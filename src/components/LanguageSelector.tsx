@@ -1,5 +1,11 @@
-import { motion } from 'framer-motion';
-import { Globe } from 'lucide-react';
+import { Globe, ChevronDown } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Language {
   code: string;
@@ -37,6 +43,8 @@ interface LanguageSelectorProps {
 }
 
 const LanguageSelector = ({ value, onChange }: LanguageSelectorProps) => {
+  const selectedLanguage = languages.find(lang => lang.code === value);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -46,30 +54,34 @@ const LanguageSelector = ({ value, onChange }: LanguageSelectorProps) => {
       </div>
       <p className="text-muted-foreground text-sm">Choose the language for your story</p>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-        {languages.map((lang, index) => (
-          <motion.button
-            key={lang.code}
-            onClick={() => onChange(lang.code)}
-            className={`p-3 rounded-xl flex items-center gap-2 transition-all duration-300 ${
-              value === lang.code
-                ? 'bg-primary/30 border-2 border-primary text-foreground shadow-lg shadow-primary/20'
-                : 'bg-muted/30 border-2 border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-            }`}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.02 }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <span className="text-xl">{lang.flag}</span>
-            <div className="text-left">
-              <p className="text-sm font-medium leading-tight">{lang.nativeName}</p>
-              <p className="text-xs text-muted-foreground">{lang.name}</p>
-            </div>
-          </motion.button>
-        ))}
-      </div>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-full max-w-xs bg-background border-border text-foreground">
+          <SelectValue placeholder="Select a language">
+            {selectedLanguage && (
+              <span className="flex items-center gap-2">
+                <span className="text-xl">{selectedLanguage.flag}</span>
+                <span>{selectedLanguage.nativeName}</span>
+                <span className="text-muted-foreground">({selectedLanguage.name})</span>
+              </span>
+            )}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="bg-background border-border z-50 max-h-80">
+          {languages.map((lang) => (
+            <SelectItem 
+              key={lang.code} 
+              value={lang.code}
+              className="cursor-pointer hover:bg-muted"
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-xl">{lang.flag}</span>
+                <span>{lang.nativeName}</span>
+                <span className="text-muted-foreground">({lang.name})</span>
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };
