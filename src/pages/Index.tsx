@@ -2,6 +2,7 @@ import { useState } from 'react';
 import BubbleBackground from '../components/BubbleBackground';
 import HeroSection from '../components/HeroSection';
 import FeatureCards from '../components/FeatureCards';
+import ExamplesSection from '../components/ExamplesSection';
 import StoryWizard from '../components/StoryWizard';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -24,6 +25,7 @@ const Index = () => {
             >
               <HeroSection onStartCreating={() => setShowWizard(true)} />
               <FeatureCards />
+              <ExamplesSection />
               
               {/* Footer */}
               <footer className="py-12 px-4 text-center border-t border-border/30">
