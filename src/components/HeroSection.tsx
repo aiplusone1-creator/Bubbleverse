@@ -66,7 +66,13 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
             Start Creating
             <ArrowRight className="w-5 h-5 ml-2 inline-block" />
           </BubbleButton>
-          <BubbleButton variant="outline" size="lg">
+          <BubbleButton 
+            variant="outline" 
+            size="lg"
+            onClick={() => {
+              document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
             See Examples
           </BubbleButton>
         </motion.div>
