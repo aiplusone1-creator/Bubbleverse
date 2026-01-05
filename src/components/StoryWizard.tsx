@@ -1,0 +1,314 @@
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { ArrowLeft, ArrowRight, Wand2 } from 'lucide-react';
+import GlassCard from './GlassCard';
+import BubbleButton from './BubbleButton';
+import StoryLengthSelector from './StoryLengthSelector';
+import FormatSelector from './FormatSelector';
+import ArtStyleSelector from './ArtStyleSelector';
+import CharacterUpload from './CharacterUpload';
+import InterestsInput from './InterestsInput';
+
+interface Character {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl?: string;
+}
+
+interface StoryConfig {
+  storyLength: string;
+  format: string;
+  artStyle: string;
+  characters: Character[];
+  interests: string[];
+  plotMode: 'auto' | 'manual';
+  customPlot: string;
+}
+
+interface StoryWizardProps {
+  onBack: () => void;
+}
+
+const steps = [
+  { id: 1, title: 'Story Setup', description: 'Choose length, format & style' },
+  { id: 2, title: 'Characters', description: 'Add your heroes' },
+  { id: 3, title: 'Story Theme', description: 'Personalize the adventure' },
+  { id: 4, title: 'Review', description: 'Ready to create magic!' },
+];
+
+const StoryWizard = ({ onBack }: StoryWizardProps) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [config, setConfig] = useState<StoryConfig>({
+    storyLength: 'medium',
+    format: 'storyboard',
+    artStyle: 'disney',
+    characters: [],
+    interests: [],
+    plotMode: 'auto',
+    customPlot: '',
+  });
+  const [customInterest, setCustomInterest] = useState('');
+
+  const handleNext = () => {
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      onBack();
+    }
+  };
+
+  const handleToggleInterest = (interest: string) => {
+    setConfig(prev => ({
+      ...prev,
+      interests: prev.interests.includes(interest)
+        ? prev.interests.filter(i => i !== interest)
+        : [...prev.interests, interest]
+    }));
+  };
+
+  const handleAddCustomInterest = () => {
+    if (customInterest.trim() && !config.interests.includes(customInterest.trim())) {
+      setConfig(prev => ({
+        ...prev,
+        interests: [...prev.interests, customInterest.trim()]
+      }));
+      setCustomInterest('');
+    }
+  };
+
+  const handleAddCharacter = (character: Character) => {
+    setConfig(prev => ({
+      ...prev,
+      characters: [...prev.characters, character]
+    }));
+  };
+
+  const handleRemoveCharacter = (id: string) => {
+    setConfig(prev => ({
+      ...prev,
+      characters: prev.characters.filter(c => c.id !== id)
+    }));
+  };
+
+  const handleUpdateCharacter = (id: string, updates: Partial<Character>) => {
+    setConfig(prev => ({
+      ...prev,
+      characters: prev.characters.map(c => 
+        c.id === id ? { ...c, ...updates } : c
+      )
+    }));
+  };
+
+  return (
+    <section className="min-h-screen py-20 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Progress Steps */}
+        <motion.div 
+          className="flex justify-between mb-12 relative"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {/* Progress line */}
+          <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted/50" />
+          <motion.div 
+            className="absolute top-5 left-0 h-0.5 bg-primary"
+            initial={{ width: '0%' }}
+            animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+            transition={{ duration: 0.5 }}
+          />
+          
+          {steps.map((step, index) => (
+            <div key={step.id} className="flex flex-col items-center relative z-10">
+              <motion.div
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
+                  currentStep >= step.id
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+                whileHover={{ scale: 1.1 }}
+              >
+                {step.id}
+              </motion.div>
+              <span className={`mt-2 text-sm font-medium ${
+                currentStep >= step.id ? 'text-foreground' : 'text-muted-foreground'
+              }`}>
+                {step.title}
+              </span>
+              <span className="text-xs text-muted-foreground hidden md:block">
+                {step.description}
+              </span>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Step Content */}
+        <GlassCard className="mb-8">
+          <AnimatePresence mode="wait">
+            {currentStep === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <StoryLengthSelector 
+                  value={config.storyLength} 
+                  onChange={(v) => setConfig(prev => ({ ...prev, storyLength: v }))} 
+                />
+                <FormatSelector 
+                  value={config.format} 
+                  onChange={(v) => setConfig(prev => ({ ...prev, format: v }))} 
+                />
+                <ArtStyleSelector 
+                  value={config.artStyle} 
+                  onChange={(v) => setConfig(prev => ({ ...prev, artStyle: v }))} 
+                />
+              </motion.div>
+            )}
+
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <CharacterUpload
+                  characters={config.characters}
+                  onAddCharacter={handleAddCharacter}
+                  onRemoveCharacter={handleRemoveCharacter}
+                  onUpdateCharacter={handleUpdateCharacter}
+                />
+              </motion.div>
+            )}
+
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <InterestsInput
+                  selectedInterests={config.interests}
+                  customInterest={customInterest}
+                  onToggleInterest={handleToggleInterest}
+                  onCustomInterestChange={setCustomInterest}
+                  onAddCustomInterest={handleAddCustomInterest}
+                />
+
+                {/* Plot Mode Toggle */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold text-foreground">Plot Creation</h3>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setConfig(prev => ({ ...prev, plotMode: 'auto' }))}
+                      className={`flex-1 p-4 rounded-xl transition-all ${
+                        config.plotMode === 'auto'
+                          ? 'bg-primary/20 border-2 border-primary'
+                          : 'bg-muted/30 border-2 border-transparent'
+                      }`}
+                    >
+                      <Wand2 className="w-6 h-6 mx-auto mb-2 text-primary" />
+                      <p className="font-medium text-foreground">AI Magic</p>
+                      <p className="text-sm text-muted-foreground">Let AI create a surprise plot</p>
+                    </button>
+                    <button
+                      onClick={() => setConfig(prev => ({ ...prev, plotMode: 'manual' }))}
+                      className={`flex-1 p-4 rounded-xl transition-all ${
+                        config.plotMode === 'manual'
+                          ? 'bg-secondary/20 border-2 border-secondary'
+                          : 'bg-muted/30 border-2 border-transparent'
+                      }`}
+                    >
+                      <span className="text-2xl block mb-2">✍️</span>
+                      <p className="font-medium text-foreground">Custom Plot</p>
+                      <p className="text-sm text-muted-foreground">Write your own story</p>
+                    </button>
+                  </div>
+                  
+                  {config.plotMode === 'manual' && (
+                    <motion.textarea
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      placeholder="Write your story plot here... e.g., 'Ali finds a magical key in Cairo that opens a portal to...'"
+                      value={config.customPlot}
+                      onChange={(e) => setConfig(prev => ({ ...prev, customPlot: e.target.value }))}
+                      className="w-full h-32 bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                    />
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {currentStep === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="text-center py-8"
+              >
+                <motion.div
+                  className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Wand2 className="w-12 h-12 text-primary" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-foreground mb-4">Ready to Create Magic!</h3>
+                <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                  Your personalized story is about to come to life. 
+                  Click below to start the AI generation process.
+                </p>
+                
+                {/* Summary */}
+                <div className="glass-card p-4 max-w-md mx-auto text-left mb-8">
+                  <h4 className="font-semibold text-foreground mb-3">Story Summary</h4>
+                  <div className="space-y-2 text-sm">
+                    <p><span className="text-muted-foreground">Length:</span> <span className="text-foreground capitalize">{config.storyLength}</span></p>
+                    <p><span className="text-muted-foreground">Format:</span> <span className="text-foreground capitalize">{config.format}</span></p>
+                    <p><span className="text-muted-foreground">Style:</span> <span className="text-foreground capitalize">{config.artStyle}</span></p>
+                    <p><span className="text-muted-foreground">Characters:</span> <span className="text-foreground">{config.characters.length || 'None added'}</span></p>
+                    <p><span className="text-muted-foreground">Interests:</span> <span className="text-foreground">{config.interests.length ? config.interests.join(', ') : 'None selected'}</span></p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </GlassCard>
+
+        {/* Navigation */}
+        <div className="flex justify-between">
+          <BubbleButton variant="outline" onClick={handlePrev}>
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            {currentStep === 1 ? 'Back to Home' : 'Previous'}
+          </BubbleButton>
+          
+          {currentStep < steps.length ? (
+            <BubbleButton onClick={handleNext}>
+              Next Step
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </BubbleButton>
+          ) : (
+            <BubbleButton>
+              <Wand2 className="w-5 h-5 mr-2" />
+              Generate Story
+            </BubbleButton>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default StoryWizard;
