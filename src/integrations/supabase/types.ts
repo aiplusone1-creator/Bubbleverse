@@ -14,7 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      characters: {
+        Row: {
+          created_at: string | null
+          embedding_data: Json | null
+          id: string
+          name: string | null
+          original_image_url: string | null
+          role: string | null
+          story_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          embedding_data?: Json | null
+          id?: string
+          name?: string | null
+          original_image_url?: string | null
+          role?: string | null
+          story_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          embedding_data?: Json | null
+          id?: string
+          name?: string | null
+          original_image_url?: string | null
+          role?: string | null
+          story_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "characters_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          created_at: string | null
+          dialogue_text: string | null
+          generated_image_url: string | null
+          id: string
+          is_regenerated: boolean | null
+          page_number: number | null
+          panel_layout_type: string | null
+          scene_description: string | null
+          story_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dialogue_text?: string | null
+          generated_image_url?: string | null
+          id?: string
+          is_regenerated?: boolean | null
+          page_number?: number | null
+          panel_layout_type?: string | null
+          scene_description?: string | null
+          story_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dialogue_text?: string | null
+          generated_image_url?: string | null
+          id?: string
+          is_regenerated?: boolean | null
+          page_number?: number | null
+          panel_layout_type?: string | null
+          scene_description?: string | null
+          story_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stories: {
+        Row: {
+          art_style: string | null
+          child_interests: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          id: string
+          language: string | null
+          pdf_url: string | null
+          plot_mode_manual: boolean | null
+          status: string | null
+          story_format: string | null
+          story_length_mode: string | null
+          title: string | null
+          updated_at: string | null
+          user_plot_input: string | null
+        }
+        Insert: {
+          art_style?: string | null
+          child_interests?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          pdf_url?: string | null
+          plot_mode_manual?: boolean | null
+          status?: string | null
+          story_format?: string | null
+          story_length_mode?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_plot_input?: string | null
+        }
+        Update: {
+          art_style?: string | null
+          child_interests?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          pdf_url?: string | null
+          plot_mode_manual?: boolean | null
+          status?: string | null
+          story_format?: string | null
+          story_length_mode?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_plot_input?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
