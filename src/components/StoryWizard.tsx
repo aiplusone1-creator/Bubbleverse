@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { ArrowLeft, ArrowRight, Wand2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import GlassCard from './GlassCard';
 import BubbleButton from './BubbleButton';
 import StoryLengthSelector from './StoryLengthSelector';
@@ -8,6 +9,9 @@ import FormatSelector from './FormatSelector';
 import ArtStyleSelector from './ArtStyleSelector';
 import CharacterUpload from './CharacterUpload';
 import InterestsInput from './InterestsInput';
+import GeneratingScreen from './GeneratingScreen';
+import StoryPreview from './StoryPreview';
+import { generateStory, saveStoryToDatabase } from '@/lib/storyService';
 
 interface Character {
   id: string;
@@ -26,6 +30,16 @@ interface StoryConfig {
   customPlot: string;
 }
 
+interface GeneratedStory {
+  title: string;
+  pages: Array<{
+    pageNumber: number;
+    sceneDescription: string;
+    dialogueText: string;
+    panelLayoutType: string;
+  }>;
+}
+
 interface StoryWizardProps {
   onBack: () => void;
 }
@@ -38,7 +52,13 @@ const steps = [
 ];
 
 const StoryWizard = ({ onBack }: StoryWizardProps) => {
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingProgress, setGeneratingProgress] = useState(0);
+  const [generatingStep, setGeneratingStep] = useState('Preparing your story...');
+  const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
+  
   const [config, setConfig] = useState<StoryConfig>({
     storyLength: 'medium',
     format: 'storyboard',
@@ -106,6 +126,107 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
     }));
   };
 
+  const handleGenerateStory = async () => {
+    setIsGenerating(true);
+    setGeneratingProgress(0);
+    setGeneratingStep('Preparing your story...');
+
+    // Simulate progress updates
+    const progressInterval = setInterval(() => {
+      setGeneratingProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 15;
+      });
+    }, 500);
+
+    const stepMessages = [
+      'Gathering magical ingredients...',
+      'Crafting your adventure...',
+      'Adding sparkles and wonder...',
+      'Bringing characters to life...',
+      'Polishing the final touches...',
+    ];
+
+    let stepIndex = 0;
+    const stepInterval = setInterval(() => {
+      stepIndex = (stepIndex + 1) % stepMessages.length;
+      setGeneratingStep(stepMessages[stepIndex]);
+    }, 2000);
+
+    try {
+      console.log('Starting story generation with config:', config);
+      
+      const result = await generateStory(config);
+      
+      setGeneratingProgress(95);
+      setGeneratingStep('Saving your story...');
+      
+      // Save to database
+      await saveStoryToDatabase(config, result);
+      
+      setGeneratingProgress(100);
+      setGeneratingStep('Story complete!');
+      
+      // Short delay to show 100%
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setGeneratedStory({
+        title: result.title,
+        pages: result.pages,
+      });
+
+      toast({
+        title: "Story Created! ✨",
+        description: `"${result.title}" is ready with ${result.pages.length} magical pages!`,
+      });
+
+    } catch (error) {
+      console.error('Story generation failed:', error);
+      toast({
+        title: "Oops! Something went wrong",
+        description: error instanceof Error ? error.message : "Failed to generate story. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      clearInterval(progressInterval);
+      clearInterval(stepInterval);
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCreateNewStory = () => {
+    setGeneratedStory(null);
+    setCurrentStep(1);
+    setConfig({
+      storyLength: 'medium',
+      format: 'storyboard',
+      artStyle: 'disney',
+      characters: [],
+      interests: [],
+      plotMode: 'auto',
+      customPlot: '',
+    });
+  };
+
+  // Show generating screen
+  if (isGenerating) {
+    return <GeneratingScreen progress={generatingProgress} currentStep={generatingStep} />;
+  }
+
+  // Show story preview after generation
+  if (generatedStory) {
+    return (
+      <StoryPreview
+        title={generatedStory.title}
+        pages={generatedStory.pages}
+        artStyle={config.artStyle}
+        format={config.format}
+        onBack={onBack}
+        onCreateNew={handleCreateNewStory}
+      />
+    );
+  }
+
   return (
     <section className="min-h-screen py-20 px-4">
       <div className="max-w-4xl mx-auto">
@@ -124,7 +245,7 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
             transition={{ duration: 0.5 }}
           />
           
-          {steps.map((step, index) => (
+          {steps.map((step) => (
             <div key={step.id} className="flex flex-col items-center relative z-10">
               <motion.div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
@@ -300,7 +421,7 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
               <ArrowRight className="w-5 h-5 ml-2" />
             </BubbleButton>
           ) : (
-            <BubbleButton>
+            <BubbleButton onClick={handleGenerateStory}>
               <Wand2 className="w-5 h-5 mr-2" />
               Generate Story
             </BubbleButton>
