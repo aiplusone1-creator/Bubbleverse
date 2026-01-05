@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Wand2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Wand2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GlassCard from './GlassCard';
 import BubbleButton from './BubbleButton';
@@ -11,6 +11,8 @@ import CharacterUpload from './CharacterUpload';
 import InterestsInput from './InterestsInput';
 import GeneratingScreen from './GeneratingScreen';
 import StoryPreview from './StoryPreview';
+import LanguageSelector from './LanguageSelector';
+import CustomPlotInput from './CustomPlotInput';
 import { generateStory, saveStoryToDatabase } from '@/lib/storyService';
 
 interface Character {
@@ -24,6 +26,8 @@ interface StoryConfig {
   storyLength: string;
   format: string;
   artStyle: string;
+  customArtStyle: string;
+  language: string;
   characters: Character[];
   interests: string[];
   plotMode: 'auto' | 'manual';
@@ -58,11 +62,14 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   const [generatingProgress, setGeneratingProgress] = useState(0);
   const [generatingStep, setGeneratingStep] = useState('Preparing your story...');
   const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   
   const [config, setConfig] = useState<StoryConfig>({
     storyLength: 'medium',
     format: 'storyboard',
     artStyle: 'disney',
+    customArtStyle: '',
+    language: '',
     characters: [],
     interests: [],
     plotMode: 'auto',
@@ -70,9 +77,75 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   });
   const [customInterest, setCustomInterest] = useState('');
 
+  // Validation function for each step
+  const validateStep = (step: number): string[] => {
+    const errors: string[] = [];
+    
+    switch (step) {
+      case 1:
+        if (!config.language) {
+          errors.push('Please select a language for your story');
+        }
+        if (config.artStyle === 'custom' && !config.customArtStyle.trim()) {
+          errors.push('Please describe your custom art style');
+        }
+        break;
+      case 2:
+        const unnamedCharacters = config.characters.filter(c => !c.name.trim());
+        if (unnamedCharacters.length > 0) {
+          errors.push('Please give a name to all characters');
+        }
+        break;
+      case 3:
+        if (config.interests.length === 0) {
+          errors.push('Please select at least one interest');
+        }
+        if (config.plotMode === 'manual' && !config.customPlot.trim()) {
+          errors.push('Please write your custom plot');
+        }
+        break;
+    }
+    
+    return errors;
+  };
+
   const handleNext = () => {
+    const errors = validateStep(currentStep);
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      toast({
+        title: "Please complete required fields",
+        description: errors[0],
+        variant: "destructive",
+      });
+      return;
+    }
+    setValidationErrors([]);
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleStepClick = (stepId: number) => {
+    // Only allow going to previous steps freely, forward requires validation
+    if (stepId < currentStep) {
+      setCurrentStep(stepId);
+    } else if (stepId > currentStep) {
+      // Validate all steps up to the target step
+      for (let i = currentStep; i < stepId; i++) {
+        const errors = validateStep(i);
+        if (errors.length > 0) {
+          setValidationErrors(errors);
+          toast({
+            title: "Please complete required fields",
+            description: errors[0],
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      setValidationErrors([]);
+      setCurrentStep(stepId);
     }
   };
 
@@ -197,10 +270,13 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   const handleCreateNewStory = () => {
     setGeneratedStory(null);
     setCurrentStep(1);
+    setValidationErrors([]);
     setConfig({
       storyLength: 'medium',
       format: 'storyboard',
       artStyle: 'disney',
+      customArtStyle: '',
+      language: '',
       characters: [],
       interests: [],
       plotMode: 'auto',
@@ -247,16 +323,18 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
           
           {steps.map((step) => (
             <div key={step.id} className="flex flex-col items-center relative z-10">
-              <motion.div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
+              <motion.button
+                onClick={() => handleStepClick(step.id)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 cursor-pointer ${
                   currentStep >= step.id
                     ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
-                    : 'bg-muted text-muted-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
                 whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
               >
                 {step.id}
-              </motion.div>
+              </motion.button>
               <span className={`mt-2 text-sm font-medium ${
                 currentStep >= step.id ? 'text-foreground' : 'text-muted-foreground'
               }`}>
@@ -280,6 +358,10 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-8"
               >
+                <LanguageSelector
+                  value={config.language}
+                  onChange={(v) => setConfig(prev => ({ ...prev, language: v }))}
+                />
                 <StoryLengthSelector 
                   value={config.storyLength} 
                   onChange={(v) => setConfig(prev => ({ ...prev, storyLength: v }))} 
@@ -289,8 +371,10 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
                   onChange={(v) => setConfig(prev => ({ ...prev, format: v }))} 
                 />
                 <ArtStyleSelector 
-                  value={config.artStyle} 
-                  onChange={(v) => setConfig(prev => ({ ...prev, artStyle: v }))} 
+                  value={config.artStyle}
+                  customStyle={config.customArtStyle}
+                  onChange={(v) => setConfig(prev => ({ ...prev, artStyle: v }))}
+                  onCustomStyleChange={(v) => setConfig(prev => ({ ...prev, customArtStyle: v }))}
                 />
               </motion.div>
             )}
@@ -358,13 +442,10 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
                   </div>
                   
                   {config.plotMode === 'manual' && (
-                    <motion.textarea
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      placeholder="Write your story plot here... e.g., 'Ali finds a magical key in Cairo that opens a portal to...'"
+                    <CustomPlotInput
                       value={config.customPlot}
-                      onChange={(e) => setConfig(prev => ({ ...prev, customPlot: e.target.value }))}
-                      className="w-full h-32 bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                      onChange={(v) => setConfig(prev => ({ ...prev, customPlot: v }))}
+                      interests={config.interests}
                     />
                   )}
                 </div>
@@ -396,10 +477,11 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
                 <div className="glass-card p-4 max-w-md mx-auto text-left mb-8">
                   <h4 className="font-semibold text-foreground mb-3">Story Summary</h4>
                   <div className="space-y-2 text-sm">
+                    <p><span className="text-muted-foreground">Language:</span> <span className="text-foreground uppercase">{config.language || 'Not selected'}</span></p>
                     <p><span className="text-muted-foreground">Length:</span> <span className="text-foreground capitalize">{config.storyLength}</span></p>
                     <p><span className="text-muted-foreground">Format:</span> <span className="text-foreground capitalize">{config.format}</span></p>
-                    <p><span className="text-muted-foreground">Style:</span> <span className="text-foreground capitalize">{config.artStyle}</span></p>
-                    <p><span className="text-muted-foreground">Characters:</span> <span className="text-foreground">{config.characters.length || 'None added'}</span></p>
+                    <p><span className="text-muted-foreground">Style:</span> <span className="text-foreground capitalize">{config.artStyle === 'custom' ? config.customArtStyle : config.artStyle}</span></p>
+                    <p><span className="text-muted-foreground">Characters:</span> <span className="text-foreground">{config.characters.length ? config.characters.map(c => c.name).join(', ') : 'None added'}</span></p>
                     <p><span className="text-muted-foreground">Interests:</span> <span className="text-foreground">{config.interests.length ? config.interests.join(', ') : 'None selected'}</span></p>
                   </div>
                 </div>

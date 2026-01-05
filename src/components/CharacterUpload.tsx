@@ -123,13 +123,22 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
               
               {/* Details */}
               <div className="flex-1 space-y-2">
-                <input
-                  type="text"
-                  placeholder="Character name"
-                  value={character.name}
-                  onChange={(e) => onUpdateCharacter(character.id, { name: e.target.value })}
-                  className="w-full bg-muted/30 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Character name *"
+                    value={character.name}
+                    onChange={(e) => onUpdateCharacter(character.id, { name: e.target.value })}
+                    className={`w-full bg-muted/30 border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                      !character.name.trim() ? 'border-destructive/50' : 'border-border'
+                    }`}
+                  />
+                  {!character.name.trim() && (
+                    <span className="absolute -top-2 right-2 text-xs bg-destructive/20 text-destructive px-1.5 py-0.5 rounded">
+                      Required
+                    </span>
+                  )}
+                </div>
                 <select
                   value={character.role}
                   onChange={(e) => onUpdateCharacter(character.id, { role: e.target.value })}
