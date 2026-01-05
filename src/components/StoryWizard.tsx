@@ -91,6 +91,10 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
         }
         break;
       case 2:
+        const heroCharacters = config.characters.filter(c => c.role === 'hero');
+        if (heroCharacters.length === 0) {
+          errors.push('Please add at least one Hero character (the main child of the story)');
+        }
         const unnamedCharacters = config.characters.filter(c => !c.name.trim());
         if (unnamedCharacters.length > 0) {
           errors.push('Please give a name to all characters');
