@@ -13,6 +13,11 @@ interface ParallaxBubble {
   layer: number; // 1-4, affects parallax speed
   opacity: number;
   glowIntensity: number;
+  floatDuration: number; // Animation duration for floating
+  floatDelayX: number;
+  floatDelayY: number;
+  floatRangeX: number;
+  floatRangeY: number;
 }
 
 const GLOW_RADIUS = 200;
@@ -35,7 +40,7 @@ const ImmersiveBackground = memo(() => {
     mouseY.set(mousePosition.y);
   }, [mousePosition, mouseX, mouseY]);
 
-  // Generate bubbles with different layers
+  // Generate bubbles with different layers and float animations
   const bubbles: ParallaxBubble[] = useMemo(() => 
     Array.from({ length: BUBBLE_COUNT }, (_, i) => ({
       id: i,
@@ -46,6 +51,11 @@ const ImmersiveBackground = memo(() => {
       layer: Math.ceil(Math.random() * 4),
       opacity: 0.3 + Math.random() * 0.4,
       glowIntensity: 0.3 + Math.random() * 0.3,
+      floatDuration: 8 + Math.random() * 12, // 8-20 seconds
+      floatDelayX: Math.random() * -10,
+      floatDelayY: Math.random() * -10,
+      floatRangeX: 20 + Math.random() * 40, // 20-60px horizontal drift
+      floatRangeY: 30 + Math.random() * 50, // 30-80px vertical drift
     })), []
   );
 
@@ -175,10 +185,11 @@ const ParallaxBubbleComponent = memo(({
         top: `${bubble.y}%`,
         width: bubble.size,
         height: bubble.size,
-        y: parallaxOffset,
         zIndex: bubble.layer,
       }}
       animate={{
+        x: [0, bubble.floatRangeX, 0, -bubble.floatRangeX * 0.5, 0],
+        y: [parallaxOffset, parallaxOffset - bubble.floatRangeY, parallaxOffset, parallaxOffset - bubble.floatRangeY * 0.3, parallaxOffset],
         background: `radial-gradient(circle at 30% 30%, 
           hsla(${activeHue}, 100%, 85%, ${activeOpacity}), 
           hsla(${activeHue}, 100%, 65%, ${activeOpacity * 0.6}) 40%,
@@ -190,8 +201,26 @@ const ParallaxBubbleComponent = memo(({
           0 0 ${bubble.size * activeGlow * 1.5}px hsla(${activeHue + 20}, 100%, 60%, ${activeGlow * 0.3})
         `,
         scale: isNearMouse ? 1.15 : 1,
+        rotate: [0, 5, 0, -5, 0],
       }}
       transition={{
+        x: {
+          duration: bubble.floatDuration,
+          repeat: Infinity,
+          ease: 'easeInOut',
+          delay: bubble.floatDelayX,
+        },
+        y: {
+          duration: bubble.floatDuration * 0.8,
+          repeat: Infinity,
+          ease: 'easeInOut',
+          delay: bubble.floatDelayY,
+        },
+        rotate: {
+          duration: bubble.floatDuration * 1.2,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        },
         background: { duration: 0.3 },
         boxShadow: { duration: 0.3 },
         scale: { type: 'spring', stiffness: 300, damping: 20 },
