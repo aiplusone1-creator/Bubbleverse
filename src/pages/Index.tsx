@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import BubbleBackground from '../components/BubbleBackground';
+import ImmersiveBackground from '../components/ImmersiveBackground';
+import InteractiveBub from '../components/InteractiveBub';
 import HeroSection from '../components/HeroSection';
 import FeatureCards from '../components/FeatureCards';
 import ExamplesSection from '../components/ExamplesSection';
@@ -11,7 +12,8 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden">
-      <BubbleBackground />
+      <ImmersiveBackground />
+      <InteractiveBub />
       
       <main className="relative z-10">
         <AnimatePresence mode="wait">
