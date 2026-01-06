@@ -21,7 +21,7 @@ interface ParallaxBubble {
 }
 
 const GLOW_RADIUS = 200;
-const BUBBLE_COUNT = 35;
+const BUBBLE_COUNT = 40;
 
 const ImmersiveBackground = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,16 +46,16 @@ const ImmersiveBackground = memo(() => {
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: Math.random() * 80 + 30,
+      size: Math.random() * 35 + 10, // Smaller bubbles: 10-45px (was 30-110px)
       baseHue: Math.random() > 0.5 ? 190 + Math.random() * 30 : 270 + Math.random() * 40,
       layer: Math.ceil(Math.random() * 4),
-      opacity: 0.3 + Math.random() * 0.4,
-      glowIntensity: 0.3 + Math.random() * 0.3,
+      opacity: 0.15 + Math.random() * 0.25, // More transparent for distant feel
+      glowIntensity: 0.15 + Math.random() * 0.2, // Softer glow
       floatDuration: 8 + Math.random() * 12, // 8-20 seconds
       floatDelayX: Math.random() * -10,
       floatDelayY: Math.random() * -10,
-      floatRangeX: 20 + Math.random() * 40, // 20-60px horizontal drift
-      floatRangeY: 30 + Math.random() * 50, // 30-80px vertical drift
+      floatRangeX: 10 + Math.random() * 20, // Smaller movement for distant feel
+      floatRangeY: 15 + Math.random() * 25,
     })), []
   );
 

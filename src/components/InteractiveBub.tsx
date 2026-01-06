@@ -26,6 +26,7 @@ const InteractiveBub = memo(() => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
 
   // Velocity for physics
   const velocityRef = useRef({ x: 0, y: 0 });
@@ -73,6 +74,23 @@ const InteractiveBub = memo(() => {
       ScrollTrigger.getAll().forEach(t => t.kill());
     };
   }, []);
+
+  // Eye tracking - make eyes follow the mouse
+  useEffect(() => {
+    const bubCenterX = position.x;
+    const bubCenterY = position.y;
+    
+    const dx = mousePosition.x - bubCenterX;
+    const dy = mousePosition.y - bubCenterY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Normalize and clamp the eye movement (max 4px in any direction)
+    const maxOffset = 4;
+    const normalizedX = distance > 0 ? (dx / distance) * Math.min(distance / 50, 1) * maxOffset : 0;
+    const normalizedY = distance > 0 ? (dy / distance) * Math.min(distance / 50, 1) * maxOffset : 0;
+    
+    setEyeOffset({ x: normalizedX, y: normalizedY });
+  }, [mousePosition, position]);
 
   // Main physics loop
   useEffect(() => {
@@ -285,28 +303,44 @@ const InteractiveBub = memo(() => {
 
         {/* Eyes */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/3 flex gap-3">
+          {/* Left Eye */}
           <motion.div 
-            className="relative"
-            animate={{
-              scaleY: expression.eyes === 'happy' ? 0.3 : expression.eyes === 'surprised' ? 1.3 : 1,
-              y: expression.eyes === 'looking' ? -2 : 0,
+            className="relative w-3 h-3.5 rounded-full bg-white flex items-center justify-center overflow-hidden"
+            style={{
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
             }}
           >
-            <div className="w-2.5 h-3 rounded-full bg-slate-800" />
+            <motion.div 
+              className="w-2 h-2.5 rounded-full bg-slate-800"
+              animate={{
+                x: eyeOffset.x,
+                y: eyeOffset.y,
+                scaleY: expression.eyes === 'happy' ? 0.3 : expression.eyes === 'surprised' ? 1.2 : 1,
+              }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            />
             {expression.eyes === 'surprised' && (
-              <div className="absolute top-0.5 left-0.5 w-1 h-1 rounded-full bg-white" />
+              <div className="absolute top-1 left-1 w-1 h-1 rounded-full bg-white" />
             )}
           </motion.div>
+          {/* Right Eye */}
           <motion.div 
-            className="relative"
-            animate={{
-              scaleY: expression.eyes === 'happy' ? 0.3 : expression.eyes === 'surprised' ? 1.3 : 1,
-              y: expression.eyes === 'looking' ? -2 : 0,
+            className="relative w-3 h-3.5 rounded-full bg-white flex items-center justify-center overflow-hidden"
+            style={{
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
             }}
           >
-            <div className="w-2.5 h-3 rounded-full bg-slate-800" />
+            <motion.div 
+              className="w-2 h-2.5 rounded-full bg-slate-800"
+              animate={{
+                x: eyeOffset.x,
+                y: eyeOffset.y,
+                scaleY: expression.eyes === 'happy' ? 0.3 : expression.eyes === 'surprised' ? 1.2 : 1,
+              }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            />
             {expression.eyes === 'surprised' && (
-              <div className="absolute top-0.5 left-0.5 w-1 h-1 rounded-full bg-white" />
+              <div className="absolute top-1 left-1 w-1 h-1 rounded-full bg-white" />
             )}
           </motion.div>
         </div>
