@@ -4,6 +4,7 @@ import InteractiveBub from '../components/InteractiveBub';
 import HeroSection from '../components/HeroSection';
 import FeatureCards from '../components/FeatureCards';
 import ExamplesSection from '../components/ExamplesSection';
+import Footer from '../components/Footer';
 import StoryWizard from '../components/StoryWizard';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -30,11 +31,7 @@ const Index = () => {
               <ExamplesSection />
               
               {/* Footer */}
-              <footer className="py-12 px-4 text-center border-t border-border/30">
-                <p className="text-muted-foreground text-sm">
-                  © 2026 Bubbleverse. Creating magical stories for children everywhere.
-                </p>
-              </footer>
+              <Footer />
             </motion.div>
           ) : (
             <motion.div
