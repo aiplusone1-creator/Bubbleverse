@@ -72,6 +72,38 @@
     --sidebar-ring: 190 100% 50%;
   }
 
+  .light {
+    --background: 210 40% 96%;
+    --foreground: 220 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 15%;
+    --primary: 190 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 190 100% 60%;
+    --secondary: 280 60% 65%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 30% 90%;
+    --muted-foreground: 220 20% 40%;
+    --accent: 300 70% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 30% 80%;
+    --input: 210 30% 85%;
+    --ring: 190 100% 40%;
+    
+    --bubble-cyan: 190 100% 40%;
+    --bubble-pink: 320 70% 60%;
+    --bubble-lavender: 280 50% 65%;
+    --bubble-gold: 45 100% 50%;
+    --glass-bg: 0 0% 100%;
+    --glass-border: 200 50% 70%;
+    
+    --gradient-background: radial-gradient(ellipse at 50% 0%, hsl(280 30% 90%) 0%, hsl(210 40% 96%) 70%);
+  }
+
   .dark {
     --background: 220 60% 8%;
     --foreground: 200 100% 98%;

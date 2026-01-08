@@ -1,27 +1,22 @@
 import { motion } from 'framer-motion';
-import BubbleverseLogo from './BubbleverseLogo';
 import BubbleButton from './BubbleButton';
+import Header from './Header';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface HeroSectionProps {
   onStartCreating: () => void;
 }
 
 const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
+  const { t, isRTL } = useLanguage();
+
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-4 relative">
-      {/* Header */}
-      <motion.header
-        className="absolute top-0 left-0 right-0 p-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
-        <BubbleverseLogo />
-      </motion.header>
+      <Header />
 
       {/* Main content */}
-      <div className="text-center max-w-4xl mx-auto">
+      <div className={`text-center max-w-4xl mx-auto ${isRTL ? 'rtl' : ''}`}>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -30,7 +25,7 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
         >
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium">
             <Sparkles className="w-4 h-4" />
-            AI-Powered Story Creation
+            {t('aiPowered')}
           </span>
         </motion.div>
 
@@ -40,10 +35,10 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
-          Create{' '}
-          <span className="text-magical">Magical Stories</span>
+          {t('createMagical')}{' '}
+          <span className="text-magical">{t('magicalStories')}</span>
           <br />
-          Starring Your Child
+          {t('starringChild')}
         </motion.h1>
 
         <motion.p 
@@ -52,19 +47,18 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
         >
-          Transform your little one into the hero of their own personalized 
-          3D storybook or comic book adventure
+          {t('heroDescription')}
         </motion.p>
 
         <motion.div 
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          className={`flex flex-col sm:flex-row gap-4 justify-center items-center ${isRTL ? 'sm:flex-row-reverse' : ''}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
           <BubbleButton size="lg" onClick={onStartCreating}>
-            Start Creating
-            <ArrowRight className="w-5 h-5 ml-2 inline-block" />
+            {t('startCreating')}
+            <ArrowRight className={`w-5 h-5 inline-block ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
           </BubbleButton>
           <BubbleButton 
             variant="outline" 
@@ -73,7 +67,7 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
               document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
-            See Examples
+            {t('seeExamples')}
           </BubbleButton>
         </motion.div>
 
@@ -85,10 +79,10 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
           transition={{ duration: 0.8, delay: 0.8 }}
         >
           {[
-            { value: '10K+', label: 'Stories Created' },
-            { value: '5', label: 'Art Styles' },
-            { value: '300 DPI', label: 'Print Quality' },
-          ].map((stat, index) => (
+            { value: '10K+', label: t('storiesCreated') },
+            { value: '5', label: t('artStyles') },
+            { value: '300 DPI', label: t('printQuality') },
+          ].map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="text-3xl font-bold text-magical">{stat.value}</div>
               <div className="text-muted-foreground text-sm">{stat.label}</div>
