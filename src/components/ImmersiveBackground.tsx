@@ -2,7 +2,7 @@ import { useEffect, useRef, useMemo, memo, useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useMousePosition } from '@/hooks/useMousePosition';
 import { useScrollPosition } from '@/hooks/useScrollPosition';
-import gsap from 'gsap';
+import { useTheme } from 'next-themes';
 
 interface ParallaxBubble {
   id: number;
@@ -27,6 +27,8 @@ const ImmersiveBackground = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mousePosition = useMousePosition();
   const scrollY = useScrollPosition();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   
   // Smooth mouse values for performance
   const mouseX = useMotionValue(0);
@@ -59,32 +61,48 @@ const ImmersiveBackground = memo(() => {
     })), []
   );
 
+  // Theme-aware background colors
+  const darkBackground = `
+    radial-gradient(ellipse at 30% 20%, hsla(270, 60%, 25%, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, hsla(200, 80%, 20%, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(240, 50%, 15%, 0.6) 0%, transparent 70%),
+    linear-gradient(180deg, 
+      hsl(250, 40%, 8%) 0%, 
+      hsl(220, 50%, 12%) 30%,
+      hsl(200, 60%, 10%) 60%,
+      hsl(270, 50%, 10%) 100%
+    )
+  `;
+
+  const lightBackground = `
+    radial-gradient(ellipse at 30% 20%, hsla(270, 60%, 85%, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, hsla(200, 80%, 85%, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(240, 50%, 92%, 0.6) 0%, transparent 70%),
+    linear-gradient(180deg, 
+      hsl(210, 40%, 96%) 0%, 
+      hsl(220, 30%, 94%) 30%,
+      hsl(200, 40%, 95%) 60%,
+      hsl(270, 30%, 95%) 100%
+    )
+  `;
+
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 overflow-hidden pointer-events-none z-0"
+      className="fixed inset-0 overflow-hidden pointer-events-none z-0 transition-all duration-500"
       style={{
-        background: `
-          radial-gradient(ellipse at 30% 20%, hsla(270, 60%, 25%, 0.4) 0%, transparent 50%),
-          radial-gradient(ellipse at 70% 80%, hsla(200, 80%, 20%, 0.4) 0%, transparent 50%),
-          radial-gradient(ellipse at 50% 50%, hsla(240, 50%, 15%, 0.6) 0%, transparent 70%),
-          linear-gradient(180deg, 
-            hsl(250, 40%, 8%) 0%, 
-            hsl(220, 50%, 12%) 30%,
-            hsl(200, 60%, 10%) 60%,
-            hsl(270, 50%, 10%) 100%
-          )
-        `,
+        background: isDark ? darkBackground : lightBackground,
       }}
     >
       {/* Liquid gradient overlay that shifts with scroll */}
       <motion.div 
         className="absolute inset-0"
         style={{
-          background: `
-            radial-gradient(circle at 20% 30%, hsla(180, 100%, 50%, 0.08) 0%, transparent 40%),
-            radial-gradient(circle at 80% 70%, hsla(280, 100%, 60%, 0.08) 0%, transparent 40%)
-          `,
+          background: isDark 
+            ? `radial-gradient(circle at 20% 30%, hsla(180, 100%, 50%, 0.08) 0%, transparent 40%),
+               radial-gradient(circle at 80% 70%, hsla(280, 100%, 60%, 0.08) 0%, transparent 40%)`
+            : `radial-gradient(circle at 20% 30%, hsla(180, 100%, 50%, 0.15) 0%, transparent 40%),
+               radial-gradient(circle at 80% 70%, hsla(280, 100%, 60%, 0.12) 0%, transparent 40%)`,
           y: useTransform(useSpring(scrollY, { stiffness: 50, damping: 20 }), [0, 1000], [0, -100]),
         }}
       />
@@ -97,25 +115,26 @@ const ImmersiveBackground = memo(() => {
           scrollY={scrollY}
           mouseX={smoothMouseX}
           mouseY={smoothMouseY}
+          isDark={isDark}
         />
       ))}
 
       {/* Ambient glow spots that respond to scroll */}
       <motion.div 
-        className="absolute w-[600px] h-[600px] rounded-full blur-[120px]"
+        className="absolute w-[600px] h-[600px] rounded-full blur-[120px] transition-colors duration-500"
         style={{
           left: '10%',
           top: '20%',
-          background: 'hsla(190, 100%, 50%, 0.12)',
+          background: isDark ? 'hsla(190, 100%, 50%, 0.12)' : 'hsla(190, 100%, 50%, 0.2)',
           y: useTransform(useSpring(scrollY, { stiffness: 30, damping: 15 }), [0, 1000], [0, 200]),
         }}
       />
       <motion.div 
-        className="absolute w-[500px] h-[500px] rounded-full blur-[100px]"
+        className="absolute w-[500px] h-[500px] rounded-full blur-[100px] transition-colors duration-500"
         style={{
           right: '15%',
           bottom: '30%',
-          background: 'hsla(280, 80%, 50%, 0.1)',
+          background: isDark ? 'hsla(280, 80%, 50%, 0.1)' : 'hsla(280, 80%, 60%, 0.15)',
           y: useTransform(useSpring(scrollY, { stiffness: 40, damping: 18 }), [0, 1000], [0, 150]),
         }}
       />
@@ -128,12 +147,14 @@ const ParallaxBubbleComponent = memo(({
   bubble, 
   scrollY, 
   mouseX, 
-  mouseY 
+  mouseY,
+  isDark 
 }: { 
   bubble: ParallaxBubble;
   scrollY: number;
   mouseX: any;
   mouseY: any;
+  isDark: boolean;
 }) => {
   const bubbleRef = useRef<HTMLDivElement>(null);
   const [isNearMouse, setIsNearMouse] = useState(false);
@@ -171,15 +192,19 @@ const ParallaxBubbleComponent = memo(({
     return () => unsubX();
   }, [mouseX, mouseY, bubbleCenter]);
 
-  // Animated hue shift when near mouse
+  // Animated hue shift when near mouse - adjust for light/dark mode
   const activeHue = isNearMouse ? (bubble.baseHue > 250 ? 320 : 180) : bubble.baseHue;
   const activeGlow = isNearMouse ? bubble.glowIntensity * 2.5 : bubble.glowIntensity;
   const activeOpacity = isNearMouse ? Math.min(bubble.opacity * 1.5, 0.9) : bubble.opacity;
+  const baseOpacity = isDark ? activeOpacity : activeOpacity * 1.3;
+  const baseLightness = isDark ? 85 : 60;
+  const midLightness = isDark ? 65 : 50;
+  const outerLightness = isDark ? 55 : 45;
 
   return (
     <motion.div
       ref={bubbleRef}
-      className="absolute rounded-full"
+      className="absolute rounded-full transition-colors duration-500"
       style={{
         left: `${bubble.x}%`,
         top: `${bubble.y}%`,
@@ -191,9 +216,9 @@ const ParallaxBubbleComponent = memo(({
         x: [0, bubble.floatRangeX, 0, -bubble.floatRangeX * 0.5, 0],
         y: [parallaxOffset, parallaxOffset - bubble.floatRangeY, parallaxOffset, parallaxOffset - bubble.floatRangeY * 0.3, parallaxOffset],
         background: `radial-gradient(circle at 30% 30%, 
-          hsla(${activeHue}, 100%, 85%, ${activeOpacity}), 
-          hsla(${activeHue}, 100%, 65%, ${activeOpacity * 0.6}) 40%,
-          hsla(${activeHue + 40}, 80%, 55%, ${activeOpacity * 0.3}) 70%,
+          hsla(${activeHue}, 100%, ${baseLightness}%, ${baseOpacity}), 
+          hsla(${activeHue}, 100%, ${midLightness}%, ${baseOpacity * 0.6}) 40%,
+          hsla(${activeHue + 40}, 80%, ${outerLightness}%, ${baseOpacity * 0.3}) 70%,
           transparent 100%)`,
         boxShadow: `
           inset 0 0 ${bubble.size / 3}px hsla(${activeHue}, 100%, 90%, ${activeGlow}),
