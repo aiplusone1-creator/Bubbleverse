@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Globe, LogIn } from 'lucide-react';
+import { Moon, Sun, Globe, LogIn, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import BubbleverseLogo from './BubbleverseLogo';
 import { Button } from './ui/button';
 import {
@@ -11,10 +13,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 const Header = () => {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t, isRTL } = useLanguage();
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    // Set up auth listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <motion.header
@@ -65,15 +86,26 @@ const Header = () => {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-primary" />
           </Button>
 
-          {/* Sign In Button */}
-          <Link to="/auth">
-            <Button
-              className="bubble-button px-4 py-2 text-sm md:px-6 md:py-2 md:text-base flex items-center gap-2"
-            >
-              <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('signIn')}</span>
-            </Button>
-          </Link>
+          {/* Sign In / Profile Button */}
+          {user ? (
+            <Link to="/profile">
+              <Button
+                className="bubble-button px-4 py-2 text-sm md:px-6 md:py-2 md:text-base flex items-center gap-2"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('profile')}</span>
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/auth">
+              <Button
+                className="bubble-button px-4 py-2 text-sm md:px-6 md:py-2 md:text-base flex items-center gap-2"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('signIn')}</span>
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </motion.header>

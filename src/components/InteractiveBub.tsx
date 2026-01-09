@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import { useMousePosition } from '@/hooks/useMousePosition';
+import { useTheme } from 'next-themes';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -15,6 +16,8 @@ const WANDER_SPEED = 0.5;
 const EDGE_PADDING = 60;
 
 const InteractiveBub = memo(() => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const containerRef = useRef<HTMLDivElement>(null);
   const bubRef = useRef<HTMLDivElement>(null);
   const mousePosition = useMousePosition();
@@ -279,16 +282,28 @@ const InteractiveBub = memo(() => {
         <div 
           className="absolute inset-0 rounded-full"
           style={{
-            background: `radial-gradient(circle at 30% 30%, 
-              hsla(190, 100%, 85%, 0.95), 
-              hsla(190, 100%, 65%, 0.8) 40%,
-              hsla(280, 80%, 75%, 0.6) 70%,
-              hsla(280, 80%, 60%, 0.4) 100%)`,
-            boxShadow: `
-              inset 0 0 25px hsla(190, 100%, 95%, 0.6),
-              0 0 40px hsla(190, 100%, 70%, 0.5),
-              0 0 80px hsla(280, 80%, 70%, 0.3)
-            `,
+            background: isDark 
+              ? `radial-gradient(circle at 30% 30%, 
+                  hsla(190, 100%, 85%, 0.95), 
+                  hsla(190, 100%, 65%, 0.8) 40%,
+                  hsla(280, 80%, 75%, 0.6) 70%,
+                  hsla(280, 80%, 60%, 0.4) 100%)`
+              : `radial-gradient(circle at 30% 30%, 
+                  hsla(190, 100%, 45%, 0.98), 
+                  hsla(190, 100%, 35%, 0.9) 40%,
+                  hsla(280, 80%, 45%, 0.8) 70%,
+                  hsla(280, 80%, 35%, 0.6) 100%)`,
+            boxShadow: isDark
+              ? `
+                inset 0 0 25px hsla(190, 100%, 95%, 0.6),
+                0 0 40px hsla(190, 100%, 70%, 0.5),
+                0 0 80px hsla(280, 80%, 70%, 0.3)
+              `
+              : `
+                inset 0 0 25px hsla(190, 100%, 60%, 0.7),
+                0 0 40px hsla(190, 100%, 45%, 0.6),
+                0 0 80px hsla(280, 80%, 45%, 0.4)
+              `,
           }}
         />
 

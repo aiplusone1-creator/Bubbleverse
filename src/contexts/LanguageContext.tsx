@@ -38,6 +38,25 @@ const translations: Record<Language, Record<string, string>> = {
     'noAccount': "Don't have an account?",
     'haveAccount': 'Already have an account?',
     'backHome': 'Back to Home',
+    'continueWithGoogle': 'Continue with Google',
+    'orContinueWith': 'or continue with email',
+    
+    // Profile
+    'profile': 'Profile',
+    'settings': 'Settings',
+    'myStories': 'My Stories',
+    'editProfile': 'Edit Profile',
+    'displayName': 'Display Name',
+    'saveChanges': 'Save Changes',
+    'signOut': 'Sign Out',
+    'theme': 'Theme',
+    'language': 'Language',
+    'darkMode': 'Dark Mode',
+    'lightMode': 'Light Mode',
+    'accountSettings': 'Account Settings',
+    'preferences': 'Preferences',
+    'noStoriesYet': 'No stories created yet',
+    'startFirstStory': 'Start creating your first magical story!',
     
     // Footer
     'footerText': '© 2026 Bubbleverse. Creating magical stories for children everywhere.',
@@ -70,6 +89,25 @@ const translations: Record<Language, Record<string, string>> = {
     'noAccount': 'ليس لديك حساب؟',
     'haveAccount': 'لديك حساب بالفعل؟',
     'backHome': 'العودة للرئيسية',
+    'continueWithGoogle': 'المتابعة مع جوجل',
+    'orContinueWith': 'أو المتابعة بالبريد الإلكتروني',
+    
+    // Profile
+    'profile': 'الملف الشخصي',
+    'settings': 'الإعدادات',
+    'myStories': 'قصصي',
+    'editProfile': 'تعديل الملف الشخصي',
+    'displayName': 'الاسم المعروض',
+    'saveChanges': 'حفظ التغييرات',
+    'signOut': 'تسجيل الخروج',
+    'theme': 'المظهر',
+    'language': 'اللغة',
+    'darkMode': 'الوضع الداكن',
+    'lightMode': 'الوضع الفاتح',
+    'accountSettings': 'إعدادات الحساب',
+    'preferences': 'التفضيلات',
+    'noStoriesYet': 'لم يتم إنشاء قصص بعد',
+    'startFirstStory': 'ابدأ بإنشاء قصتك السحرية الأولى!',
     
     // Footer
     'footerText': '© 2026 Bubbleverse. نصنع قصصاً سحرية للأطفال في كل مكان.',
