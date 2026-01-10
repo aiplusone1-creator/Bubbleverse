@@ -64,10 +64,18 @@ export const saveStoryToDatabase = async (
 ): Promise<string> => {
   console.log('Saving story to database...');
   
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error('User must be authenticated to save stories');
+  }
+  
   // Create the story record
   const { data: story, error: storyError } = await supabase
     .from('stories')
     .insert({
+      user_id: user.id,
       title: generatedData.title,
       status: 'completed',
       story_length_mode: config.storyLength,
@@ -91,6 +99,7 @@ export const saveStoryToDatabase = async (
   if (config.characters.length > 0) {
     const charactersToInsert = config.characters.map(c => ({
       story_id: story.id,
+      user_id: user.id,
       name: c.name,
       role: c.role,
       original_image_url: c.imageUrl || null,
@@ -108,6 +117,7 @@ export const saveStoryToDatabase = async (
   // Save pages
   const pagesToInsert = generatedData.pages.map(p => ({
     story_id: story.id,
+    user_id: user.id,
     page_number: p.pageNumber,
     scene_description: p.sceneDescription,
     dialogue_text: p.dialogueText,
