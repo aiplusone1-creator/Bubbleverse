@@ -23,6 +23,7 @@ export type Database = {
           original_image_url: string | null
           role: string | null
           story_id: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -32,6 +33,7 @@ export type Database = {
           original_image_url?: string | null
           role?: string | null
           story_id?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           original_image_url?: string | null
           role?: string | null
           story_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -63,6 +66,7 @@ export type Database = {
           panel_layout_type: string | null
           scene_description: string | null
           story_id: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -74,6 +78,7 @@ export type Database = {
           panel_layout_type?: string | null
           scene_description?: string | null
           story_id?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -85,6 +90,7 @@ export type Database = {
           panel_layout_type?: string | null
           scene_description?: string | null
           story_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -111,6 +117,7 @@ export type Database = {
           story_length_mode: string | null
           title: string | null
           updated_at: string | null
+          user_id: string | null
           user_plot_input: string | null
         }
         Insert: {
@@ -127,6 +134,7 @@ export type Database = {
           story_length_mode?: string | null
           title?: string | null
           updated_at?: string | null
+          user_id?: string | null
           user_plot_input?: string | null
         }
         Update: {
@@ -143,6 +151,7 @@ export type Database = {
           story_length_mode?: string | null
           title?: string | null
           updated_at?: string | null
+          user_id?: string | null
           user_plot_input?: string | null
         }
         Relationships: []
