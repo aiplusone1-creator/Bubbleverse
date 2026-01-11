@@ -5,3 +5,6 @@ enabled = true
 
 [functions.generate-story]
 verify_jwt = false
+
+[functions.enhance-plot]
+verify_jwt = false
