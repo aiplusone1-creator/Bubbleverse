@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,53 @@ serve(async (req) => {
   }
 
   try {
+    // ===== AUTHENTICATION CHECK =====
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.log('Missing or invalid Authorization header');
+      return new Response(JSON.stringify({ error: 'Unauthorized - Please log in to enhance plots' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.log('Invalid token or claims:', claimsError);
+      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid session' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log('Authenticated user:', userId);
+
+    // Check if user is banned
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_banned')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (profile?.is_banned) {
+      console.log('Banned user attempted to enhance plot:', userId);
+      return new Response(JSON.stringify({ error: 'Your account has been suspended' }), { 
+        status: 403, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+    // ===== END AUTHENTICATION CHECK =====
+
     const { plot, interests } = await req.json();
     
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -63,6 +111,8 @@ ${interestsText}`;
     if (!enhancedPlot) {
       throw new Error('No response from AI');
     }
+
+    console.log('Plot enhanced successfully for user:', userId);
 
     return new Response(JSON.stringify({ enhancedPlot }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
