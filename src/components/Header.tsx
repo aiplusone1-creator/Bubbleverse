@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Globe, LogIn, User } from 'lucide-react';
+import { Moon, Sun, Globe, LogIn, User, Shield } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,22 +20,51 @@ const Header = () => {
   const { language, setLanguage, t, isRTL } = useLanguage();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Set up auth listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Check admin status
+      if (session?.user) {
+        setTimeout(() => {
+          checkAdminStatus(session.user.id);
+        }, 0);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      setIsAdmin(!!data && !error);
+    } catch {
+      setIsAdmin(false);
+    }
+  };
 
   return (
     <motion.header
@@ -85,6 +114,20 @@ const Header = () => {
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-primary" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-primary" />
           </Button>
+
+          {/* Admin Panel Button - Only for admins */}
+          {isAdmin && (
+            <Link to="/admin">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="glass-card h-10 w-10 border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/10"
+                title="Admin Panel"
+              >
+                <Shield className="h-5 w-5 text-amber-500" />
+              </Button>
+            </Link>
+          )}
 
           {/* Sign In / Profile Button */}
           {user ? (
