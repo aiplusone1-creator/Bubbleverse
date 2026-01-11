@@ -1,4 +1,4 @@
-import { BarChart3, Users, BookOpen, Settings, Home, LogOut } from 'lucide-react';
+import { BarChart3, Users, BookOpen, Settings, Home, LogOut, Image } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,7 @@ const menuItems = [
   { title: 'Overview', url: '/admin', icon: BarChart3 },
   { title: 'Users', url: '/admin/users', icon: Users },
   { title: 'Stories', url: '/admin/stories', icon: BookOpen },
+  { title: 'Examples', url: '/admin/examples', icon: Image },
   { title: 'System Prompts', url: '/admin/config', icon: Settings },
 ];
 

@@ -85,6 +85,39 @@ export type Database = {
           },
         ]
       }
+      examples: {
+        Row: {
+          cover_url: string
+          created_at: string
+          display_order: number
+          id: string
+          is_visible: boolean
+          style: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          style: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          style?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           created_at: string | null
