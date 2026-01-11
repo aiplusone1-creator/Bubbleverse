@@ -38,7 +38,6 @@ interface Story {
   created_at: string;
   user_id: string | null;
   profiles?: {
-    email: string | null;
     display_name: string | null;
   } | null;
 }
@@ -68,18 +67,18 @@ export default function AdminStories() {
 
       if (storiesError) throw storiesError;
 
-      // Fetch profiles separately for user emails
+      // Fetch profiles separately for user display names
       const userIds = [...new Set((storiesData || []).map(s => s.user_id).filter(Boolean))];
-      let profilesMap: Record<string, { email: string | null; display_name: string | null }> = {};
+      let profilesMap: Record<string, { display_name: string | null }> = {};
 
       if (userIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('user_id, email, display_name')
+          .select('user_id, display_name')
           .in('user_id', userIds);
 
         profilesData?.forEach(p => {
-          profilesMap[p.user_id] = { email: p.email, display_name: p.display_name };
+          profilesMap[p.user_id] = { display_name: p.display_name };
         });
       }
 
@@ -143,7 +142,7 @@ export default function AdminStories() {
 
   const filteredStories = stories.filter(story =>
     story.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    story.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    story.profiles?.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -216,7 +215,7 @@ export default function AdminStories() {
                         </div>
                       </TableCell>
                       <TableCell className="text-slate-300">
-                        {story.profiles?.email || story.user_id || 'Anonymous'}
+                        {story.profiles?.display_name || (story.user_id ? `${story.user_id.slice(0, 8)}...` : 'Anonymous')}
                       </TableCell>
                       <TableCell>
                         <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">

@@ -19,7 +19,6 @@ import { Badge } from '@/components/ui/badge';
 interface UserProfile {
   id: string;
   user_id: string;
-  email: string | null;
   display_name: string | null;
   is_premium: boolean;
   is_banned: boolean;
@@ -108,7 +107,6 @@ export default function AdminUsers() {
   };
 
   const filteredUsers = users.filter(user =>
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -160,14 +158,14 @@ export default function AdminUsers() {
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                             <span className="text-white font-bold text-sm">
-                              {user.email?.charAt(0).toUpperCase() || '?'}
+                              {user.display_name?.charAt(0).toUpperCase() || '?'}
                             </span>
                           </div>
                           <div>
                             <p className="text-white font-medium">
-                              {user.display_name || 'No name'}
+                              {user.display_name || 'Anonymous User'}
                             </p>
-                            <p className="text-slate-400 text-sm">{user.email}</p>
+                            <p className="text-slate-400 text-sm">ID: {user.user_id.slice(0, 8)}...</p>
                           </div>
                         </div>
                       </TableCell>
