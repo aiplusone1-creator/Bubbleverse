@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import BubbleButton from './BubbleButton';
 import Header from './Header';
+import HeroShowcase from './HeroShowcase';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -14,7 +15,9 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-4 relative">
       <Header />
-
+      
+      {/* Hero Showcase - Floating images */}
+      <HeroShowcase />
       {/* Main content */}
       <div className={`text-center max-w-4xl mx-auto ${isRTL ? 'rtl' : ''}`}>
         <motion.div

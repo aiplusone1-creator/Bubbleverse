@@ -60,6 +60,12 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Footer
     'footerText': '© 2026 Bubbleverse. Creating magical stories for children everywhere.',
+    'interactiveMode': 'Interactive Mode',
+    'showBub': 'Show Bub',
+    
+    // Currency
+    'currency': 'Currency',
+    'currencyPreference': 'Currency Preference',
   },
   ar: {
     // Header
@@ -111,6 +117,12 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Footer
     'footerText': '© 2026 Bubbleverse. نصنع قصصاً سحرية للأطفال في كل مكان.',
+    'interactiveMode': 'الوضع التفاعلي',
+    'showBub': 'إظهار باب',
+    
+    // Currency
+    'currency': 'العملة',
+    'currencyPreference': 'تفضيل العملة',
   },
 };
 
