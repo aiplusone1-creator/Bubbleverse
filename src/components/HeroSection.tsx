@@ -7,14 +7,16 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 interface HeroSectionProps {
   onStartCreating: () => void;
+  showMascot?: boolean;
+  onToggleMascot?: () => void;
 }
 
-const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
+const HeroSection = ({ onStartCreating, showMascot, onToggleMascot }: HeroSectionProps) => {
   const { t, isRTL } = useLanguage();
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-4 relative">
-      <Header />
+      <Header showMascot={showMascot} onToggleMascot={onToggleMascot} />
       
       {/* Hero Showcase - Floating images */}
       <HeroShowcase />

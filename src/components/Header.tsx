@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, LogIn, User, Shield } from 'lucide-react';
+import { Moon, Sun, LogIn, User, Shield, Sparkles } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +9,12 @@ import BubbleverseLogo from './BubbleverseLogo';
 import { Button } from './ui/button';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
-const Header = () => {
+interface HeaderProps {
+  showMascot?: boolean;
+  onToggleMascot?: () => void;
+}
+
+const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t, isRTL } = useLanguage();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -71,6 +76,21 @@ const Header = () => {
         <BubbleverseLogo />
 
         <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          {/* Bub Toggle Button */}
+          {onToggleMascot && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleMascot}
+              className={`glass-card h-10 w-10 border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all ${
+                showMascot ? 'text-primary' : 'text-muted-foreground'
+              }`}
+              title={t('showBub')}
+            >
+              <Sparkles className={`h-5 w-5 transition-transform ${showMascot ? 'scale-110' : 'scale-90 opacity-50'}`} />
+            </Button>
+          )}
+
           {/* Instant Language Switcher */}
           <Button
             variant="ghost"
