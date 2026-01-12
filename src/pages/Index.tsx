@@ -28,7 +28,11 @@ const Index = () => {
               exit={{ opacity: 0, x: -100 }}
               transition={{ duration: 0.5 }}
             >
-              <HeroSection onStartCreating={() => setShowWizard(true)} />
+              <HeroSection 
+                onStartCreating={() => setShowWizard(true)} 
+                showMascot={showMascot}
+                onToggleMascot={() => setShowMascot(!showMascot)}
+              />
               <FeatureCards />
               <ExamplesSection />
               
