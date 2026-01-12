@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Settings, BookOpen, LogOut, Moon, Sun, Globe, Edit2, Check } from 'lucide-react';
+import { ArrowLeft, User, Settings, BookOpen, LogOut, Moon, Sun, Globe, Edit2, Check, DollarSign } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,7 @@ const Profile = () => {
   const [displayName, setDisplayName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [preferredCurrency, setPreferredCurrency] = useState<'EGP' | 'USD'>('EGP');
   
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage, t, isRTL } = useLanguage();
@@ -43,6 +44,8 @@ const Profile = () => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setDisplayName(session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '');
+        // Fetch currency preference
+        fetchCurrencyPreference(session.user.id);
       }
       setLoading(false);
       if (!session) {
@@ -52,6 +55,28 @@ const Profile = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const fetchCurrencyPreference = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('preferred_currency')
+      .eq('user_id', userId)
+      .single();
+    
+    if (data?.preferred_currency) {
+      setPreferredCurrency(data.preferred_currency as 'EGP' | 'USD');
+    }
+  };
+
+  const handleCurrencyChange = async (currency: 'EGP' | 'USD') => {
+    setPreferredCurrency(currency);
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ preferred_currency: currency })
+        .eq('user_id', user.id);
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -276,6 +301,41 @@ const Profile = () => {
                       >
                         AR
                       </Button>
+                    </div>
+                  </div>
+
+                  {/* Currency Preference */}
+                  <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <DollarSign className="h-5 w-5 text-primary" />
+                      <div className={isRTL ? 'text-right' : ''}>
+                        <p className={`font-medium ${isDark ? 'text-foreground' : 'text-slate-800'}`}>{t('currency')}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t('currencyPreference')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex rounded-lg overflow-hidden border border-primary/20">
+                      <button
+                        onClick={() => handleCurrencyChange('EGP')}
+                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                          preferredCurrency === 'EGP'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-background/50 text-muted-foreground hover:bg-primary/10'
+                        }`}
+                      >
+                        EGP
+                      </button>
+                      <button
+                        onClick={() => handleCurrencyChange('USD')}
+                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                          preferredCurrency === 'USD'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-background/50 text-muted-foreground hover:bg-primary/10'
+                        }`}
+                      >
+                        USD
+                      </button>
                     </div>
                   </div>
                 </div>

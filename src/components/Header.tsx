@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Globe, LogIn, User, Shield } from 'lucide-react';
+import { Moon, Sun, LogIn, User, Shield } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import BubbleverseLogo from './BubbleverseLogo';
 import { Button } from './ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 const Header = () => {
@@ -77,32 +71,14 @@ const Header = () => {
         <BubbleverseLogo />
 
         <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          {/* Language Switcher */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="glass-card h-10 w-10 border-primary/20 hover:border-primary/40 hover:bg-primary/10"
-              >
-                <Globe className="h-5 w-5 text-primary" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="glass-card border-primary/20">
-              <DropdownMenuItem
-                onClick={() => setLanguage('en')}
-                className={`cursor-pointer ${language === 'en' ? 'text-primary' : ''}`}
-              >
-                🇺🇸 English
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setLanguage('ar')}
-                className={`cursor-pointer ${language === 'ar' ? 'text-primary' : ''}`}
-              >
-                🇸🇦 العربية
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Instant Language Switcher */}
+          <Button
+            variant="ghost"
+            onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+            className="glass-card h-10 px-3 border-primary/20 hover:border-primary/40 hover:bg-primary/10 text-sm font-medium"
+          >
+            {language === 'en' ? 'العربية' : 'English'}
+          </Button>
 
           {/* Theme Toggle */}
           <Button

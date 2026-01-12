@@ -7,14 +7,16 @@ import ExamplesSection from '../components/ExamplesSection';
 import Footer from '../components/Footer';
 import StoryWizard from '../components/StoryWizard';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useMascotVisibility } from '@/hooks/useMascotVisibility';
 
 const Index = () => {
   const [showWizard, setShowWizard] = useState(false);
+  const { showMascot, setShowMascot } = useMascotVisibility();
 
   return (
     <div className="relative min-h-screen overflow-x-hidden">
       <ImmersiveBackground />
-      <InteractiveBub />
+      {showMascot && <InteractiveBub />}
       
       <main className="relative z-10">
         <AnimatePresence mode="wait">
@@ -31,7 +33,7 @@ const Index = () => {
               <ExamplesSection />
               
               {/* Footer */}
-              <Footer />
+              <Footer showMascot={showMascot} onToggleMascot={setShowMascot} />
             </motion.div>
           ) : (
             <motion.div
