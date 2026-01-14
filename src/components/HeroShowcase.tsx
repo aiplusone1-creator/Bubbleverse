@@ -72,8 +72,8 @@ const HeroShowcase = () => {
             }}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ 
-              opacity: isActive ? 0.4 : 0.15,
-              scale: isActive ? 1 : 0.85,
+              opacity: isActive ? 0.85 : 0.5,
+              scale: isActive ? 1 : 0.9,
             }}
             transition={{ 
               duration: 1.5, 
@@ -115,7 +115,7 @@ const HeroShowcase = () => {
                   <img
                     src={image.image_url}
                     alt={image.alt_text || 'Story example'}
-                    className="w-full h-full object-cover opacity-70 blur-[1px]"
+                    className="w-full h-full object-cover opacity-95"
                   />
                   {/* Gradient overlay for depth */}
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-purple-500/20" />
