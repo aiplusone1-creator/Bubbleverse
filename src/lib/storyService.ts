@@ -4,6 +4,8 @@ interface StoryConfig {
   storyLength: string;
   format: string;
   artStyle: string;
+  customArtStyle?: string;
+  language: string;
   characters: Array<{ id: string; name: string; role: string; imageUrl?: string }>;
   interests: string[];
   plotMode: 'auto' | 'manual';
@@ -37,6 +39,8 @@ export const generateStory = async (config: StoryConfig): Promise<GenerateStoryR
       storyLength: config.storyLength,
       format: config.format,
       artStyle: config.artStyle,
+      customArtStyle: config.customArtStyle,
+      language: config.language,
       characters: config.characters.map(c => ({ name: c.name, role: c.role })),
       interests: config.interests,
       plotMode: config.plotMode,
