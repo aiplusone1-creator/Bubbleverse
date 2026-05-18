@@ -265,149 +265,138 @@ const InteractiveBub = memo(() => {
         damping: 15,
       }}
     >
-      {/* Main bubble body */}
+      {/* Main bubble body — iridescent soap bubble */}
       <motion.div
-        className="relative w-20 h-20"
+        className="relative w-24 h-24"
         animate={{
-          y: bubMood === 'dancing' ? [0, -8, 0] : [0, -3, 0],
-          rotate: bubMood === 'dancing' ? [0, 10, -10, 0] : 0,
+          y: bubMood === 'dancing' ? [0, -10, 0] : [0, -4, 0],
+          rotate: bubMood === 'dancing' ? [0, 8, -8, 0] : 0,
         }}
         transition={{
-          duration: bubMood === 'dancing' ? 0.5 : 2,
+          duration: bubMood === 'dancing' ? 0.5 : 2.4,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
       >
-        {/* Bubble gradient body */}
-        <div 
-          className="absolute inset-0 rounded-full"
+        {/* Iridescent halo */}
+        <div
+          className="absolute -inset-3 rounded-full blur-2xl opacity-70 pointer-events-none"
           style={{
-            background: isDark 
-              ? `radial-gradient(circle at 30% 30%, 
-                  hsla(190, 100%, 85%, 0.95), 
-                  hsla(190, 100%, 65%, 0.8) 40%,
-                  hsla(280, 80%, 75%, 0.6) 70%,
-                  hsla(280, 80%, 60%, 0.4) 100%)`
-              : `radial-gradient(circle at 30% 30%, 
-                  hsla(190, 100%, 45%, 0.98), 
-                  hsla(190, 100%, 35%, 0.9) 40%,
-                  hsla(280, 80%, 45%, 0.8) 70%,
-                  hsla(280, 80%, 35%, 0.6) 100%)`,
-            boxShadow: isDark
-              ? `
-                inset 0 0 25px hsla(190, 100%, 95%, 0.6),
-                0 0 40px hsla(190, 100%, 70%, 0.5),
-                0 0 80px hsla(280, 80%, 70%, 0.3)
-              `
-              : `
-                inset 0 0 25px hsla(190, 100%, 60%, 0.7),
-                0 0 40px hsla(190, 100%, 45%, 0.6),
-                0 0 80px hsla(280, 80%, 45%, 0.4)
-              `,
+            background:
+              'conic-gradient(from 0deg, hsla(190,100%,70%,.6), hsla(280,90%,70%,.6), hsla(330,100%,75%,.55), hsla(190,100%,70%,.6))',
           }}
         />
 
-        {/* Shine effect */}
-        <div 
-          className="absolute top-2 left-2 w-5 h-5 rounded-full"
-          style={{ 
-            background: 'radial-gradient(circle, hsla(0, 0%, 100%, 0.8) 0%, transparent 70%)',
-            filter: 'blur(1px)' 
-          }}
-        />
-
-        {/* Eyes */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/3 flex gap-3">
-          {/* Left Eye */}
-          <motion.div 
-            className="relative w-3 h-3.5 rounded-full bg-white flex items-center justify-center overflow-hidden"
-            style={{
-              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-            }}
-          >
-            <motion.div 
-              className="w-2 h-2.5 rounded-full bg-slate-800"
-              animate={{
-                x: eyeOffset.x,
-                y: eyeOffset.y,
-                scaleY: expression.eyes === 'happy' ? 0.3 : expression.eyes === 'surprised' ? 1.2 : 1,
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            />
-            {expression.eyes === 'surprised' && (
-              <div className="absolute top-1 left-1 w-1 h-1 rounded-full bg-white" />
-            )}
-          </motion.div>
-          {/* Right Eye */}
-          <motion.div 
-            className="relative w-3 h-3.5 rounded-full bg-white flex items-center justify-center overflow-hidden"
-            style={{
-              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-            }}
-          >
-            <motion.div 
-              className="w-2 h-2.5 rounded-full bg-slate-800"
-              animate={{
-                x: eyeOffset.x,
-                y: eyeOffset.y,
-                scaleY: expression.eyes === 'happy' ? 0.3 : expression.eyes === 'surprised' ? 1.2 : 1,
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            />
-            {expression.eyes === 'surprised' && (
-              <div className="absolute top-1 left-1 w-1 h-1 rounded-full bg-white" />
-            )}
-          </motion.div>
-        </div>
-
-        {/* Mouth */}
-        <motion.div 
-          className="absolute bottom-4 left-1/2 -translate-x-1/2"
-          animate={{
-            scale: expression.mouth === 'big-smile' ? 1.3 : 1,
-          }}
+        {/* Orbiting micro bubbles */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
         >
-          {expression.mouth === 'smile' || expression.mouth === 'big-smile' ? (
-            <div className="w-5 h-2.5 border-b-2 border-slate-700 rounded-b-full" />
-          ) : expression.mouth === 'o' ? (
-            <div className="w-3 h-3 rounded-full border-2 border-slate-700" />
-          ) : (
-            <div className="w-3 h-1 bg-slate-700 rounded-full" />
-          )}
+          <span className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-cyan-200/90 shadow-[0_0_10px_hsla(190,100%,80%,.95)]" />
+          <span className="absolute bottom-1 right-2 w-1.5 h-1.5 rounded-full bg-fuchsia-200/80 shadow-[0_0_8px_hsla(310,100%,80%,.9)]" />
+          <span className="absolute top-3 left-1 w-1 h-1 rounded-full bg-violet-200/80 shadow-[0_0_6px_hsla(270,100%,80%,.9)]" />
         </motion.div>
 
-        {/* Blush (when happy or dancing) */}
-        {(bubMood === 'happy' || bubMood === 'dancing') && (
-          <>
-            <div className="absolute top-1/2 left-2 w-3 h-2 rounded-full bg-pink-300/50" />
-            <div className="absolute top-1/2 right-2 w-3 h-2 rounded-full bg-pink-300/50" />
-          </>
-        )}
+        {/* Soap bubble body */}
+        <div
+          className="absolute inset-0 rounded-full overflow-hidden"
+          style={{
+            background:
+              'radial-gradient(circle at 32% 26%, hsla(0,0%,100%,.95) 0%, hsla(190,100%,80%,.85) 22%, hsla(260,90%,72%,.75) 52%, hsla(320,95%,72%,.65) 78%, hsla(220,80%,38%,.7) 100%)',
+            boxShadow: isDark
+              ? 'inset 0 0 26px hsla(0,0%,100%,.35), inset -8px -10px 24px hsla(260,80%,40%,.55), 0 14px 40px hsla(200,100%,50%,.4)'
+              : 'inset 0 0 26px hsla(0,0%,100%,.55), inset -8px -10px 24px hsla(260,80%,40%,.4), 0 14px 40px hsla(200,100%,50%,.35)',
+          }}
+        >
+          {/* Iridescent sheen sweep */}
+          <motion.div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(120deg, transparent 28%, hsla(0,0%,100%,.5) 50%, transparent 72%)',
+              mixBlendMode: 'overlay',
+            }}
+            animate={{ x: ['-60%', '60%'] }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          {/* Thin film rim */}
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{ boxShadow: 'inset 0 0 0 1.5px hsla(0,0%,100%,.4)' }}
+          />
+          {/* Specular highlights */}
+          <div className="absolute top-2 left-3 w-5 h-3 rounded-full bg-white/85 blur-[2px] rotate-[-20deg]" />
+          <div className="absolute top-4 left-5 w-1.5 h-1.5 rounded-full bg-white/95" />
+          {/* Bottom soft light bounce */}
+          <div className="absolute bottom-2 right-3 w-6 h-2 rounded-full bg-white/20 blur-md" />
+        </div>
+
+        {/* Face layer (above bubble) */}
+        <div className="absolute inset-0">
+          {/* Eyes */}
+          <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-3.5">
+            {[0, 1].map((i) => (
+              <motion.div
+                key={i}
+                className="relative w-3.5 h-4 rounded-full bg-white flex items-center justify-center overflow-hidden"
+                style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1)' }}
+              >
+                <motion.div
+                  className="w-2.5 h-3 rounded-full bg-slate-900"
+                  animate={{
+                    x: eyeOffset.x,
+                    y: eyeOffset.y,
+                    scaleY: expression.eyes === 'happy' ? 0.25 : expression.eyes === 'surprised' ? 1.2 : 1,
+                  }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                >
+                  <div className="w-1 h-1 rounded-full bg-white mt-0.5 ml-0.5" />
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Mouth */}
+          <motion.div
+            className="absolute bottom-[28%] left-1/2 -translate-x-1/2"
+            animate={{ scale: expression.mouth === 'big-smile' ? 1.3 : 1 }}
+          >
+            {expression.mouth === 'smile' || expression.mouth === 'big-smile' ? (
+              <div className="w-6 h-3 border-b-[3px] border-slate-800 rounded-b-full" />
+            ) : expression.mouth === 'o' ? (
+              <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-slate-800 bg-slate-900/30" />
+            ) : (
+              <div className="w-3.5 h-1 bg-slate-800 rounded-full" />
+            )}
+          </motion.div>
+
+          {/* Blush */}
+          {(bubMood === 'happy' || bubMood === 'dancing') && (
+            <>
+              <div className="absolute top-[52%] left-[18%] w-3 h-2 rounded-full bg-pink-400/55 blur-[1px]" />
+              <div className="absolute top-[52%] right-[18%] w-3 h-2 rounded-full bg-pink-400/55 blur-[1px]" />
+            </>
+          )}
+        </div>
 
         {/* Sparkles when dancing */}
         <AnimatePresence>
           {bubMood === 'dancing' && (
             <>
-              {[...Array(4)].map((_, i) => (
+              {[...Array(5)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="absolute w-2 h-2 text-yellow-300"
+                  className="absolute text-yellow-200 text-sm pointer-events-none"
                   initial={{ opacity: 0, scale: 0 }}
-                  animate={{ 
+                  animate={{
                     opacity: [0, 1, 0],
                     scale: [0, 1, 0],
-                    x: [0, (i % 2 === 0 ? 1 : -1) * 20],
-                    y: [0, -20 - i * 5],
+                    x: [0, (i % 2 === 0 ? 1 : -1) * 24],
+                    y: [0, -24 - i * 5],
                   }}
-                  transition={{
-                    duration: 0.8,
-                    delay: i * 0.15,
-                    repeat: Infinity,
-                  }}
-                  style={{
-                    left: 30 + (i % 2) * 20,
-                    top: 10,
-                  }}
+                  transition={{ duration: 0.9, delay: i * 0.12, repeat: Infinity }}
+                  style={{ left: 36 + (i % 2) * 22, top: 10 }}
                 >
                   ✦
                 </motion.div>
