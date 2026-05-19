@@ -79,20 +79,44 @@ const InteractiveBub = memo(() => {
     };
   }, []);
 
-  // Eye tracking - make eyes follow the mouse
+  // Natural blinking — gentle, irregular cadence
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const scheduleBlink = () => {
+      const delay = 2200 + Math.random() * 3200;
+      timeoutId = setTimeout(() => {
+        setIsBlinking(true);
+        // occasional double-blink for life
+        const doubleBlink = Math.random() < 0.18;
+        setTimeout(() => {
+          setIsBlinking(false);
+          if (doubleBlink) {
+            setTimeout(() => setIsBlinking(true), 140);
+            setTimeout(() => setIsBlinking(false), 280);
+          }
+          scheduleBlink();
+        }, 130);
+      }, delay);
+    };
+    scheduleBlink();
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Eye tracking — soft, weighted easing for a thoughtful gaze
   useEffect(() => {
     const bubCenterX = position.x;
     const bubCenterY = position.y;
-    
+
     const dx = mousePosition.x - bubCenterX;
     const dy = mousePosition.y - bubCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // Normalize and clamp the eye movement (max 4px in any direction)
-    const maxOffset = 4;
-    const normalizedX = distance > 0 ? (dx / distance) * Math.min(distance / 50, 1) * maxOffset : 0;
-    const normalizedY = distance > 0 ? (dy / distance) * Math.min(distance / 50, 1) * maxOffset : 0;
-    
+
+    // Smaller, more refined gaze range — eyes are tiny, big offsets look googly
+    const maxOffset = 2.4;
+    const ramp = Math.min(distance / 80, 1);
+    const normalizedX = distance > 0 ? (dx / distance) * ramp * maxOffset : 0;
+    const normalizedY = distance > 0 ? (dy / distance) * ramp * maxOffset * 0.85 : 0;
+
     setEyeOffset({ x: normalizedX, y: normalizedY });
   }, [mousePosition, position]);
 
