@@ -30,6 +30,7 @@ const InteractiveBub = memo(() => {
   const [rotation, setRotation] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
+  const [isBlinking, setIsBlinking] = useState(false);
 
   // Velocity for physics
   const velocityRef = useRef({ x: 0, y: 0 });
