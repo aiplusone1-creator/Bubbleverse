@@ -30,6 +30,7 @@ const InteractiveBub = memo(() => {
   const [rotation, setRotation] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
+  const [isBlinking, setIsBlinking] = useState(false);
 
   // Velocity for physics
   const velocityRef = useRef({ x: 0, y: 0 });
@@ -78,20 +79,44 @@ const InteractiveBub = memo(() => {
     };
   }, []);
 
-  // Eye tracking - make eyes follow the mouse
+  // Natural blinking — gentle, irregular cadence
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const scheduleBlink = () => {
+      const delay = 2200 + Math.random() * 3200;
+      timeoutId = setTimeout(() => {
+        setIsBlinking(true);
+        // occasional double-blink for life
+        const doubleBlink = Math.random() < 0.18;
+        setTimeout(() => {
+          setIsBlinking(false);
+          if (doubleBlink) {
+            setTimeout(() => setIsBlinking(true), 140);
+            setTimeout(() => setIsBlinking(false), 280);
+          }
+          scheduleBlink();
+        }, 130);
+      }, delay);
+    };
+    scheduleBlink();
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Eye tracking — soft, weighted easing for a thoughtful gaze
   useEffect(() => {
     const bubCenterX = position.x;
     const bubCenterY = position.y;
-    
+
     const dx = mousePosition.x - bubCenterX;
     const dy = mousePosition.y - bubCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // Normalize and clamp the eye movement (max 4px in any direction)
-    const maxOffset = 4;
-    const normalizedX = distance > 0 ? (dx / distance) * Math.min(distance / 50, 1) * maxOffset : 0;
-    const normalizedY = distance > 0 ? (dy / distance) * Math.min(distance / 50, 1) * maxOffset : 0;
-    
+
+    // Smaller, more refined gaze range — eyes are tiny, big offsets look googly
+    const maxOffset = 2.4;
+    const ramp = Math.min(distance / 80, 1);
+    const normalizedX = distance > 0 ? (dx / distance) * ramp * maxOffset : 0;
+    const normalizedY = distance > 0 ? (dy / distance) * ramp * maxOffset * 0.85 : 0;
+
     setEyeOffset({ x: normalizedX, y: normalizedY });
   }, [mousePosition, position]);
 
@@ -334,27 +359,91 @@ const InteractiveBub = memo(() => {
 
         {/* Face layer (above bubble) */}
         <div className="absolute inset-0">
-          {/* Eyes */}
-          <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-3.5">
-            {[0, 1].map((i) => (
-              <motion.div
-                key={i}
-                className="relative w-3.5 h-4 rounded-full bg-white flex items-center justify-center overflow-hidden"
-                style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1)' }}
-              >
-                <motion.div
-                  className="w-2.5 h-3 rounded-full bg-slate-900"
-                  animate={{
-                    x: eyeOffset.x,
-                    y: eyeOffset.y,
-                    scaleY: expression.eyes === 'happy' ? 0.25 : expression.eyes === 'surprised' ? 1.2 : 1,
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                >
-                  <div className="w-1 h-1 rounded-full bg-white mt-0.5 ml-0.5" />
-                </motion.div>
-              </motion.div>
-            ))}
+          {/* Eyes — refined, intelligent gaze */}
+          <div className="absolute top-[44%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-[14px]">
+            {[0, 1].map((i) => {
+              const isHappy = expression.eyes === 'happy';
+              const isSurprised = expression.eyes === 'surprised';
+              const isClosed = expression.eyes === 'closed';
+              const closedLook = isClosed || isBlinking || isHappy;
+
+              return (
+                <div key={i} className="relative w-[13px] h-[15px]">
+                  {/* Open eye (sclera + iris) */}
+                  <motion.div
+                    className="absolute inset-0 rounded-[55%] overflow-hidden"
+                    style={{
+                      background:
+                        'radial-gradient(ellipse at 50% 40%, #ffffff 0%, #f3f7fb 60%, #dde7f0 100%)',
+                      boxShadow:
+                        'inset 0 1.2px 2.5px rgba(15,23,42,0.28), inset 0 -1px 1.5px rgba(255,255,255,0.7), 0 1px 1.5px rgba(0,0,0,0.08)',
+                    }}
+                    animate={{
+                      scaleY: closedLook ? 0.06 : isSurprised ? 1.15 : 1,
+                      scaleX: isSurprised ? 1.08 : 1,
+                    }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+                  >
+                    {/* Iris — soft sky-blue gradient, intelligent feel */}
+                    <motion.div
+                      className="absolute top-1/2 left-1/2 w-[9px] h-[9px] rounded-full"
+                      style={{
+                        marginLeft: -4.5,
+                        marginTop: -4.5,
+                        background:
+                          'radial-gradient(circle at 35% 32%, #7dd3fc 0%, #38bdf8 38%, #1e6fa8 78%, #0b3b66 100%)',
+                        boxShadow:
+                          'inset 0 -1px 1.5px rgba(8,30,55,0.55), inset 0 1px 1px rgba(255,255,255,0.35)',
+                      }}
+                      animate={{
+                        x: eyeOffset.x + (i === 0 ? -0.15 : 0.15),
+                        y: eyeOffset.y,
+                      }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 24, mass: 0.6 }}
+                    >
+                      {/* Pupil */}
+                      <div
+                        className="absolute top-1/2 left-1/2 w-[4px] h-[4px] rounded-full bg-slate-950"
+                        style={{ marginLeft: -2, marginTop: -2 }}
+                      />
+                      {/* Primary catchlight */}
+                      <div
+                        className="absolute w-[2.4px] h-[2.4px] rounded-full bg-white"
+                        style={{ top: 1.2, left: 1.4, boxShadow: '0 0 1.5px rgba(255,255,255,0.9)' }}
+                      />
+                      {/* Secondary highlight — depth */}
+                      <div
+                        className="absolute w-[1px] h-[1px] rounded-full bg-white/85"
+                        style={{ bottom: 1.4, right: 1.6 }}
+                      />
+                    </motion.div>
+
+                    {/* Upper-lid shadow — adds soulful depth */}
+                    <div
+                      className="absolute inset-x-0 top-0 h-[40%] rounded-t-[55%] pointer-events-none"
+                      style={{
+                        background:
+                          'linear-gradient(to bottom, rgba(15,23,42,0.32), rgba(15,23,42,0) 100%)',
+                      }}
+                    />
+                  </motion.div>
+
+                  {/* Happy / closed crescent — elegant arc instead of squish */}
+                  <motion.div
+                    className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+                    style={{
+                      top: '40%',
+                      width: 13,
+                      height: 7,
+                      borderTop: '1.8px solid #0f172a',
+                      borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
+                    }}
+                    animate={{ opacity: isHappy && !isBlinking ? 1 : 0 }}
+                    transition={{ duration: 0.18 }}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           {/* Mouth */}
@@ -374,8 +463,8 @@ const InteractiveBub = memo(() => {
           {/* Blush */}
           {(bubMood === 'happy' || bubMood === 'dancing') && (
             <>
-              <div className="absolute top-[52%] left-[18%] w-3 h-2 rounded-full bg-pink-400/55 blur-[1px]" />
-              <div className="absolute top-[52%] right-[18%] w-3 h-2 rounded-full bg-pink-400/55 blur-[1px]" />
+              <div className="absolute top-[54%] left-[16%] w-3 h-2 rounded-full bg-pink-400/55 blur-[1px]" />
+              <div className="absolute top-[54%] right-[16%] w-3 h-2 rounded-full bg-pink-400/55 blur-[1px]" />
             </>
           )}
         </div>
