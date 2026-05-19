@@ -357,117 +357,174 @@ const InteractiveBub = memo(() => {
           <div className="absolute bottom-2 right-3 w-6 h-2 rounded-full bg-white/20 blur-md" />
         </div>
 
-        {/* Face layer (above bubble) */}
-        <div className="absolute inset-0">
-          {/* Eyes — refined, intelligent gaze */}
-          <div className="absolute top-[44%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-[14px]">
-            {[0, 1].map((i) => {
-              const isHappy = expression.eyes === 'happy';
-              const isSurprised = expression.eyes === 'surprised';
-              const isClosed = expression.eyes === 'closed';
-              const closedLook = isClosed || isBlinking || isHappy;
+        {/* Face — single integrated SVG that lives INSIDE the bubble, perfectly centered */}
+        <svg
+          viewBox="0 0 100 100"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{
+            // sits under the film, soft refraction tint
+            filter: 'drop-shadow(0 1px 0.5px rgba(255,255,255,0.55))',
+            mixBlendMode: 'multiply',
+            opacity: 0.92,
+          }}
+          aria-hidden
+        >
+          <defs>
+            <radialGradient id="bub-iris" cx="38%" cy="34%" r="70%">
+              <stop offset="0%" stopColor="#bae6fd" />
+              <stop offset="35%" stopColor="#38bdf8" />
+              <stop offset="78%" stopColor="#1e6fa8" />
+              <stop offset="100%" stopColor="#082f49" />
+            </radialGradient>
+            <radialGradient id="bub-sclera" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="70%" stopColor="#eef4fb" />
+              <stop offset="100%" stopColor="#cbd9e8" />
+            </radialGradient>
+            <clipPath id="bub-eye-L">
+              <ellipse cx="40" cy="48" rx="6.2" ry="7.4" />
+            </clipPath>
+            <clipPath id="bub-eye-R">
+              <ellipse cx="60" cy="48" rx="6.2" ry="7.4" />
+            </clipPath>
+          </defs>
 
-              return (
-                <div key={i} className="relative w-[13px] h-[15px]">
-                  {/* Open eye (sclera + iris) */}
-                  <motion.div
-                    className="absolute inset-0 rounded-[55%] overflow-hidden"
-                    style={{
-                      background:
-                        'radial-gradient(ellipse at 50% 40%, #ffffff 0%, #f3f7fb 60%, #dde7f0 100%)',
-                      boxShadow:
-                        'inset 0 1.2px 2.5px rgba(15,23,42,0.28), inset 0 -1px 1.5px rgba(255,255,255,0.7), 0 1px 1.5px rgba(0,0,0,0.08)',
-                    }}
-                    animate={{
-                      scaleY: closedLook ? 0.06 : isSurprised ? 1.15 : 1,
-                      scaleX: isSurprised ? 1.08 : 1,
-                    }}
-                    transition={{ type: 'spring', stiffness: 380, damping: 22 }}
-                  >
-                    {/* Iris — soft sky-blue gradient, intelligent feel */}
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 w-[9px] h-[9px] rounded-full"
-                      style={{
-                        marginLeft: -4.5,
-                        marginTop: -4.5,
-                        background:
-                          'radial-gradient(circle at 35% 32%, #7dd3fc 0%, #38bdf8 38%, #1e6fa8 78%, #0b3b66 100%)',
-                        boxShadow:
-                          'inset 0 -1px 1.5px rgba(8,30,55,0.55), inset 0 1px 1px rgba(255,255,255,0.35)',
-                      }}
-                      animate={{
-                        x: eyeOffset.x + (i === 0 ? -0.15 : 0.15),
-                        y: eyeOffset.y,
-                      }}
-                      transition={{ type: 'spring', stiffness: 260, damping: 24, mass: 0.6 }}
-                    >
-                      {/* Pupil */}
-                      <div
-                        className="absolute top-1/2 left-1/2 w-[4px] h-[4px] rounded-full bg-slate-950"
-                        style={{ marginLeft: -2, marginTop: -2 }}
-                      />
-                      {/* Primary catchlight */}
-                      <div
-                        className="absolute w-[2.4px] h-[2.4px] rounded-full bg-white"
-                        style={{ top: 1.2, left: 1.4, boxShadow: '0 0 1.5px rgba(255,255,255,0.9)' }}
-                      />
-                      {/* Secondary highlight — depth */}
-                      <div
-                        className="absolute w-[1px] h-[1px] rounded-full bg-white/85"
-                        style={{ bottom: 1.4, right: 1.6 }}
-                      />
-                    </motion.div>
+          {(() => {
+            const isHappy = expression.eyes === 'happy';
+            const isSurprised = expression.eyes === 'surprised';
+            const isClosed = expression.eyes === 'closed';
+            const closed = isClosed || isBlinking;
+            const showCrescent = isHappy && !isBlinking;
+            // map small px offset to svg units (svg is 100 wide ≈ 96px bubble)
+            const ex = eyeOffset.x * 1.04;
+            const ey = eyeOffset.y * 1.04;
+            const sx = isSurprised ? 1.12 : 1;
+            const sy = closed ? 0.06 : isSurprised ? 1.18 : 1;
 
-                    {/* Upper-lid shadow — adds soulful depth */}
-                    <div
-                      className="absolute inset-x-0 top-0 h-[40%] rounded-t-[55%] pointer-events-none"
-                      style={{
-                        background:
-                          'linear-gradient(to bottom, rgba(15,23,42,0.32), rgba(15,23,42,0) 100%)',
-                      }}
+            return (
+              <>
+                {/* ===== EYES ===== */}
+                {[
+                  { cx: 40, key: 'L', clip: 'bub-eye-L' },
+                  { cx: 60, key: 'R', clip: 'bub-eye-R' },
+                ].map((eye) => (
+                  <g key={eye.key}>
+                    {/* Open eye group — scales for blink/surprise around eye center */}
+                    {!showCrescent && (
+                      <g
+                        style={{
+                          transform: `translate(${eye.cx}px, 48px) scale(${sx}, ${sy}) translate(${-eye.cx}px, -48px)`,
+                          transition: 'transform 140ms cubic-bezier(.5,1.4,.4,1)',
+                          transformBox: 'fill-box',
+                          transformOrigin: '0 0',
+                        }}
+                      >
+                        {/* Sclera */}
+                        <ellipse
+                          cx={eye.cx}
+                          cy={48}
+                          rx={6.2}
+                          ry={7.4}
+                          fill="url(#bub-sclera)"
+                          stroke="rgba(15,23,42,0.25)"
+                          strokeWidth={0.45}
+                        />
+                        {/* Iris + pupil + catchlights, clipped to sclera so it never spills */}
+                        <g clipPath={`url(#${eye.clip})`}>
+                          <g
+                            style={{
+                              transform: `translate(${ex}px, ${ey}px)`,
+                              transition: 'transform 180ms cubic-bezier(.3,1,.5,1)',
+                            }}
+                          >
+                            <circle cx={eye.cx} cy={48.5} r={4.2} fill="url(#bub-iris)" />
+                            <circle cx={eye.cx} cy={48.5} r={1.9} fill="#020617" />
+                            {/* Primary catchlight */}
+                            <circle cx={eye.cx - 1.3} cy={47} r={1.05} fill="#ffffff" />
+                            {/* Secondary catchlight */}
+                            <circle cx={eye.cx + 1.5} cy={50} r={0.5} fill="rgba(255,255,255,0.85)" />
+                          </g>
+                          {/* Upper-lid shadow inside the eye for soulful depth */}
+                          <ellipse
+                            cx={eye.cx}
+                            cy={43.5}
+                            rx={6.2}
+                            ry={3.2}
+                            fill="rgba(15,23,42,0.28)"
+                          />
+                        </g>
+                      </g>
+                    )}
+
+                    {/* Happy crescent — elegant smiling arc */}
+                    {showCrescent && (
+                      <path
+                        d={`M ${eye.cx - 5.4} 49 Q ${eye.cx} 43.4 ${eye.cx + 5.4} 49`}
+                        fill="none"
+                        stroke="#0f172a"
+                        strokeWidth={1.6}
+                        strokeLinecap="round"
+                      />
+                    )}
+                  </g>
+                ))}
+
+                {/* ===== MOUTH — centered, integrated, expressive ===== */}
+                <g
+                  style={{
+                    transform: `translate(50px, 64px) scale(${expression.mouth === 'big-smile' ? 1.25 : 1})`,
+                    transformBox: 'fill-box',
+                    transition: 'transform 220ms cubic-bezier(.5,1.4,.4,1)',
+                  }}
+                >
+                  {expression.mouth === 'smile' || expression.mouth === 'big-smile' ? (
+                    <>
+                      {/* Smile curve */}
+                      <path
+                        d="M -7 0 Q 0 6.4 7 0"
+                        fill="none"
+                        stroke="#0f172a"
+                        strokeWidth={1.7}
+                        strokeLinecap="round"
+                      />
+                      {/* Soft inner-mouth blush hint */}
+                      <path
+                        d="M -5 1.4 Q 0 5 5 1.4 Q 0 3 -5 1.4 Z"
+                        fill="rgba(190,40,80,0.25)"
+                      />
+                    </>
+                  ) : expression.mouth === 'o' ? (
+                    <ellipse
+                      cx={0}
+                      cy={1}
+                      rx={2.6}
+                      ry={3}
+                      fill="rgba(15,23,42,0.55)"
+                      stroke="#0f172a"
+                      strokeWidth={1.3}
                     />
-                  </motion.div>
+                  ) : (
+                    <path
+                      d="M -3.2 0 Q 0 1.4 3.2 0"
+                      fill="none"
+                      stroke="#0f172a"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                    />
+                  )}
+                </g>
 
-                  {/* Happy / closed crescent — elegant arc instead of squish */}
-                  <motion.div
-                    className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
-                    style={{
-                      top: '40%',
-                      width: 13,
-                      height: 7,
-                      borderTop: '1.8px solid #0f172a',
-                      borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
-                    }}
-                    animate={{ opacity: isHappy && !isBlinking ? 1 : 0 }}
-                    transition={{ duration: 0.18 }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Mouth */}
-          <motion.div
-            className="absolute bottom-[28%] left-1/2 -translate-x-1/2"
-            animate={{ scale: expression.mouth === 'big-smile' ? 1.3 : 1 }}
-          >
-            {expression.mouth === 'smile' || expression.mouth === 'big-smile' ? (
-              <div className="w-6 h-3 border-b-[3px] border-slate-800 rounded-b-full" />
-            ) : expression.mouth === 'o' ? (
-              <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-slate-800 bg-slate-900/30" />
-            ) : (
-              <div className="w-3.5 h-1 bg-slate-800 rounded-full" />
-            )}
-          </motion.div>
-
-          {/* Blush */}
-          {(bubMood === 'happy' || bubMood === 'dancing') && (
-            <>
-              <div className="absolute top-[54%] left-[16%] w-3 h-2 rounded-full bg-pink-400/55 blur-[1px]" />
-              <div className="absolute top-[54%] right-[16%] w-3 h-2 rounded-full bg-pink-400/55 blur-[1px]" />
-            </>
-          )}
-        </div>
+                {/* ===== BLUSH — soft, painted into the bubble ===== */}
+                {(bubMood === 'happy' || bubMood === 'dancing') && (
+                  <>
+                    <ellipse cx={31} cy={58} rx={4.2} ry={2.4} fill="rgba(244,114,160,0.45)" />
+                    <ellipse cx={69} cy={58} rx={4.2} ry={2.4} fill="rgba(244,114,160,0.45)" />
+                  </>
+                )}
+              </>
+            );
+          })()}
+        </svg>
 
         {/* Sparkles when dancing */}
         <AnimatePresence>
