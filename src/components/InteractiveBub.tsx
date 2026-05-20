@@ -4,8 +4,9 @@ import { useMousePosition } from '@/hooks/useMousePosition';
 import { useTheme } from 'next-themes';
 
 const FOLLOW_EASE = 0.18; // higher = more eager
-const ORBIT_RADIUS = 28; // when close to cursor, orbit gently around it
-const SIZE = 88;
+const ORBIT_RADIUS = 56; // keeps Bub beside the cursor, never under it
+const MIN_DISTANCE = 48; // never come closer than this to the cursor
+const SIZE = 64;
 
 const InteractiveBub = memo(() => {
   const { resolvedTheme } = useTheme();
