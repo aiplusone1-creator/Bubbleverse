@@ -292,7 +292,19 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
 
   // Show generating screen
   if (isGenerating) {
-    return <GeneratingScreen progress={generatingProgress} currentStep={generatingStep} />;
+    return (
+      <GeneratingScreen
+        progress={generatingProgress}
+        currentStep={generatingStep}
+        onCancel={() => {
+          setIsGenerating(false);
+          setGeneratingProgress(0);
+          setGeneratingStep('Preparing your story...');
+          toast({ title: 'Generation cancelled', description: 'Taking you to your profile.' });
+          navigate('/profile');
+        }}
+      />
+    );
   }
 
   // Show story preview after generation
