@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import ImmersiveBackground from '@/components/ImmersiveBackground';
+import BubbleverseLogo from '@/components/BubbleverseLogo';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
