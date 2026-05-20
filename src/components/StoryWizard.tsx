@@ -58,6 +58,7 @@ const steps = [
 
 const StoryWizard = ({ onBack }: StoryWizardProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingProgress, setGeneratingProgress] = useState(0);
