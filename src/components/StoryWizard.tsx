@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Wand2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GlassCard from './GlassCard';
@@ -57,6 +58,7 @@ const steps = [
 
 const StoryWizard = ({ onBack }: StoryWizardProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingProgress, setGeneratingProgress] = useState(0);
@@ -290,7 +292,19 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
 
   // Show generating screen
   if (isGenerating) {
-    return <GeneratingScreen progress={generatingProgress} currentStep={generatingStep} />;
+    return (
+      <GeneratingScreen
+        progress={generatingProgress}
+        currentStep={generatingStep}
+        onCancel={() => {
+          setIsGenerating(false);
+          setGeneratingProgress(0);
+          setGeneratingStep('Preparing your story...');
+          toast({ title: 'Generation cancelled', description: 'Taking you to your profile.' });
+          navigate('/profile');
+        }}
+      />
+    );
   }
 
   // Show story preview after generation

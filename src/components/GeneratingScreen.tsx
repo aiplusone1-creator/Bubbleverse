@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
 
 const bubbleMessages = [
   "Mixing magical ingredients...",
@@ -14,12 +15,23 @@ const bubbleMessages = [
 interface GeneratingScreenProps {
   progress: number;
   currentStep: string;
+  onCancel?: () => void;
 }
 
-const GeneratingScreen = ({ progress, currentStep }: GeneratingScreenProps) => {
+const GeneratingScreen = ({ progress, currentStep, onCancel }: GeneratingScreenProps) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-lg">
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          aria-label="Cancel generation"
+          className="absolute top-6 right-6 w-11 h-11 rounded-full glass-card flex items-center justify-center text-foreground/80 hover:text-foreground hover:scale-110 transition-all border border-primary/30 hover:border-primary/60 z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
       <div className="text-center max-w-md mx-auto px-6">
+
         {/* Faceless iridescent Bub — spins around itself while generating */}
         <motion.div
           className="relative w-32 h-32 mx-auto mb-8"
