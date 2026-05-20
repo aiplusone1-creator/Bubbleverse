@@ -38,8 +38,21 @@ const InteractiveBub = memo(() => {
       const targetX = mouse.x + ox;
       const targetY = mouse.y + oy;
 
-      const dx = targetX - posRef.current.x;
-      const dy = targetY - posRef.current.y;
+      let dx = targetX - posRef.current.x;
+      let dy = targetY - posRef.current.y;
+
+      // Enforce a minimum distance so Bub stays beside the arrow, not under it
+      const distFromCursor = Math.hypot(
+        posRef.current.x - mouse.x,
+        posRef.current.y - mouse.y
+      );
+      if (distFromCursor < MIN_DISTANCE) {
+        const ang = Math.atan2(posRef.current.y - mouse.y, posRef.current.x - mouse.x) || 0;
+        const pushX = mouse.x + Math.cos(ang) * MIN_DISTANCE;
+        const pushY = mouse.y + Math.sin(ang) * MIN_DISTANCE;
+        dx = pushX - posRef.current.x;
+        dy = pushY - posRef.current.y;
+      }
 
       // Spring-like ease toward the moving target
       velRef.current.x = velRef.current.x * 0.78 + dx * FOLLOW_EASE * 0.35;
