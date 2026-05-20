@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Wand2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GlassCard from './GlassCard';
