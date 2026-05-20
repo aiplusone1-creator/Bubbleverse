@@ -33,7 +33,13 @@ interface GenerateStoryResult {
 
 export const generateStory = async (config: StoryConfig): Promise<GenerateStoryResult> => {
   console.log('Calling generate-story edge function with config:', config);
-  
+
+  // Ensure the user has a real session before invoking (anon-key calls fail with "missing sub claim")
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session) {
+    throw new Error('Please sign in to generate a story.');
+  }
+
   const { data, error } = await supabase.functions.invoke('generate-story', {
     body: {
       storyLength: config.storyLength,
