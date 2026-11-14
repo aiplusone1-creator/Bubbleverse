@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toStoryRequest, type GenerateStoryResult, type StoryConfig } from './types';
 import { createStoryRepository } from './storyRepository';
-import { persistStory } from './storyPersistence';
+import { createStorySaver } from './storyPersistence';
 
 export async function generateStory(config: StoryConfig, signal?: AbortSignal): Promise<GenerateStoryResult> {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -18,8 +18,10 @@ export async function generateStory(config: StoryConfig, signal?: AbortSignal): 
   return data;
 }
 
-export async function saveStoryToDatabase(config: StoryConfig, story: GenerateStoryResult) {
+const persistStory = createStorySaver();
+
+export async function saveStoryToDatabase(config: StoryConfig, story: GenerateStoryResult, requestKey?: string) {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new Error('User must be authenticated to save stories');
-  return persistStory(createStoryRepository(user.id), config, story);
+  return persistStory(createStoryRepository(user.id), user.id, config, story, requestKey);
 }

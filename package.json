@@ -12,12 +12,13 @@
     "test:security": "node --test scripts/security/authorization.test.mjs",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "test:requests": "node --test scripts/security/requests.test.mjs",
-    "test": "npm run test:requests && npm run test:architecture && npm run test:skills && npm run test:security",
+    "test": "npm run test:requests && npm run test:architecture && npm run test:skills && npm run test:security && npm run test:persistence",
     "check": "npm run lint && npm run typecheck && npm run build",
     "test:architecture": "node --test scripts/architecture.test.mjs",
     "skills:sync": "node scripts/skills/sync.mjs",
     "skills:check": "node scripts/skills/sync.mjs --check",
-    "test:skills": "node --test scripts/skills/skills.test.mjs"
+    "test:skills": "node --test scripts/skills/skills.test.mjs",
+    "test:persistence": "node --test scripts/security/persistence.test.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.2.10",

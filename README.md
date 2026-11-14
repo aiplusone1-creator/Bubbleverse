@@ -87,6 +87,9 @@ operator action after staging/provider/account verification. Deploy compatible s
 and frontend together. The provider key `LOVABLE_API_KEY` stays in server settings. The editor’s
 Lovable tagging tool was removed; the existing AI gateway remains behind a replaceable adapter.
 
-Current quotas limit request counts, not dollar spend. Durable jobs, atomic server-side story saving,
-private normalized photo uploads/consent/retention, and live payment/delivery validation remain
-required before the commercial MVP is ready.
+Atomic text-story saving is implemented locally via migration `20261114000400` and one
+`save_generated_story` RPC. Apply reviewed schema in independent staging **before** the new
+frontend; missing RPC intentionally rejects saving. See [CX-002 evidence and rollout](docs/reviews/CX-002-persistence.md).
+No hosted migration was applied. Current quotas limit request counts, not dollar spend.
+Durable jobs/recovery, private normalized photo uploads/consent/retention, illustrations/PDF,
+and live payment/delivery validation remain required before the commercial MVP is ready.

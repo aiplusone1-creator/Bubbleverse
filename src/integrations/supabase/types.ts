@@ -235,6 +235,7 @@ export type Database = {
         Row: {
           art_style: string | null
           child_interests: string | null
+          config_snapshot: Json | null
           cover_image_url: string | null
           created_at: string | null
           id: string
@@ -253,6 +254,7 @@ export type Database = {
         Insert: {
           art_style?: string | null
           child_interests?: string | null
+          config_snapshot?: Json | null
           cover_image_url?: string | null
           created_at?: string | null
           id?: string
@@ -271,6 +273,7 @@ export type Database = {
         Update: {
           art_style?: string | null
           child_interests?: string | null
+          config_snapshot?: Json | null
           cover_image_url?: string | null
           created_at?: string | null
           id?: string
@@ -314,6 +317,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      // Aligned with local migration 20261114000400; not a hosted schema refresh.
+      save_generated_story: {
+        Args: { p_expected_owner: string; p_request_key: string; p_payload: Json }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

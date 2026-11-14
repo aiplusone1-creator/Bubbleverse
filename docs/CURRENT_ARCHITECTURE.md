@@ -1,6 +1,6 @@
 # Bubbleverse — current modular architecture
 
-Updated 2026-11-14 after the cleanup of baseline `2856604`. Earlier `ARCHITECTURE.md`
+Updated 2026-11-14 for CX-002, based on application/skill baseline `57ae207`. Earlier `ARCHITECTURE.md`
 and audit files describe historical snapshots, not the current implementation.
 
 Keep React/Vite/TypeScript and Supabase. This is an incremental modular application;
@@ -31,11 +31,23 @@ flowchart TD
   explicitly projects text requests without photos, local character IDs or other UI state.
 - `features/stories/storyService.ts` coordinates authenticated API calls and saving.
   `storyRepository.ts` is the concrete Supabase persistence adapter.
-  `storyPersistence.ts` contains testable save sequencing without React or SDK dependencies.
-- New stories start as draft; characters/pages must save successfully before completion.
-  Failed writes reject the operation and best-effort mark failure. Partial rows can remain:
-  this is not a database transaction or a durable production workflow. `completed` here
-  refers to the existing text story, not completed illustrations/PDF/delivery.
+  `storyPersistence.ts` owns testable retry identity without React or SDK dependencies.
+- The save adapter makes one `save_generated_story` RPC. Its authenticated database
+  transaction validates payload/owner/profile, saves config/story/characters/pages and marks
+  completion together. Failure rolls back every row. The owner comes from `auth.uid()`;
+  the expected-owner argument only rejects account-switch races.
+- Owner-scoped private receipts bind request UUIDs to JSONB payload hashes. Identical
+  concurrent/repeated requests return the same ID; changed payloads conflict. Deleted
+  stories retain tombstones rather than being recreated. `config_snapshot` preserves
+  language, custom art and input settings. No raw character photos/local IDs are saved.
+- The save coordinator retains a key across failed calls for the same story object and
+  rejects changed account/content/key. It snapshots inputs and shares in-flight/successful
+  results. Explicit keys support caller-managed recovery, but no browser persistence or
+  durable job recovery is implemented. The wizard still lacks a save-only recovery UI.
+- `completed` means text persistence only, not verified provider provenance, illustrations,
+  PDF or delivery. Existing owner CRUD/RLS remains; arbitrary direct table writes do not
+  inherit the new RPC's atomic/idempotent contract. Missing RPC fails closed without
+  falling back to multiple browser writes. See `docs/reviews/CX-002-persistence.md` for rollout.
 - `StoryWizard` only shows known writing/saving stages. Its former random percentage
   timers were removed. Leaving during writing aborts the browser request and suppresses
   late UI updates; an already accepted provider request may continue. Saving cannot be

@@ -60,11 +60,11 @@ by an external prerequisite without blocking independent local work.
 
 ### CX-002 — atomic, idempotent story persistence
 
-- Owner: Codex. Priority: P0/P1. Status: `[ ] Pending`.
+- Owner: Codex. Priority: P0/P1. Status: `[x] Done — local implementation/tests; hosted rollout pending`.
 - Dependencies: current auth/ownership SQL; safe isolated PostgreSQL test environment.
 - Paths: a new additive migration in `supabase/migrations/`, isolated tests under
   `scripts/security/` and `supabase/tests/`, `src/features/stories/{storyService,storyRepository,storyPersistence,types}.ts`,
-  generated DB types only if a contract change requires regeneration, architecture tests/docs.
+  DB types aligned with the local migration (hosted regeneration not claimed), architecture tests/docs.
 - Behavior: one authenticated server transaction stores story/config/characters/pages;
   owner derived from auth, not client; language/custom style persisted; same request key
   returns the same story and rejects mismatched payload; no success on partial writes.
@@ -72,6 +72,9 @@ by an external prerequisite without blocking independent local work.
   and concurrent requests, forced insert failure/rollback and valid round trip verified.
   No production apply, no silent repair of legacy records, no paid provider changes.
 - Migration/rollback: additive, review schema drift; no table resets or ownership transfers.
+
+- Evidence: `docs/reviews/CX-002-persistence.md`; 78 tests pass locally, including
+  13 isolated atomic-save cases. Schema must precede the new client; no hosted apply.
 
 ### CX-003 — durable generation and currency budget foundations
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test, mock } from 'node:test';
 import { observeAuth } from '../src/features/auth/authState.ts';
-import { persistStory } from '../src/features/stories/storyPersistence.ts';
+import { createStorySaver } from '../src/features/stories/storyPersistence.ts';
 import { toStoryRequest } from '../src/features/stories/types.ts';
 import { createTextProvider } from '../supabase/functions/_shared/textProvider.ts';
 import { createGenerationHandler } from '../supabase/functions/_shared/generationHandler.ts';
@@ -24,41 +24,47 @@ test('story request never sends private photo data or UI character IDs', () => {
   assert.equal(config.characters[0].imageUrl, 'private-reference');
 });
 
-function repository(fail) {
-  const calls = [];
-  const action = async (name, result) => { calls.push(name); if (name === fail) throw new Error(name); return result; };
-  return { calls, port: {
-    createDraft: () => action('draft', 'story-id'),
-    saveCharacters: () => action('characters'), savePages: () => action('pages'),
-    setStatus: (_id, status) => action(status),
-  } };
-}
-
-test('story completion occurs only after all characters and pages are saved', async () => {
-  const r = repository();
-  assert.equal(await persistStory(r.port, config, story), 'story-id');
-  assert.deepEqual(r.calls, ['draft', 'characters', 'pages', 'completed']);
+test('atomic save projects text, excludes photos and shares simultaneous retries', async () => {
+  const save = createStorySaver(() => 'key'); const pending = deferred(); const calls = [];
+  const repo = { saveStory: (key, payload) => { calls.push({ key, payload }); return pending.promise; } };
+  const a = save(repo, 'owner', config, story); const b = save(repo, 'owner', config, story);
+  await tick(); assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].payload.config.characters, [{ name: 'نور', role: 'hero' }]);
+  assert.equal(calls[0].payload.config.language, 'ar');
+  pending.resolve('story-id'); assert.equal(await a, 'story-id'); assert.equal(await b, 'story-id');
+  assert.equal(await save(repo, 'owner', config, story), 'story-id'); assert.equal(calls.length, 1);
 });
-for (const fail of ['characters', 'pages', 'completed']) {
-  test(`failed ${fail} write is reported and marks story failed`, async () => {
-    const r = repository(fail);
-    await assert.rejects(persistStory(r.port, config, story), { message: fail });
-    assert.equal(r.calls.at(-1), 'failed');
-    if (fail !== 'completed') assert.ok(!r.calls.includes('completed'));
-  });
-}
-test('draft failure creates no child writes; empty stories create no draft', async () => {
-  const r = repository('draft');
-  await assert.rejects(persistStory(r.port, config, story), { message: 'draft' });
-  assert.deepEqual(r.calls, ['draft']);
-  const empty = repository();
-  await assert.rejects(persistStory(empty.port, config, { ...story, pages: [] }));
-  assert.deepEqual(empty.calls, []);
+test('lost response retries with the same identity and preserves the original failure', async () => {
+  const save = createStorySaver(() => 'stable-key'); const keys = []; let failed = true;
+  const repo = { saveStory: async key => { keys.push(key); if (failed) throw new Error('network'); return 'id'; } };
+  await assert.rejects(save(repo, 'owner', config, story), { message: 'network' });
+  failed = false; assert.equal(await save(repo, 'owner', config, story), 'id');
+  assert.deepEqual(keys, ['stable-key', 'stable-key']);
 });
-test('failed recovery write does not hide the original persistence error', async () => {
-  const r = repository('pages');
-  r.port.setStatus = async () => { throw new Error('recovery unavailable'); };
-  await assert.rejects(persistStory(r.port, config, story), { message: 'pages' });
+test('changed payload, owner or explicit retry key cannot reuse a saved attempt', async () => {
+  const save = createStorySaver(() => 'key'); let count = 0;
+  const repo = { saveStory: async () => { count++; return 'id'; } };
+  await save(repo, 'A', config, story);
+  await assert.rejects(save(repo, 'B', config, story));
+  await assert.rejects(save(repo, 'A', { ...config, language: 'en' }, story));
+  await assert.rejects(save(repo, 'A', config, story, 'other'));
+  assert.equal(count, 1);
+});
+test('empty stories make no request; explicit identity supports rehydrated retries', async () => {
+  let count = 0; const repo = { saveStory: async key => { count++; return key; } };
+  const save = createStorySaver();
+  await assert.rejects(save(repo, 'A', config, { ...story, pages: [] }));
+  assert.equal(count, 0);
+  assert.equal(await save(repo, 'A', config, structuredClone(story), 'persisted-key'), 'persisted-key');
+});
+test('save snapshots cannot change when the caller mutates local input', async () => {
+  const save = createStorySaver(() => 'key'); const local = structuredClone(config);
+  const source = structuredClone(story); let received;
+  const pending = save({ saveStory: async (_key, payload) => { received = payload; return 'id'; } }, 'A', local, source);
+  local.interests.push('new'); local.characters[0].name = 'changed'; source.pages[0].dialogueText = 'changed';
+  await pending;
+  assert.deepEqual(received.config.interests, ['space']); assert.equal(received.config.characters[0].name, 'نور');
+  assert.equal(received.story.pages[0].dialogueText, 'نص');
 });
 
 function authFixture(readRole) {

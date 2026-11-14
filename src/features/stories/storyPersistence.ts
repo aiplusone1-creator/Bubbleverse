@@ -1,24 +1,34 @@
-import type { Character, GeneratedStory, StoryConfig, StoryPage } from './types.ts';
+import { toStorySavePayload, type GeneratedStory, type StoryConfig, type StorySavePayload } from './types.ts';
 
 export interface StoryRepository {
-  createDraft(config: StoryConfig, title: string): Promise<string>;
-  saveCharacters(storyId: string, characters: Character[]): Promise<void>;
-  savePages(storyId: string, pages: StoryPage[]): Promise<void>;
-  setStatus(storyId: string, status: 'completed' | 'failed'): Promise<void>;
+  saveStory(requestKey: string, payload: StorySavePayload): Promise<string>;
 }
 
-// Completion follows every successful write. A failed write must never appear as
-// successful. This is not a transaction: a server-side atomic save remains planned.
-export async function persistStory(repository: StoryRepository, config: StoryConfig, story: GeneratedStory) {
-  if (!story.pages.length) throw new Error('Cannot save a story without pages');
-  const id = await repository.createDraft(config, story.title);
-  try {
-    if (config.characters.length) await repository.saveCharacters(id, config.characters);
-    await repository.savePages(id, story.pages);
-    await repository.setStatus(id, 'completed');
-    return id;
-  } catch (error) {
-    try { await repository.setStatus(id, 'failed'); } catch { /* preserve the original failure */ }
-    throw error;
-  }
+// In-memory retry identity only; durable jobs/reload recovery are separate work.
+export function createStorySaver(makeKey: () => string = () => crypto.randomUUID()) {
+  const attempts = new WeakMap<GeneratedStory, {
+    owner: string; key: string; serialized: string; promise?: Promise<string>;
+  }>();
+  return async (repository: StoryRepository, owner: string, config: StoryConfig,
+    story: GeneratedStory, requestKey?: string): Promise<string> => {
+    if (!story.pages.length) throw new Error('Cannot save a story without pages');
+    const payload = toStorySavePayload(config, story);
+    const serialized = JSON.stringify(payload);
+    let attempt = attempts.get(story);
+    if (attempt && (attempt.owner !== owner || attempt.serialized !== serialized ||
+      (requestKey !== undefined && requestKey !== attempt.key))) {
+      throw new Error('Story save identity or content changed; start a new save explicitly');
+    }
+    if (!attempt) {
+      attempt = { owner, key: requestKey ?? makeKey(), serialized };
+      attempts.set(story, attempt);
+    }
+    if (!attempt.promise) {
+      const current = attempt;
+      current.promise = Promise.resolve().then(() => repository.saveStory(current.key, payload));
+      // Preserve the identity after failure so a lost response can be retried safely.
+      current.promise.catch(() => { current.promise = undefined; });
+    }
+    return attempt.promise;
+  };
 }

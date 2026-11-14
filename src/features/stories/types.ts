@@ -40,6 +40,18 @@ export function toStoryRequest(config: StoryConfig) {
     storyLength: config.storyLength, format: config.format, artStyle: config.artStyle,
     customArtStyle: config.customArtStyle, language: config.language,
     characters: config.characters.map(({ name, role }) => ({ name, role })),
-    interests: config.interests, plotMode: config.plotMode, customPlot: config.customPlot,
+    interests: [...config.interests], plotMode: config.plotMode, customPlot: config.customPlot,
   };
 }
+
+// Durable text only. Private reference uploads have a separate future contract.
+export function toStorySavePayload(config: StoryConfig, story: GeneratedStory) {
+  return {
+    config: toStoryRequest(config),
+    story: { title: story.title, pages: story.pages.map(page => ({
+      pageNumber: page.pageNumber, sceneDescription: page.sceneDescription,
+      dialogueText: page.dialogueText, panelLayoutType: page.panelLayoutType,
+    })) },
+  };
+}
+export type StorySavePayload = ReturnType<typeof toStorySavePayload>;
