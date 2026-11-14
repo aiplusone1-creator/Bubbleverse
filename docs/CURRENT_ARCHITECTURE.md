@@ -16,7 +16,7 @@ flowchart TD
   Guard --> Domain[Story / plot generation]
   Domain --> Prompt[Prompt builder]
   Domain --> Port[TextProvider interface]
-  Port --> Adapter[Existing Lovable AI adapter]
+  Port --> Adapter[Direct Google Gemini API adapter]
 ```
 
 ## Frontend responsibilities
@@ -71,7 +71,7 @@ flowchart TD
 - `storyGeneration.ts` and `plotGeneration.ts`: domain orchestration, structured page
   validation, bounded title request and localized fallback. Title errors do not discard
   validated pages or automatically regenerate/charge for the whole story.
-- `textProvider.ts`: existing gateway HTTP transport, timeout, bounded token parameters,
+- `textProvider.ts`: direct Google Gemini API HTTP transport, timeout, bounded token parameters,
   content checks and safe error classification. Alternate providers can implement the same
   interface without changing story logic. No paid provider was changed or invoked here.
 - Function `index.ts` files only compose these modules. Deno dependencies remain pinned

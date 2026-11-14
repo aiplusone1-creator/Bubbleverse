@@ -84,8 +84,9 @@ owner-led containment. Source removal cannot revoke a real credential.
 
 AI generation is disabled by default in the request-limit migration. Enabling it is an explicit
 operator action after staging/provider/account verification. Deploy compatible schema, functions
-and frontend together. The provider key `LOVABLE_API_KEY` stays in server settings. The editor’s
-Lovable tagging tool was removed; the existing AI gateway remains behind a replaceable adapter.
+and frontend together. The provider key `GEMINI_API_KEY` stays in server settings for direct Google
+Gemini API text generation. Lovable runtime dependencies and gateways have been completely removed;
+text generation connects directly to Google AI Studio with sanitized error boundaries.
 
 Atomic text-story saving is implemented locally via migration `20261114000400` and one
 `save_generated_story` RPC. Apply reviewed schema in independent staging **before** the new
