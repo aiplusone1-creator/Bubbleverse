@@ -1,0 +1,9 @@
+# AG-005 foundation rollout status
+
+The current branch supports authenticated inquiry creation, quotes, order views, assignment, correction and authenticated B2B intake. SQL execution and hosted schema parity must be verified before staging deployment. The four migrations follow atomic story save in timestamp order. The role addition commits separately so later migrations can reference it.
+
+Validate fresh migration and upgrade from AG-004 with disposable PostgreSQL, then staging with isolated synthetic users and private storage. Verify customer A/B, banned/missing profile, anonymous, admin and assigned/unassigned operators, concurrent claims, duplicate submission, correction, direct writes, private Storage and preservation of existing saved stories. Inspect existing hosted migration history and default grants independently.
+
+The legacy Gemini endpoints currently deny customer sessions and return unavailable for authorized staff. Deploying them before the replacement wizard would interrupt the current customer generation flow. Coordinate any future staging release across database, Edge Functions and frontend. Keep provider generation disabled. If a migration was applied, prefer a forward correction to preserve order rows. Avoid restoring customer-triggered generation as a rollback mechanism.
+
+Required for subsequent work: full story settings and contact DTO, trusted upload processing and consent retention/deletion, staff payment confirmation, order-bound generation claim and atomic result, operator WhatsApp templates, fulfillment assets, and B2B staff follow-up. Pricing, company WhatsApp destination, payment provider, print and courier arrangements remain owner-controlled. The private bucket is provisioned with no app access. Hosted status and live providers have not been exercised.

@@ -24,11 +24,12 @@ export function createGenerationHandler<Input>(options: {
   return async (req: Request): Promise<Response> => {
     if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
     try {
-      const input = options.validate(await readJson(req));
-      const key = requestKey(req);
+      const body = await readJson(req);
       const header = req.headers.get('Authorization');
       if (!header?.startsWith('Bearer ')) throw new RequestError('Unauthorized - Please sign in', 401);
       const access = await options.authorize(header);
+      const input = options.validate(body);
+      const key = requestKey(req);
       options.assertProviderConfigured();
       await access.reserve(options.operation, key);
       return json(await options.generate(input));

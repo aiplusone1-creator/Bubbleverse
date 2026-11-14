@@ -12,6 +12,9 @@ export async function authorizeGeneration(header: string): Promise<GenerationAcc
   const { data: profile, error: profileError } = await client.from('profiles').select('is_banned')
     .eq('user_id', data.claims.sub).maybeSingle();
   requireUsableProfile(profile, profileError);
+  const { data: staff, error: staffError } = await client.rpc('is_order_staff');
+  if (staffError) throw new RequestError('Staff authorization is unavailable', 503);
+  if (staff !== true) throw new RequestError('Staff authorization required', 403);
   return {
     async reserve(operation, requestKey) {
       const { data, error } = await client.rpc('reserve_ai_request', {

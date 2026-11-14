@@ -84,6 +84,45 @@ const commitAs = (source, id = user(1)) =>
   `BEGIN; SET LOCAL ROLE authenticated; SET LOCAL "request.jwt.claim.sub" = '${id}'; ${source}; COMMIT;`;
 const save = (key = randomUUID(), body = payload(), owner = user(1)) => ok(commitAs(call(key, body, owner), owner));
 const total = () => ok(`SELECT (SELECT count(*) FROM public.stories)::text || '/' || (SELECT count(*) FROM public.characters)::text || '/' || (SELECT count(*) FROM public.pages)::text || '/' || (SELECT count(*) FROM public.story_save_requests)::text`);
+const inquiry = (key, name = 'Synthetic child') =>
+  `SELECT public.create_story_inquiry('${key}', 'EG', 'digital_pdf', 'ar', '${name}', NULL)`;
+
+test('order inquiry retries are owner-scoped and cannot change payment or expose staff data', () => {
+  const key = randomUUID();
+  const result = JSON.parse(ok(commitAs(inquiry(key))));
+  assert.match(result.reference, /^BV-[A-F0-9]{32}$/);
+  assert.equal(result.status, 'whatsapp_inquiry');
+  assert.equal(JSON.parse(ok(commitAs(inquiry(key)))).id, result.id);
+  denied(inquiry(key, 'Different synthetic child'), 'PT409');
+  denied(inquiry(key), '42501', user(1), 'anon');
+  denied(`SELECT public.get_story_order('${result.id}')`, 'PT404', user(2));
+  denied(`UPDATE public.story_orders SET payment_status = 'paid' WHERE id = '${result.id}'`);
+  const owner = JSON.parse(ok(asUser(`SELECT public.get_story_order('${result.id}')`)));
+  assert.equal(owner.paymentStatus, 'unpaid');
+  assert.equal(Object.hasOwn(owner, 'internalNotes'), false);
+  ok(`DELETE FROM public.story_orders WHERE id = '${result.id}'`);
+});
+
+test('concurrent order claims have one winner and private detail stays assignment-scoped', async () => {
+  const operators = [user(104), user(105)];
+  for (const [index, id] of operators.entries()) {
+    ok(`INSERT INTO auth.users (id, email) VALUES ('${id}', 'synthetic-operator-${index}@example.invalid');
+      INSERT INTO public.user_roles (user_id, role) VALUES ('${id}', 'operator')`);
+  }
+  const { id } = JSON.parse(ok(commitAs(inquiry(randomUUID()))));
+  const claim = `SELECT public.claim_story_order('${id}')`;
+  const detail = `SELECT public.get_story_order('${id}')`;
+  denied(claim);
+  denied(detail, 'PT404', operators[0]);
+  const results = await Promise.all(operators.map(operator => sqlAsync(commitAs(claim, operator))));
+  assert.equal(results.filter(result => result.status === 0).length, 1);
+  const loser = results.findIndex(result => result.status !== 0);
+  assert.match(results[loser].stderr, /PT409/);
+  denied(detail, 'PT404', operators[loser]);
+  const winner = operators[1 - loser];
+  assert.equal(JSON.parse(ok(asUser(detail, winner))).assignedOperatorId, winner);
+  ok(`DELETE FROM public.story_orders WHERE id = '${id}'`);
+});
 function sqlAsync(source) {
   return new Promise((resolve, reject) => {
     const child = spawn('docker', ['exec', '-i', container, 'psql', '-X', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1',

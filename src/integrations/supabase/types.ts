@@ -317,6 +317,67 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_story_inquiry: {
+        Args: {
+          p_request_key: string
+          p_country: string
+          p_format: string
+          p_language: string
+          p_child_first_name: string
+          p_shipping_address: string | null
+        }
+        Returns: Json
+      }
+      get_story_order_quote: {
+        Args: { p_country: string; p_format: string }
+        Returns: Json
+      }
+      list_story_orders: {
+        Args: { p_before?: string }
+        Returns: Json
+      }
+      list_order_queue: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_story_order: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
+      claim_story_order: {
+        Args: { p_order_id: string }
+        Returns: string
+      }
+      assign_story_order: {
+        Args: { p_order_id: string; p_operator_id: string }
+        Returns: string
+      }
+      request_order_correction: {
+        Args: { p_order_id: string; p_message: string }
+        Returns: undefined
+      }
+      correct_story_order: {
+        Args: { p_order_id: string; p_child_first_name: string; p_shipping_address: string | null }
+        Returns: undefined
+      }
+      is_order_staff: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      submit_b2b_inquiry: {
+        Args: {
+          p_institution: string
+          p_contact_name: string
+          p_contact_email: string
+          p_contact_phone: string
+          p_country: string
+          p_format: string
+          p_language: string
+          p_quantity: number
+          p_notes: string | null
+        }
+        Returns: string
+      }
       // Aligned with local migration 20261114000400; not a hosted schema refresh.
       save_generated_story: {
         Args: { p_expected_owner: string; p_request_key: string; p_payload: Json }
@@ -332,7 +393,7 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "operator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -460,7 +521,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "operator"],
     },
   },
 } as const
