@@ -1,3 +1,4 @@
+import { useLanguage } from '@/hooks/useLanguage';
 import { motion } from 'framer-motion';
 
 interface FormatOption {
@@ -28,15 +29,16 @@ interface FormatSelectorProps {
 }
 
 const FormatSelector = ({ value, onChange }: FormatSelectorProps) => {
+  const { t } = useLanguage();
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold text-foreground">Story Format</h3>
+      <h3 className="text-xl font-semibold text-foreground">{t('summaryFormat')}</h3>
       <div className="grid md:grid-cols-2 gap-4">
         {formats.map((option, index) => (
           <motion.button
             key={option.id}
             onClick={() => onChange(option.id)}
-            className={`relative p-6 rounded-2xl text-left transition-all duration-300 ${
+            className={`relative p-6 rounded-2xl text-start transition-all duration-300 ${
               value === option.id
                 ? 'bg-secondary/30 border-2 border-secondary shadow-lg shadow-secondary/20'
                 : 'bg-muted/30 border-2 border-transparent hover:bg-muted/50'
@@ -48,9 +50,9 @@ const FormatSelector = ({ value, onChange }: FormatSelectorProps) => {
             whileTap={{ scale: 0.98 }}
           >
             <span className="text-4xl mb-3 block">{option.icon}</span>
-            <h4 className="font-semibold text-foreground text-lg">{option.title}</h4>
-            <p className="text-muted-foreground text-sm mt-1">{option.description}</p>
-            
+            <h4 className="font-semibold text-foreground text-lg">{t('inquiryOption_' + option.id)}</h4>
+            <p className="text-muted-foreground text-sm mt-1">{t('inquiryDescription_' + option.id)}</p>
+
             {value === option.id && (
               <motion.div
                 className="absolute top-3 right-3 w-6 h-6 bg-secondary rounded-full flex items-center justify-center"

@@ -1,3 +1,4 @@
+import { useLanguage } from '@/hooks/useLanguage';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Palette, Plus } from 'lucide-react';
@@ -39,11 +40,12 @@ const ArtStyleSelector = ({ value, customStyle, onChange, onCustomStyleChange }:
     onChange(styleId);
   };
 
+  const { t } = useLanguage();
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Palette className="w-5 h-5 text-accent" />
-        <h3 className="text-xl font-semibold text-foreground">Art Style</h3>
+        <h3 className="text-xl font-semibold text-foreground">{t('summaryStyle')}</h3>
       </div>
       <div className="flex flex-wrap gap-3">
         {artStyles.map((style, index) => (
@@ -62,10 +64,10 @@ const ArtStyleSelector = ({ value, customStyle, onChange, onCustomStyleChange }:
             whileTap={{ scale: 0.95 }}
           >
             <span className="text-xl">{style.preview}</span>
-            <span className="font-medium">{style.name}</span>
+            <span className="font-medium">{t('inquiryOption_' + style.id)}</span>
           </motion.button>
         ))}
-        
+
         {/* Custom Style Button */}
         <motion.button
           onClick={() => handleStyleSelect('custom')}
@@ -81,10 +83,10 @@ const ArtStyleSelector = ({ value, customStyle, onChange, onCustomStyleChange }:
           whileTap={{ scale: 0.95 }}
         >
           <Plus className="w-5 h-5" />
-          <span className="font-medium">Custom Style</span>
+          <span className="font-medium">{t('inquiryOption_custom')}</span>
         </motion.button>
       </div>
-      
+
       {/* Custom Style Input */}
       {showCustomInput && (
         <motion.div
@@ -94,14 +96,11 @@ const ArtStyleSelector = ({ value, customStyle, onChange, onCustomStyleChange }:
         >
           <input
             type="text"
-            placeholder="Describe your custom art style... e.g., 'Dark gothic horror with watercolor textures'"
+            aria-label={t('inquiryArtCustom')} placeholder={t('inquiryArtCustom')} maxLength={300}
             value={customStyle}
             onChange={(e) => onCustomStyleChange(e.target.value)}
             className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50"
           />
-          <p className="text-xs text-muted-foreground mt-2">
-            Tip: Be descriptive! Include mood, colors, and artistic references.
-          </p>
         </motion.div>
       )}
     </div>

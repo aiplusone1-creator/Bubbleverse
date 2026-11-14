@@ -1,3 +1,4 @@
+import { useLanguage } from '@/hooks/useLanguage';
 import { motion } from 'framer-motion';
 
 interface StoryLengthOption {
@@ -38,15 +39,16 @@ interface StoryLengthSelectorProps {
 }
 
 const StoryLengthSelector = ({ value, onChange }: StoryLengthSelectorProps) => {
+  const { t } = useLanguage();
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold text-foreground">Story Length</h3>
+      <h3 className="text-xl font-semibold text-foreground">{t('summaryLength')}</h3>
       <div className="grid md:grid-cols-3 gap-4">
         {storyLengths.map((option, index) => (
           <motion.button
             key={option.id}
             onClick={() => onChange(option.id)}
-            className={`relative p-5 rounded-2xl text-left transition-all duration-300 ${
+            className={`relative p-5 rounded-2xl text-start transition-all duration-300 ${
               value === option.id
                 ? 'bg-primary/20 border-2 border-primary shadow-lg shadow-primary/20'
                 : 'bg-muted/30 border-2 border-transparent hover:bg-muted/50'
@@ -58,10 +60,10 @@ const StoryLengthSelector = ({ value, onChange }: StoryLengthSelectorProps) => {
             whileTap={{ scale: 0.98 }}
           >
             <span className="text-3xl mb-3 block">{option.icon}</span>
-            <h4 className="font-semibold text-foreground">{option.title}</h4>
-            <p className="text-primary font-medium text-sm">{option.pages}</p>
-            <p className="text-muted-foreground text-sm mt-1">{option.description}</p>
-            
+            <h4 className="font-semibold text-foreground">{t('inquiryOption_' + option.id)}</h4>
+            <p className="text-primary font-medium text-sm">{t('inquiryLength_' + option.id)}</p>
+            <p className="text-muted-foreground text-sm mt-1">{t('inquiryDescription_' + option.id)}</p>
+
             {value === option.id && (
               <motion.div
                 className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center"

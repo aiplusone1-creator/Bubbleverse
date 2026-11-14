@@ -1,13 +1,15 @@
+import { inquiryTranslations } from './inquiryTranslations';
 import React, { useState, useEffect } from 'react';
 
 import { LanguageContext, type Language } from './languageState';
 
 const translations: Record<Language, Record<string, string>> = {
   en: {
+    ...inquiryTranslations.en,
     // Header
     'signIn': 'Sign In',
     'signUp': 'Sign Up',
-    
+
     // Hero — Premium Whimsical Editorial Brand Direction
     'aiPowered': 'Bespoke Illustrated Storybooks',
     'heroTagline': 'Bespoke Illustrated Storybooks',
@@ -41,7 +43,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Examples Section
     'examplesTitle': 'Tales of Adventure',
     'examplesSubtitle': 'A glimpse into the magical worlds our young heroes explore',
-    
+
     // Auth
     'welcomeBack': 'Welcome Back',
     'signInContinue': 'Sign in to continue your magical journey',
@@ -55,7 +57,7 @@ const translations: Record<Language, Record<string, string>> = {
     'backHome': 'Back to Home',
     'continueWithGoogle': 'Continue with Google',
     'orContinueWith': 'or continue with email',
-    
+
     // Profile
     'profile': 'Profile',
     'settings': 'Settings',
@@ -72,12 +74,12 @@ const translations: Record<Language, Record<string, string>> = {
     'preferences': 'Preferences',
     'noStoriesYet': 'No stories created yet',
     'startFirstStory': 'Start creating your first magical story!',
-    
+
     // Footer
     'footerText': '© 2026 Bubbleverse. Creating magical stories for children everywhere.',
     'interactiveMode': 'Interactive Mode',
     'showBub': 'Show Bub',
-    
+
     // Currency
     'currency': 'Currency',
     'currencyPreference': 'Currency Preference',
@@ -92,7 +94,7 @@ const translations: Record<Language, Record<string, string>> = {
     'step3Title': 'Story Theme',
     'step3Desc': 'Personalize the adventure',
     'step4Title': 'Review',
-    'step4Desc': 'Ready to create magic!',
+    'step4Desc': 'Review and send your inquiry',
     'nextStep': 'Next Step',
     'previous': 'Previous',
     'startOver': 'Start Over',
@@ -152,10 +154,11 @@ const translations: Record<Language, Record<string, string>> = {
     'removeCharacter': 'Remove character',
   },
   ar: {
+    ...inquiryTranslations.ar,
     // Header
     'signIn': 'تسجيل الدخول',
     'signUp': 'إنشاء حساب',
-    
+
     // Hero — Premium Whimsical Editorial Brand Direction
     'aiPowered': 'حكايات أطفال مصورة ومخصصة',
     'heroTagline': 'حكايات أطفال مصورة ومخصصة',
@@ -189,7 +192,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Examples Section
     'examplesTitle': 'حكايات من عالم الخيال',
     'examplesSubtitle': 'لمحة عن العوالم الساحرة والمغامرات التي خاضها أبطالنا الصغار',
-    
+
     // Auth
     'welcomeBack': 'مرحباً بعودتك',
     'signInContinue': 'سجّل دخولك لمتابعة رحلتك السحرية',
@@ -203,7 +206,7 @@ const translations: Record<Language, Record<string, string>> = {
     'backHome': 'العودة للرئيسية',
     'continueWithGoogle': 'المتابعة مع جوجل',
     'orContinueWith': 'أو المتابعة بالبريد الإلكتروني',
-    
+
     // Profile
     'profile': 'الملف الشخصي',
     'settings': 'الإعدادات',
@@ -220,12 +223,12 @@ const translations: Record<Language, Record<string, string>> = {
     'preferences': 'التفضيلات',
     'noStoriesYet': 'لم يتم إنشاء قصص بعد',
     'startFirstStory': 'ابدأ بإنشاء قصتك السحرية الأولى!',
-    
+
     // Footer
     'footerText': '© 2026 Bubbleverse. نصنع قصصاً سحرية للأطفال في كل مكان.',
     'interactiveMode': 'الوضع التفاعلي',
     'showBub': 'إظهار باب',
-    
+
     // Currency
     'currency': 'العملة',
     'currencyPreference': 'تفضيل العملة',
@@ -240,7 +243,7 @@ const translations: Record<Language, Record<string, string>> = {
     'step3Title': 'ثيم القصة',
     'step3Desc': 'خصص المغامرة',
     'step4Title': 'المراجعة',
-    'step4Desc': 'جاهز لصنع السحر!',
+    'step4Desc': 'راجع طلبك وأرسله',
     'nextStep': 'الخطوة التالية',
     'previous': 'السابق',
     'startOver': 'البدء من جديد',
@@ -258,7 +261,7 @@ const translations: Record<Language, Record<string, string>> = {
     'aiMagicDesc': 'دع الذكاء الاصطناعي يبتكر حبكة مفاجئة',
     'customPlot': 'حبكة مخصصة',
     'customPlotDesc': 'اكتب أحداث قصتك بنفسك',
-    'readyCreateMagic': 'جاهز لصنع السحر!',
+    'readyCreateMagic': 'راجع طلبك وأرسله',
     'readyCreateMagicDesc': 'قصتك المخصصة على وشك أن تدب فيها الحياة. اضغط أدناه لبدء عملية التوليد بالذكاء الاصطناعي.',
     'storySummary': 'ملخص القصة',
     'summaryLanguage': 'اللغة',

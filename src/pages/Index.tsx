@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { useState } from 'react';
 import ImmersiveBackground from '../components/ImmersiveBackground';
 import InteractiveBub from '../components/InteractiveBub';
@@ -10,14 +11,22 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useMascotVisibility } from '@/hooks/useMascotVisibility';
 
 const Index = () => {
-  const [showWizard, setShowWizard] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const [showWizard, setShowWizard] = useState(params.get('inquiry') === 'resume');
+  const closeWizard = () => {
+    setShowWizard(false);
+    if (params.has('inquiry')) {
+      params.delete('inquiry');
+      setParams(params, { replace: true });
+    }
+  };
   const { showMascot, setShowMascot } = useMascotVisibility();
 
   return (
     <div className="relative min-h-screen overflow-x-hidden">
       <ImmersiveBackground />
       {showMascot && <InteractiveBub />}
-      
+
       <main className="relative z-10">
         <AnimatePresence mode="wait">
           {!showWizard ? (
@@ -28,14 +37,14 @@ const Index = () => {
               exit={{ opacity: 0, x: -100 }}
               transition={{ duration: 0.5 }}
             >
-              <HeroSection 
-                onStartCreating={() => setShowWizard(true)} 
+              <HeroSection
+                onStartCreating={() => setShowWizard(true)}
                 showMascot={showMascot}
                 onToggleMascot={() => setShowMascot(!showMascot)}
               />
               <FeatureCards />
               <ExamplesSection />
-              
+
               {/* Footer */}
               <Footer showMascot={showMascot} onToggleMascot={setShowMascot} />
             </motion.div>
@@ -47,7 +56,7 @@ const Index = () => {
               exit={{ opacity: 0, x: 100 }}
               transition={{ duration: 0.5 }}
             >
-              <StoryWizard onBack={() => setShowWizard(false)} />
+              <StoryWizard onBack={closeWizard} />
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,3 +1,4 @@
+import ProfileInquiries from '@/components/ProfileInquiries';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -20,7 +21,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preferredCurrency, setPreferredCurrency] = useState<'EGP' | 'USD'>('EGP');
-  
+
   const { setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage, t, isRTL } = useLanguage();
   const { toast } = useToast();
@@ -62,7 +63,7 @@ const Profile = () => {
         data: { full_name: displayName }
       });
       if (error) throw error;
-      
+
       toast({
         title: 'Success',
         description: 'Profile updated successfully',
@@ -113,7 +114,7 @@ const Profile = () => {
             <ArrowLeft className={`h-5 w-5 ${isRTL ? 'rotate-180' : ''}`} />
             {t('backHome')}
           </Link>
-          
+
           <Button
             variant="ghost"
             onClick={handleSignOut}
@@ -129,19 +130,19 @@ const Profile = () => {
           <div className={`flex items-center gap-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
             {/* Avatar */}
             <div className="relative">
-              <div 
+              <div
                 className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-2xl md:text-3xl font-bold"
                 style={{
-                  background: isDark 
+                  background: isDark
                     ? 'linear-gradient(135deg, hsla(190, 100%, 50%, 0.3), hsla(280, 80%, 60%, 0.3))'
                     : 'linear-gradient(135deg, hsla(190, 100%, 45%, 0.4), hsla(280, 80%, 55%, 0.4))',
                   border: `2px solid ${isDark ? 'hsla(190, 100%, 70%, 0.5)' : 'hsla(190, 100%, 45%, 0.5)'}`,
                 }}
               >
                 {user?.user_metadata?.avatar_url ? (
-                  <img 
-                    src={user.user_metadata.avatar_url} 
-                    alt="Profile" 
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="Profile"
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
@@ -190,8 +191,8 @@ const Profile = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="glass-card p-1 w-full md:w-auto">
+        <Tabs defaultValue={new URLSearchParams(window.location.search).get('tab') === 'inquiries' ? 'inquiries' : 'settings'} dir={isRTL ? 'rtl' : 'ltr'} className="space-y-6">
+          <TabsList className="glass-card h-auto flex-wrap p-1 w-full md:w-auto">
             <TabsTrigger value="stories" className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <BookOpen className="h-4 w-4" />
               {t('myStories')}
@@ -200,7 +201,11 @@ const Profile = () => {
               <Settings className="h-4 w-4" />
               {t('settings')}
             </TabsTrigger>
+            <TabsTrigger value="inquiries" className="min-h-11">{t('inquiryMyInquiries')}</TabsTrigger>
           </TabsList>
+          <TabsContent value="inquiries">
+            {user && <ProfileInquiries key={user.id} ownerId={user.id} />}
+          </TabsContent>
 
           {/* My Stories Tab */}
           <TabsContent value="stories">
@@ -226,7 +231,7 @@ const Profile = () => {
                 <h3 className={`text-lg font-semibold mb-6 ${isDark ? 'text-foreground' : 'text-slate-800'} ${isRTL ? 'text-right' : ''}`}>
                   {t('preferences')}
                 </h3>
-                
+
                 <div className="space-y-6">
                   {/* Theme Toggle */}
                   <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -318,7 +323,7 @@ const Profile = () => {
                 <h3 className={`text-lg font-semibold mb-6 ${isDark ? 'text-foreground' : 'text-slate-800'} ${isRTL ? 'text-right' : ''}`}>
                   {t('accountSettings')}
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div className={isRTL ? 'text-right' : ''}>
                     <Label className="text-muted-foreground">{t('email')}</Label>

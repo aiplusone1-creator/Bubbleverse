@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,10 +24,14 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const [params] = useSearchParams();
+  const reauthenticate = params.get('reauth') === '1';
+  const target = params.get('return') === 'inquiry' ? '/?inquiry=resume' :
+    params.get('return') === 'inquiries' ? '/profile?tab=inquiries' : '/';
   const { user } = useAuth();
   useEffect(() => {
-    if (user) navigate('/');
-  }, [user, navigate]);
+    if (user && !reauthenticate) navigate(target, { replace: true });
+  }, [user, navigate, target, reauthenticate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +53,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}${target}`,
           },
         });
 
@@ -67,7 +71,7 @@ const Auth = () => {
 
         if (error) throw error;
 
-        navigate('/');
+        navigate(target, { replace: true });
       }
     } catch (error: unknown) {
       toast({
@@ -86,7 +90,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}${target}`,
         },
       });
       if (error) throw error;
@@ -142,7 +146,7 @@ const Auth = () => {
         <div className="glass-card p-8 md:p-10 border border-primary/20 shadow-[0_20px_80px_-20px_hsla(200,100%,55%,.45)]">
           {/* Back Button */}
           <Link
-            to="/"
+            to={target}
             className={`inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}
           >
             <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
