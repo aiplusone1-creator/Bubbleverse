@@ -9,16 +9,18 @@ const translations: Record<Language, Record<string, string>> = {
     'signUp': 'Sign Up',
     
     // Hero
-    'aiPowered': 'AI-Powered Story Creation',
+    'aiPowered': 'Personalized Children\'s Storybooks',
     'createMagical': 'Create',
     'magicalStories': 'Magical Stories',
     'starringChild': 'Starring Your Child',
-    'heroDescription': 'Transform your little one into the hero of their own personalized 3D storybook or comic book adventure',
+    'heroDescription': 'Transform your little one into the hero of their own personalized illustrated storybook or comic book adventure',
     'startCreating': 'Start Creating',
     'seeExamples': 'See Examples',
     'storiesCreated': 'Stories Created',
     'artStyles': 'Art Styles',
     'printQuality': 'Print Quality',
+    'personalizedForChild': 'Personalized for Your Child',
+    'bilingualStories': 'Bilingual Storytelling',
     
     // Auth
     'welcomeBack': 'Welcome Back',
@@ -135,16 +137,18 @@ const translations: Record<Language, Record<string, string>> = {
     'signUp': 'إنشاء حساب',
     
     // Hero
-    'aiPowered': 'إنشاء قصص بالذكاء الاصطناعي',
+    'aiPowered': 'قصص أطفال مصورة ومخصصة',
     'createMagical': 'أنشئ',
     'magicalStories': 'قصص سحرية',
     'starringChild': 'بطلها طفلك',
-    'heroDescription': 'حوّل طفلك الصغير إلى بطل قصته الشخصية ثلاثية الأبعاد أو مغامرة كتاب مصور',
+    'heroDescription': 'حوّل طفلك الصغير إلى بطل قصته الشخصية المصورة أو مغامرة كتاب مصور ساحر',
     'startCreating': 'ابدأ الإنشاء',
     'seeExamples': 'شاهد الأمثلة',
     'storiesCreated': 'قصة تم إنشاؤها',
     'artStyles': 'أساليب فنية',
     'printQuality': 'جودة الطباعة',
+    'personalizedForChild': 'مخصصة لطفلك بالكامل',
+    'bilingualStories': 'سرد باللغتين العربية والإنجليزية',
     
     // Auth
     'welcomeBack': 'مرحباً بعودتك',

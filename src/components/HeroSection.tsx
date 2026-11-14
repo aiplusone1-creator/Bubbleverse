@@ -76,7 +76,7 @@ const HeroSection = ({ onStartCreating, showMascot, onToggleMascot }: HeroSectio
           </BubbleButton>
         </motion.div>
 
-        {/* Stats */}
+        {/* Features / Capabilities */}
         <motion.div 
           className="flex flex-wrap justify-center gap-8 mt-16"
           initial={{ opacity: 0 }}
@@ -84,9 +84,9 @@ const HeroSection = ({ onStartCreating, showMascot, onToggleMascot }: HeroSectio
           transition={{ duration: 0.8, delay: 0.8 }}
         >
           {[
-            { value: '10K+', label: t('storiesCreated') },
-            { value: '5', label: t('artStyles') },
-            { value: '300 DPI', label: t('printQuality') },
+            { value: '100%', label: t('personalizedForChild') },
+            { value: '5+', label: t('artStyles') },
+            { value: 'EN · AR', label: t('bilingualStories') },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="text-3xl font-bold text-magical">{stat.value}</div>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <!-- Ambient Glow -->
+    <radialGradient id="bvHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#c084fc" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#f472b6" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Soap Bubble Body -->
+    <radialGradient id="bvBubble" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="28%" stop-color="#38bdf8" stop-opacity="0.85"/>
+      <stop offset="55%" stop-color="#818cf8" stop-opacity="0.75"/>
+      <stop offset="78%" stop-color="#c084fc" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.5"/>
+    </radialGradient>
+    <!-- Refraction Rim -->
+    <linearGradient id="bvRim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Glow Halo -->
+  <circle cx="24" cy="24" r="23" fill="url(#bvHalo)" />
+
+  <!-- Orbiting Micro-bubbles -->
+  <circle cx="24" cy="4" r="1.5" fill="#bae6fd" />
+  <circle cx="24" cy="44" r="1.2" fill="#f5d0fe" />
+  <circle cx="4" cy="24" r="1.2" fill="#ddd6fe" />
+
+  <!-- Main Bubble Body -->
+  <circle cx="24" cy="24" r="18" fill="url(#bvBubble)" stroke="url(#bvRim)" stroke-width="1.2" />
+
+  <!-- Specular Highlights -->
+  <ellipse cx="19" cy="15" rx="3.5" ry="2" transform="rotate(-25 19 15)" fill="#ffffff" opacity="0.9" />
+  <circle cx="27" cy="18" r="1.2" fill="#ffffff" opacity="0.8" />
+</svg>
