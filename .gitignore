@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local, generated Antigravity exports; canonical profiles are in .agents/skills.
+/.agent/skills/bubbleverse-*/
+/.agent/skills/.bubbleverse-skill-export.json

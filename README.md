@@ -56,6 +56,25 @@ See [current architecture](docs/CURRENT_ARCHITECTURE.md), [code review](docs/COD
 [the MVP plan](docs/MVP_EXECUTION_PLAN_AR.md), and [security rollout notes](docs/WEEK1_PROGRESS_AR.md).
 Earlier audit documents explicitly describe their historical baselines.
 
+## Project skills and Antigravity handoff
+
+Start with [AGENTS.md](AGENTS.md), [DESIGN.md](DESIGN.md) and the active task board
+[CODEX_DIRECTIVES.md](CODEX_DIRECTIVES.md). The [skill index](docs/skills/INDEX.md) routes
+tasks to project-scoped profiles instead of loading every generic skill at once.
+
+```sh
+npm run test:skills
+npm run skills:sync
+npm run skills:check
+```
+
+Canonical skills are under `.agents/skills/`. The exporter makes local ignored copies
+under `.agent/skills/` for Antigravity-style workspace use, without overwriting edited
+or unknown files. Actual discovery must be verified inside the client. The first
+bounded assignment is [AG-001](docs/handoffs/AG-001.md); it audits the laptop UI and
+writes only its report/assets while Codex owns backend work. Do not execute all pending
+tasks or change another agent's files from a generic handoff prompt.
+
 ## Hosted setup is separate
 
 Do not replay/reset migrations against the configured hosted project during development setup.

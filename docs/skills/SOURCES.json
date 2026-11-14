@@ -1,0 +1,120 @@
+{
+  "source": "user-provided uploads, 2026-11-14",
+  "original_bodies_committed": false,
+  "files": [
+    {
+      "file": "apple-design.md",
+      "sha256": "7fbacf928637e136da6d475358d0639667a3637ba772f03f8e815bb4c0b86946",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "break-ui.md",
+      "sha256": "fb126d176f3b6bf7dfe71f2ae6620ab3dd81e6282c672a1801720055addfce18",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "ask-sonner.md",
+      "sha256": "4350ebfef0437875de80cc989059900b21ad621ea09f4709cc2917e7dee82d46",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "choreograph.md",
+      "sha256": "0a6802bb2fd5a3993842d48332b8ab56ae5bab369ffa8700f85f6fcff56b8478",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "find-animation-opportunities.md",
+      "sha256": "331479e0d867f90d637ef3ef1bdbbd38498d144ab493442afdfbc138abc751b4",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "emil-design-eng.md",
+      "sha256": "cdbfe467e6c9a4940c3a19e795cecf1ba659378d7412e06c245c6ae49da47da6",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "gestures.md",
+      "sha256": "1928c86cce924a2a178ddd156ba5ed0f184665a1f95b549724ffb5ae703e994f",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "improve-animations.md",
+      "sha256": "632be90e04261192112571b05abd5708fbb846808a4a7780717ee206daa6c6f6",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "learn-taste.md",
+      "sha256": "d624b8cd475eec24c5dc3f49b0380b56c8dab8399df11b92d7c9685aa8d4d33e",
+      "kind": "skill",
+      "source_manual_flag": true
+    },
+    {
+      "file": "mobile-native.md",
+      "sha256": "705e267bc47ea61e4c6f94d121efeebdb994055f482673b8a72f4a0dd62f1968",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "pick-ui-library.md",
+      "sha256": "db10dc6b2a0c340d873f69e35140ceb3c929e15664b33fcacd1ecb25c5574df3",
+      "kind": "skill",
+      "source_manual_flag": true
+    },
+    {
+      "file": "prototype.md",
+      "sha256": "30def86c5a5a0794a954b2a046d24c847c7129f316d79892abff73d54d79adc0",
+      "kind": "skill",
+      "source_manual_flag": true
+    },
+    {
+      "file": "review-animations.md",
+      "sha256": "9ceb5072ce5d5e51b07efa60817c66d06fc6492b7900b44dff5ff0f8f7bcf188",
+      "kind": "skill",
+      "source_manual_flag": true
+    },
+    {
+      "file": "animate.md",
+      "sha256": "4ce49ea635ec175b45552bae070ea07b2d6aa5367047994250c1c095b71c8585",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "animate-expo.md",
+      "sha256": "67e5d2ebe23b3edf52ce9d399532f2ead2bd7eff127919dd1c3bbe489b04dd4d",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "animation-performance.md",
+      "sha256": "6481e7a611b54c0d1d229ac3ac516c05648e63aa79de88c0a1bdc5ae2666ab80",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "animation-vocabulary.md",
+      "sha256": "42df33f1583483cc441fcd76693b3399148602705d2e9b8a26665d6b1951cd0b",
+      "kind": "skill",
+      "source_manual_flag": false
+    },
+    {
+      "file": "improve-animations-AUDIT.md",
+      "sha256": "90312d201cd8ce7dc8add4147570cd47cdb6c901e9980951d9f7b4851b738524",
+      "kind": "reference-template",
+      "source_manual_flag": false
+    },
+    {
+      "file": "improve-animations-PLAN-TEMPLATE.md",
+      "sha256": "e25250c49937e183cca5bc42a057d9f5407a0cacd30d0aad1a4b6d59d7b2a844",
+      "kind": "reference-template",
+      "source_manual_flag": false
+    }
+  ]
+}
