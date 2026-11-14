@@ -1,0 +1,21 @@
+-- Test-only rollback fixture. Reopens known vulnerabilities; never auto-deploy.
+BEGIN;
+ALTER POLICY "Users can view their own characters" ON public.characters USING (auth.uid() = user_id);
+ALTER POLICY "Users can create their own characters" ON public.characters WITH CHECK (auth.uid() = user_id);
+ALTER POLICY "Users can update their own characters" ON public.characters USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+ALTER POLICY "Users can delete their own characters" ON public.characters USING (auth.uid() = user_id);
+ALTER POLICY "Users can view their own pages" ON public.pages USING (auth.uid() = user_id);
+ALTER POLICY "Users can create their own pages" ON public.pages WITH CHECK (auth.uid() = user_id);
+ALTER POLICY "Users can update their own pages" ON public.pages USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+ALTER POLICY "Users can delete their own pages" ON public.pages USING (auth.uid() = user_id);
+ALTER TABLE public.characters DROP CONSTRAINT characters_story_owner_fk;
+ALTER TABLE public.pages DROP CONSTRAINT pages_story_owner_fk;
+ALTER TABLE public.characters DROP CONSTRAINT characters_owner_required;
+ALTER TABLE public.pages DROP CONSTRAINT pages_owner_required;
+ALTER TABLE public.stories DROP CONSTRAINT stories_id_owner_unique;
+ALTER TABLE public.stories DROP CONSTRAINT stories_owner_required;
+DROP TRIGGER guard_profile_fields ON public.profiles;
+DROP TRIGGER guard_story_identity ON public.stories;
+DROP FUNCTION public.guard_profile_fields();
+DROP FUNCTION public.guard_story_identity();
+COMMIT;

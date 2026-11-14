@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:security": "node --test scripts/security/authorization.test.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.2.10",
