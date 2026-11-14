@@ -26,7 +26,7 @@ const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
       transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.2 }}
     >
       <div className="flex items-center justify-between gap-1 sm:gap-2">
-        <div className="shrink min-w-0 [&_.w-12]:w-8 [&_.w-12]:h-8 sm:[&_.w-12]:w-12 sm:[&_.w-12]:h-12 [&_h1]:text-base sm:[&_h1]:text-2xl [&_h1+div]:hidden sm:[&_h1+div]:flex">
+        <div className="shrink-0 min-w-0 max-[359px]:[&_.leading-none]:hidden [&_h1]:text-base sm:[&_h1]:text-2xl [&_h1+div]:hidden sm:[&_h1+div]:flex">
           <BubbleverseLogo />
         </div>
 

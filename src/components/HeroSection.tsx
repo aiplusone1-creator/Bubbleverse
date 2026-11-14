@@ -21,53 +21,55 @@ const HeroSection = ({ onStartCreating, showMascot, onToggleMascot }: HeroSectio
       {/* Hero Showcase - Floating images */}
       <HeroShowcase />
       {/* Main content */}
-      <div className={`text-center max-w-4xl mx-auto ${isRTL ? 'rtl' : ''}`}>
+      <div className={`text-center max-w-4xl mx-auto pt-16 sm:pt-20 pb-12 ${isRTL ? 'rtl' : ''}`}>
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="mb-6"
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-5 sm:mb-6"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium">
-            <Sparkles className="w-4 h-4" />
-            {t('aiPowered')}
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs sm:text-sm font-medium shadow-[0_2px_12px_hsl(var(--primary)/0.15)]">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+            {t('heroTagline')}
           </span>
         </motion.div>
 
         <motion.h1 
-          className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
-          initial={{ opacity: 0, y: 30 }}
+          className="text-4xl sm:text-6xl md:text-7xl font-bold mb-5 sm:mb-6 leading-[1.15] sm:leading-tight tracking-tight font-editorial"
+          initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
         >
-          {t('createMagical')}{' '}
-          <span className="text-magical">{t('magicalStories')}</span>
-          <br />
-          {t('starringChild')}
+          {t('heroHeadlineMain')}{' '}
+          <span className="text-editorial-gold italic font-normal">
+            {t('heroHeadlineAccent')}
+          </span>
+          {t('heroHeadlineSuffix')}
         </motion.h1>
 
         <motion.p 
-          className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
+          className="text-base sm:text-xl md:text-2xl text-muted-foreground mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed font-normal px-2"
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
         >
           {t('heroDescription')}
         </motion.p>
 
         <motion.div 
-          className={`flex flex-col sm:flex-row gap-4 justify-center items-center ${isRTL ? 'sm:flex-row-reverse' : ''}`}
-          initial={{ opacity: 0, y: 20 }}
+          className={`flex flex-col sm:flex-row gap-3.5 sm:gap-4 justify-center items-center ${isRTL ? 'sm:flex-row-reverse' : ''}`}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
+          transition={{ duration: 0.7, delay: 0.5 }}
         >
-          <BubbleButton size="lg" onClick={onStartCreating}>
+          <BubbleButton size="lg" onClick={onStartCreating} className="w-full sm:w-auto">
             {t('startCreating')}
             <ArrowRight className={`w-5 h-5 inline-block ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
           </BubbleButton>
           <BubbleButton 
             variant="outline" 
             size="lg"
+            className="w-full sm:w-auto"
             onClick={() => {
               document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth' });
             }}
@@ -76,21 +78,22 @@ const HeroSection = ({ onStartCreating, showMascot, onToggleMascot }: HeroSectio
           </BubbleButton>
         </motion.div>
 
-        {/* Features / Capabilities */}
+        {/* Product-Truth Value Pillars (No fake stats) */}
         <motion.div 
-          className="flex flex-wrap justify-center gap-8 mt-16"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 max-w-3xl mx-auto mt-12 sm:mt-16 px-2"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.7 }}
         >
           {[
             { value: '100%', label: t('personalizedForChild') },
-            { value: '5+', label: t('artStyles') },
+            { value: '5+', label: t('enchantingStyles') },
             { value: 'EN · AR', label: t('bilingualStories') },
+            { value: 'PDF', label: t('instantPreview') },
           ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-3xl font-bold text-magical">{stat.value}</div>
-              <div className="text-muted-foreground text-sm">{stat.label}</div>
+            <div key={stat.label} className="glass-card p-3 sm:p-4 text-center border-border/40 hover:border-primary/30">
+              <div className="text-xl sm:text-2xl font-bold text-editorial-gold mb-1 font-editorial">{stat.value}</div>
+              <div className="text-muted-foreground text-xs sm:text-sm font-medium leading-tight">{stat.label}</div>
             </div>
           ))}
         </motion.div>

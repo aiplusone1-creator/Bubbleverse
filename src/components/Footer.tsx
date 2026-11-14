@@ -11,19 +11,19 @@ const Footer = ({ showMascot = true, onToggleMascot }: FooterProps) => {
   const { t, isRTL } = useLanguage();
 
   return (
-    <footer className="py-12 px-4 border-t border-border/30">
-      <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-muted-foreground text-sm text-center sm:text-left">
+    <footer className={`py-12 px-4 border-t border-border/40 ${isRTL ? 'rtl' : ''}`}>
+      <div className={`max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+        <p className={`text-muted-foreground text-xs sm:text-sm text-center ${isRTL ? 'sm:text-right' : 'sm:text-left'} leading-relaxed font-normal`}>
           {t('footerText')}
         </p>
         
         {/* Mascot Toggle */}
         {onToggleMascot && (
           <div 
-            className={`glass-card px-4 py-2 flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+            className={`glass-card px-3.5 py-1.5 sm:px-4 sm:py-2 flex items-center gap-3 border-border/50 ${isRTL ? 'flex-row-reverse' : ''}`}
           >
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm text-muted-foreground">{t('showBub')}</span>
+            <span className="text-xs sm:text-sm text-muted-foreground font-medium">{t('showBub')}</span>
             <Switch
               checked={showMascot}
               onCheckedChange={onToggleMascot}

@@ -8,19 +8,39 @@ const translations: Record<Language, Record<string, string>> = {
     'signIn': 'Sign In',
     'signUp': 'Sign Up',
     
-    // Hero
-    'aiPowered': 'Personalized Children\'s Storybooks',
+    // Hero — Premium Whimsical Editorial Brand Direction
+    'aiPowered': 'Bespoke Illustrated Storybooks',
+    'heroTagline': 'Bespoke Illustrated Storybooks',
+    'heroHeadlineMain': 'Magical Stories.',
+    'heroHeadlineAccent': 'Your Child,',
+    'heroHeadlineSuffix': ' the Hero.',
     'createMagical': 'Create',
     'magicalStories': 'Magical Stories',
     'starringChild': 'Starring Your Child',
-    'heroDescription': 'Transform your little one into the hero of their own personalized illustrated storybook or comic book adventure',
+    'heroDescription': 'Transform your little one into the hero of their own personalized illustrated storybook adventure filled with wonder, warmth, and courage.',
     'startCreating': 'Start Creating',
-    'seeExamples': 'See Examples',
+    'seeExamples': 'Explore Stories',
     'storiesCreated': 'Stories Created',
     'artStyles': 'Art Styles',
     'printQuality': 'Print Quality',
     'personalizedForChild': 'Personalized for Your Child',
     'bilingualStories': 'Bilingual Storytelling',
+    'enchantingStyles': 'Enchanting Art Styles',
+    'instantPreview': 'Digital Reading & PDF',
+
+    // Features Section
+    'featuresTitle': 'Artistry & Wonder',
+    'featuresSubtitle': 'Every detail crafted to ignite imagination and nurture wonder',
+    'feature1Title': 'Starring Your Child',
+    'feature1Desc': 'Tailored narrative arcs where your child’s name, traits, and spirit lead the quest.',
+    'feature2Title': 'Enchanting Bespoke Art',
+    'feature2Desc': 'Delightful 3D, classic watercolor, anime, and fantasy styles brought to life.',
+    'feature3Title': 'Thoughtfully Authored',
+    'feature3Desc': 'Age-appropriate stories with heart, humor, and meaningful character growth.',
+
+    // Examples Section
+    'examplesTitle': 'Tales of Adventure',
+    'examplesSubtitle': 'A glimpse into the magical worlds our young heroes explore',
     
     // Auth
     'welcomeBack': 'Welcome Back',
@@ -136,19 +156,39 @@ const translations: Record<Language, Record<string, string>> = {
     'signIn': 'تسجيل الدخول',
     'signUp': 'إنشاء حساب',
     
-    // Hero
-    'aiPowered': 'قصص أطفال مصورة ومخصصة',
+    // Hero — Premium Whimsical Editorial Brand Direction
+    'aiPowered': 'حكايات أطفال مصورة ومخصصة',
+    'heroTagline': 'حكايات أطفال مصورة ومخصصة',
+    'heroHeadlineMain': 'حكايات سحرية...',
+    'heroHeadlineAccent': 'طفلك',
+    'heroHeadlineSuffix': ' بطلها.',
     'createMagical': 'أنشئ',
     'magicalStories': 'قصص سحرية',
     'starringChild': 'بطلها طفلك',
-    'heroDescription': 'حوّل طفلك الصغير إلى بطل قصته الشخصية المصورة أو مغامرة كتاب مصور ساحر',
-    'startCreating': 'ابدأ الإنشاء',
-    'seeExamples': 'شاهد الأمثلة',
+    'heroDescription': 'حوّل طفلك الصغير إلى بطل حكايته المصورة والمخصصة له بالكامل في مغامرة خيالية مفعمة بالدفء والخيال والشجاعة.',
+    'startCreating': 'ابدأ الحكاية',
+    'seeExamples': 'شاهد القصص',
     'storiesCreated': 'قصة تم إنشاؤها',
     'artStyles': 'أساليب فنية',
     'printQuality': 'جودة الطباعة',
     'personalizedForChild': 'مخصصة لطفلك بالكامل',
-    'bilingualStories': 'سرد باللغتين العربية والإنجليزية',
+    'bilingualStories': 'سرد بالعربية والإنجليزية',
+    'enchantingStyles': 'أساليب فنية ساحرة',
+    'instantPreview': 'قراءة فورية وتصدير PDF',
+
+    // Features Section
+    'featuresTitle': 'سحر وإبداع لا ينتهي',
+    'featuresSubtitle': 'كل تفصيلة مصممة بعناية لإشعال خيال طفلك وغرس حب القراءة',
+    'feature1Title': 'طفلك بطل الحكاية',
+    'feature1Desc': 'حبكة قصصية مخصصة يقود فيها اسم طفلك وملامحه وشخصيته تفاصيل المغامرة.',
+    'feature2Title': 'أساليب فنية ساحرة',
+    'feature2Desc': 'خيارات بصرية متنوعة بين الرسوم ثلاثية الأبعاد والألوان المائية والأنيمي الخيالي.',
+    'feature3Title': 'سرد قصصي هادف',
+    'feature3Desc': 'محتوى يناسب عمر طفلك يجمع بين المرح والتشويق وقيم الشجاعة والفضيلة.',
+
+    // Examples Section
+    'examplesTitle': 'حكايات من عالم الخيال',
+    'examplesSubtitle': 'لمحة عن العوالم الساحرة والمغامرات التي خاضها أبطالنا الصغار',
     
     // Auth
     'welcomeBack': 'مرحباً بعودتك',
