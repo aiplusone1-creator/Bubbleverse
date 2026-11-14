@@ -3,7 +3,7 @@ import { test, mock } from 'node:test';
 import { observeAuth } from '../src/features/auth/authState.ts';
 import { createStorySaver } from '../src/features/stories/storyPersistence.ts';
 import { toStoryRequest } from '../src/features/stories/types.ts';
-import { createTextProvider } from '../supabase/functions/_shared/textProvider.ts';
+import { createTextProvider, createGeminiProvider, createAppTextProvider } from '../supabase/functions/_shared/textProvider.ts';
 import { createGenerationHandler } from '../supabase/functions/_shared/generationHandler.ts';
 import { generateStory } from '../supabase/functions/_shared/storyGeneration.ts';
 import { buildStoryPrompts } from '../supabase/functions/_shared/storyPrompts.ts';
@@ -132,6 +132,52 @@ test('provider network, invalid JSON and missing content fail safely without ret
   let called = false;
   await assert.rejects(createTextProvider(undefined, async () => { called = true; }).generateText(textRequest), error => error.status === 503);
   assert.equal(called, false);
+});
+
+test('gemini provider sends bounded parameters to Google AI Studio endpoint and strips google/ prefix', async () => {
+  const provider = createGeminiProvider('gemini-test-key', async (url, options) => {
+    const parsed = new URL(url);
+    assert.equal(parsed.hostname, 'generativelanguage.googleapis.com');
+    assert.equal(parsed.pathname, '/v1beta/openai/chat/completions');
+    assert.equal(options.headers.Authorization, 'Bearer gemini-test-key');
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, 'gemini-2.5-flash');
+    assert.equal(body.max_tokens, 100);
+    assert.ok(options.signal);
+    return Response.json({ choices: [{ message: { content: ' Gemini Story ' } }] });
+  });
+  const res = await provider.generateText({
+    model: 'google/gemini-2.5-flash',
+    maxTokens: 100,
+    messages: [{ role: 'user', content: 'Synthetic' }],
+  });
+  assert.equal(res, 'Gemini Story');
+});
+
+for (const [upstream, expected] of [[402, 402], [403, 402], [429, 429], [500, 502]]) {
+  test(`gemini provider HTTP ${upstream} is classified without exposing its body`, async () => {
+    const provider = createGeminiProvider('test-only', async () => new Response('private gemini error details', { status: upstream }));
+    await assert.rejects(provider.generateText(textRequest), error => error.status === expected && !error.message.includes('private'));
+  });
+}
+
+test('createAppTextProvider routes to Gemini when available and Lovable as fallback', async () => {
+  let target = '';
+  const mockFetch = async (url) => {
+    target = new URL(url).hostname;
+    return Response.json({ choices: [{ message: { content: 'ok' } }] });
+  };
+
+  const geminiActive = createAppTextProvider({ geminiApiKey: 'g-key', lovableApiKey: 'l-key' }, mockFetch);
+  await geminiActive.generateText(textRequest);
+  assert.equal(target, 'generativelanguage.googleapis.com');
+
+  const lovableFallback = createAppTextProvider({ lovableApiKey: 'l-key' }, mockFetch);
+  await lovableFallback.generateText(textRequest);
+  assert.equal(target, 'ai.gateway.lovable.dev');
+
+  const unconfigured = createAppTextProvider({});
+  assert.throws(() => unconfigured.assertConfigured(), error => error.status === 503);
 });
 
 function handlerFixture(failure) {
