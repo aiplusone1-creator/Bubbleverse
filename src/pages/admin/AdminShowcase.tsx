@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Edit2, GripVertical, Image, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -44,11 +44,8 @@ const AdminShowcase = () => {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchImages();
-  }, []);
 
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     const { data, error } = await supabase
       .from('showcase_images')
       .select('*')
@@ -64,7 +61,11 @@ const AdminShowcase = () => {
       setImages(data || []);
     }
     setLoading(false);
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

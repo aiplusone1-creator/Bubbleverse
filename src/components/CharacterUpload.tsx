@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Upload, X, User, Heart, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import { readCharacterPhoto } from '@/lib/characterPhoto';
 
 interface Character {
   id: string;
@@ -25,42 +26,34 @@ const roleOptions = [
 
 const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpdateCharacter }: CharacterUploadProps) => {
   const [dragOver, setDragOver] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const [readingPhoto, setReadingPhoto] = useState(false);
+
+  const addPhoto = async (file: File) => {
+    if (readingPhoto) return;
+    setPhotoError('');
+    setReadingPhoto(true);
+    try {
+      const imageUrl = await readCharacterPhoto(file);
+      onAddCharacter({ id: crypto.randomUUID(), name: '', role: 'hero', imageUrl });
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : 'Unable to open this photo.');
+    } finally {
+      setReadingPhoto(false);
+    }
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    // Handle file drop
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        onAddCharacter({
-          id: Date.now().toString(),
-          name: '',
-          role: 'hero',
-          imageUrl: reader.result as string,
-        });
-      };
-      reader.readAsDataURL(file);
-    }
+    if (files.length > 0) void addPhoto(files[0]);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        onAddCharacter({
-          id: Date.now().toString(),
-          name: '',
-          role: 'hero',
-          imageUrl: reader.result as string,
-        });
-      };
-      reader.readAsDataURL(file);
-    }
+    if (files && files.length > 0) void addPhoto(files[0]);
+    e.target.value = '';
   };
 
   return (
@@ -83,13 +76,15 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
         <input 
           type="file" 
           className="hidden" 
-          accept="image/*"
+          accept="image/png,image/jpeg"
+          disabled={readingPhoto}
           onChange={handleFileSelect}
         />
         <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-        <p className="text-foreground font-medium">Drop photos here or click to upload</p>
-        <p className="text-muted-foreground text-sm mt-1">PNG, JPG up to 10MB</p>
+        <p className="text-foreground font-medium">{readingPhoto ? 'Checking your photo…' : 'Drop photos here or click to upload'}</p>
+        <p className="text-muted-foreground text-sm mt-1">PNG or JPG · Up to 10 MB · Up to 24 megapixels</p>
       </motion.label>
+      {photoError && <p role="alert" className="text-sm text-destructive">{photoError}</p>}
 
       {/* Character Cards */}
       <div className="grid md:grid-cols-2 gap-4">

@@ -96,10 +96,10 @@ const Profile = () => {
         description: 'Profile updated successfully',
       });
       setIsEditing(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update profile',
+        description: error instanceof Error ? error.message : 'Failed to update profile',
         variant: 'destructive',
       });
     } finally {

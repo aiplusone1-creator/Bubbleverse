@@ -92,7 +92,7 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
           errors.push('Please describe your custom art style');
         }
         break;
-      case 2:
+      case 2: {
         const heroCharacters = config.characters.filter(c => c.role === 'hero');
         if (heroCharacters.length === 0) {
           errors.push('Please add at least one Hero character (the main child of the story)');
@@ -102,6 +102,7 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
           errors.push('Please give a name to all characters');
         }
         break;
+      }
       case 3:
         if (config.interests.length === 0) {
           errors.push('Please select at least one interest');
@@ -233,7 +234,6 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
     }, 2000);
 
     try {
-      console.log('Starting story generation with config:', config);
       
       const result = await generateStory(config);
       

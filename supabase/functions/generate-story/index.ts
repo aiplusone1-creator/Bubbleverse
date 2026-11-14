@@ -1,22 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import { RequestError, readJson, requestKey, requireUsableProfile, requireReservation, validateStoryRequest, validateStoryPages } from '../_shared/requestValidation.ts';
+import { createClient } from "npm:@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-idempotency-key',
 };
-
-interface StoryRequest {
-  storyLength: string;
-  format: string;
-  artStyle: string;
-  customArtStyle?: string;
-  language: string; // Added language parameter
-  characters: Array<{ name: string; role: string }>;
-  interests: string[];
-  plotMode: 'auto' | 'manual';
-  customPlot?: string;
-}
 
 interface StoryPage {
   pageNumber: number;
@@ -25,74 +14,71 @@ interface StoryPage {
   panelLayoutType: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const input = validateStoryRequest(await readJson(req));
+    const idempotencyKey = requestKey(req);
     // ===== AUTHENTICATION CHECK =====
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      console.log('Missing or invalid Authorization header');
-      return new Response(JSON.stringify({ error: 'Unauthorized - Please log in to generate stories' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      return new Response(JSON.stringify({ error: 'Unauthorized - Please log in to generate stories' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    
-    if (claimsError || !claimsData?.claims) {
-      console.log('Invalid token or claims:', claimsError);
-      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid session' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid session' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     const userId = claimsData.claims.sub;
-    console.log('Authenticated user:', userId);
 
     // Check if user is banned
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('is_banned')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (profile?.is_banned) {
-      console.log('Banned user attempted to generate story:', userId);
-      return new Response(JSON.stringify({ error: 'Your account has been suspended' }), { 
-        status: 403, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
+    requireUsableProfile(profile, profileError);
     // ===== END AUTHENTICATION CHECK =====
 
-    const { storyLength, format, artStyle, customArtStyle, language, characters, interests, plotMode, customPlot } = await req.json() as StoryRequest;
-    
+    const { storyLength, format, artStyle, customArtStyle, language, characters, interests, plotMode, customPlot } = input;
+
     // Resolve the final art style (use custom if provided)
     const finalArtStyle = artStyle === 'custom' && customArtStyle ? customArtStyle : artStyle;
-    
+
     // Resolve the language (default to English)
     const storyLanguage = language || 'English';
-    
-    console.log('Generating story with config:', { storyLength, format, artStyle: finalArtStyle, language: storyLanguage, characters, interests, plotMode });
+
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
+
+    const { data: reservation, error: reservationError } = await supabase.rpc('reserve_ai_request', {
+      p_operation: 'generate-story', p_request_key: idempotencyKey,
+    });
+    requireReservation(reservation, reservationError);
 
     // Determine page count based on story length
     const pageRanges: Record<string, { min: number; max: number }> = {
@@ -108,11 +94,11 @@ serve(async (req) => {
     const heroName = heroCharacter?.name || 'A brave young hero';
     const characterDescriptions = characters.map(c => `${c.name} (${c.role})`).join(', ');
     const interestsList = interests.length > 0 ? interests.join(', ') : 'adventure, friendship, discovery';
-    
+
     // ===== CRITICAL: STRICT LANGUAGE ENFORCEMENT =====
     const systemPrompt = `You are a professional children's book author writing EXCLUSIVELY in **${storyLanguage}**.
 
-**CRITICAL LANGUAGE RULE:** You MUST write the ENTIRE story text, ALL dialogue, and ALL narrative strictly in **${storyLanguage}**. 
+**CRITICAL LANGUAGE RULE:** You MUST write the ENTIRE story text, ALL dialogue, and ALL narrative strictly in **${storyLanguage}**.
 ${storyLanguage !== 'English' ? `Do NOT use English at all. Every single word of the story content must be in ${storyLanguage}.` : ''}
 
 Your stories are:
@@ -197,10 +183,10 @@ Return ONLY a JSON array with this structure:
   }
 ]`;
 
-    console.log('Calling Lovable AI for story generation...');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
+      signal: AbortSignal.timeout(45000),
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
@@ -212,13 +198,14 @@ Return ONLY a JSON array with this structure:
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.8,
+        max_tokens: 12000,
       }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      
+      await response.body?.cancel();
+    console.error('Generation operation failed');
+
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }), {
           status: 429,
@@ -231,12 +218,11 @@ Return ONLY a JSON array with this structure:
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      
+
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
-    console.log('AI Response received');
 
     const content = aiResponse.choices?.[0]?.message?.content;
     if (!content) {
@@ -249,19 +235,19 @@ Return ONLY a JSON array with this structure:
       // Extract JSON from the response (it might be wrapped in markdown code blocks)
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        pages = JSON.parse(jsonMatch[0]);
+        pages = validateStoryPages(JSON.parse(jsonMatch[0]), pageCount);
       } else {
         throw new Error('No JSON array found in response');
       }
     } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      console.log('Raw content:', content);
-      throw new Error('Failed to parse story content');
+    console.error('Generation operation failed');
+      throw new RequestError('Invalid story response from provider', 502);
     }
 
     // Generate a title from the first page - IN THE SAME LANGUAGE
     const titleResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
+      signal: AbortSignal.timeout(45000),
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
@@ -269,12 +255,12 @@ Return ONLY a JSON array with this structure:
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash-lite',
         messages: [
-          { 
-            role: 'user', 
+          {
+            role: 'user',
             content: `Based on this story's first page, generate a short, catchy title (max 6 words) in ${storyLanguage}.
 
 IMPORTANT: The title MUST be written in ${storyLanguage} language only.
-            
+
 Scene: ${pages[0]?.sceneDescription}
 Text: ${pages[0]?.dialogueText}
 
@@ -293,9 +279,8 @@ Respond with ONLY the title in ${storyLanguage}, no quotes or explanation.`
       }
     }
 
-    console.log('Story generated successfully:', { title, pageCount: pages.length, userId });
 
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       success: true,
       title,
       pages,
@@ -310,11 +295,11 @@ Respond with ONLY the title in ${storyLanguage}, no quotes or explanation.`
     });
 
   } catch (error) {
-    console.error('Error in generate-story function:', error);
-    return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    console.error('Generation operation failed');
+    return new Response(JSON.stringify({
+      error: error instanceof RequestError ? error.message : 'Story generation failed. Please try again later.'
     }), {
-      status: 500,
+      status: error instanceof RequestError ? error.status : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

@@ -1,75 +1,73 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import { RequestError, readJson, requestKey, requireUsableProfile, requireReservation, validateEnhanceRequest } from '../_shared/requestValidation.ts';
+import { createClient } from "npm:@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-idempotency-key',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const input = validateEnhanceRequest(await readJson(req));
+    const idempotencyKey = requestKey(req);
     // ===== AUTHENTICATION CHECK =====
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      console.log('Missing or invalid Authorization header');
-      return new Response(JSON.stringify({ error: 'Unauthorized - Please log in to enhance plots' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      return new Response(JSON.stringify({ error: 'Unauthorized - Please log in to enhance plots' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    
-    if (claimsError || !claimsData?.claims) {
-      console.log('Invalid token or claims:', claimsError);
-      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid session' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid session' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     const userId = claimsData.claims.sub;
-    console.log('Authenticated user:', userId);
 
     // Check if user is banned
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('is_banned')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (profile?.is_banned) {
-      console.log('Banned user attempted to enhance plot:', userId);
-      return new Response(JSON.stringify({ error: 'Your account has been suspended' }), { 
-        status: 403, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
+    requireUsableProfile(profile, profileError);
     // ===== END AUTHENTICATION CHECK =====
 
-    const { plot, interests } = await req.json();
-    
+    const { plot, interests } = input;
+
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!lovableApiKey) {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const interestsText = interests?.length > 0 
-      ? `The story should incorporate these themes: ${interests.join(', ')}.` 
+    const { data: reservation, error: reservationError } = await supabase.rpc('reserve_ai_request', {
+      p_operation: 'enhance-plot', p_request_key: idempotencyKey,
+    });
+    requireReservation(reservation, reservationError);
+
+    const interestsText = interests?.length > 0
+      ? `The story should incorporate these themes: ${interests.join(', ')}.`
       : '';
 
     const systemPrompt = `You are a creative children's story plot enhancer. Your task is to take a basic plot idea and transform it into a more engaging, detailed, and imaginative story premise suitable for children.
@@ -85,6 +83,7 @@ ${interestsText}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
+      signal: AbortSignal.timeout(45000),
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
@@ -100,8 +99,8 @@ ${interestsText}`;
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI API Error:', errorText);
+      await response.body?.cancel();
+    console.error('Generation operation failed');
       throw new Error(`AI API Error: ${response.status}`);
     }
 
@@ -112,16 +111,15 @@ ${interestsText}`;
       throw new Error('No response from AI');
     }
 
-    console.log('Plot enhanced successfully for user:', userId);
 
     return new Response(JSON.stringify({ enhancedPlot }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in enhance-plot function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Generation operation failed');
+    const errorMessage = error instanceof RequestError ? error.message : 'Plot enhancement failed. Please try again later.';
     return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
+      status: error instanceof RequestError ? error.status : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

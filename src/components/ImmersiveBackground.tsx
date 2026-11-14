@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, memo, useState } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { useMousePosition } from '@/hooks/useMousePosition';
 import { useScrollPosition } from '@/hooks/useScrollPosition';
 import { useTheme } from 'next-themes';
@@ -152,8 +152,8 @@ const ParallaxBubbleComponent = memo(({
 }: { 
   bubble: ParallaxBubble;
   scrollY: number;
-  mouseX: any;
-  mouseY: any;
+  mouseX: MotionValue<number>;
+  mouseY: MotionValue<number>;
   isDark: boolean;
 }) => {
   const bubbleRef = useRef<HTMLDivElement>(null);

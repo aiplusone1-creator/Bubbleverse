@@ -32,7 +32,6 @@ interface GenerateStoryResult {
 }
 
 export const generateStory = async (config: StoryConfig): Promise<GenerateStoryResult> => {
-  console.log('Calling generate-story edge function with config:', config);
 
   // Ensure the user has a real session before invoking (anon-key calls fail with "missing sub claim")
   const { data: sessionData } = await supabase.auth.getSession();
@@ -41,6 +40,7 @@ export const generateStory = async (config: StoryConfig): Promise<GenerateStoryR
   }
 
   const { data, error } = await supabase.functions.invoke('generate-story', {
+    headers: { 'x-idempotency-key': crypto.randomUUID() },
     body: {
       storyLength: config.storyLength,
       format: config.format,
@@ -64,7 +64,6 @@ export const generateStory = async (config: StoryConfig): Promise<GenerateStoryR
     throw new Error(data.error);
   }
 
-  console.log('Story generated successfully:', data);
   return data;
 };
 
@@ -72,7 +71,6 @@ export const saveStoryToDatabase = async (
   config: StoryConfig, 
   generatedData: GenerateStoryResult
 ): Promise<string> => {
-  console.log('Saving story to database...');
   
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
@@ -103,7 +101,6 @@ export const saveStoryToDatabase = async (
     throw new Error('Failed to save story');
   }
 
-  console.log('Story saved:', story);
 
   // Save characters
   if (config.characters.length > 0) {
@@ -142,6 +139,5 @@ export const saveStoryToDatabase = async (
     console.error('Error saving pages:', pagesError);
   }
 
-  console.log('Story saved with ID:', story.id);
   return story.id;
 };

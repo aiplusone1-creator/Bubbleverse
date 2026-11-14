@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -48,11 +48,8 @@ export default function AdminStories() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleted, setShowDeleted] = useState(false);
 
-  useEffect(() => {
-    fetchStories();
-  }, [showDeleted]);
 
-  const fetchStories = async () => {
+  const fetchStories = useCallback(async () => {
     try {
       let query = supabase
         .from('stories')
@@ -69,7 +66,7 @@ export default function AdminStories() {
 
       // Fetch profiles separately for user display names
       const userIds = [...new Set((storiesData || []).map(s => s.user_id).filter(Boolean))];
-      let profilesMap: Record<string, { display_name: string | null }> = {};
+      const profilesMap: Record<string, { display_name: string | null }> = {};
 
       if (userIds.length > 0) {
         const { data: profilesData } = await supabase
@@ -94,7 +91,11 @@ export default function AdminStories() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showDeleted]);
+
+  useEffect(() => {
+    fetchStories();
+  }, [fetchStories]);
 
   const softDeleteStory = async (storyId: string) => {
     try {

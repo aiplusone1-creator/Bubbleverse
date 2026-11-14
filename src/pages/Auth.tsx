@@ -82,10 +82,10 @@ const Auth = () => {
 
         navigate('/');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'An error occurred',
+        description: error instanceof Error ? error.message : 'An error occurred',
         variant: 'destructive',
       });
     } finally {
@@ -103,10 +103,10 @@ const Auth = () => {
         },
       });
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to sign in with Google',
+        description: error instanceof Error ? error.message : 'Failed to sign in with Google',
         variant: 'destructive',
       });
       setGoogleLoading(false);

@@ -27,6 +27,7 @@ const CustomPlotInput = ({ value, onChange, interests }: CustomPlotInputProps) =
     setIsEnhancing(true);
     try {
       const { data, error } = await supabase.functions.invoke('enhance-plot', {
+        headers: { 'x-idempotency-key': crypto.randomUUID() },
         body: {
           plot: value,
           interests: interests,
