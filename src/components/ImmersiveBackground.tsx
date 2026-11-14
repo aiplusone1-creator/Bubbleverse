@@ -51,7 +51,7 @@ const ImmersiveBackground = memo(() => {
       x: Math.random() * 100,
       y: Math.random() * 100,
       size: Math.random() * 35 + 10, // Smaller bubbles: 10-45px (was 30-110px)
-      baseHue: Math.random() > 0.5 ? 190 + Math.random() * 30 : 270 + Math.random() * 40,
+      baseHue: Math.random() > 0.6 ? 37 + Math.random() * 15 : (Math.random() > 0.5 ? 262 + Math.random() * 25 : 196 + Math.random() * 25),
       layer: Math.ceil(Math.random() * 4),
       opacity: 0.15 + Math.random() * 0.25, // More transparent for distant feel
       glowIntensity: 0.15 + Math.random() * 0.2, // Softer glow
@@ -63,28 +63,28 @@ const ImmersiveBackground = memo(() => {
     })), []
   );
 
-  // Theme-aware background colors
+  // Theme-aware background colors — Premium Whimsical Editorial Foundation
   const darkBackground = `
-    radial-gradient(ellipse at 30% 20%, hsla(270, 60%, 25%, 0.4) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, hsla(200, 80%, 20%, 0.4) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, hsla(240, 50%, 15%, 0.6) 0%, transparent 70%),
+    radial-gradient(ellipse at 30% 15%, hsla(262, 48%, 20%, 0.45) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 75%, hsla(37, 91%, 20%, 0.25) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 45%, hsla(234, 34%, 15%, 0.7) 0%, transparent 70%),
     linear-gradient(180deg, 
-      hsl(250, 40%, 8%) 0%, 
-      hsl(220, 50%, 12%) 30%,
-      hsl(200, 60%, 10%) 60%,
-      hsl(270, 50%, 10%) 100%
+      hsl(224, 37%, 8%) 0%, 
+      hsl(234, 34%, 13%) 35%,
+      hsl(234, 34%, 11%) 70%,
+      hsl(224, 37%, 8%) 100%
     )
   `;
 
   const lightBackground = `
-    radial-gradient(ellipse at 30% 20%, hsla(270, 60%, 85%, 0.5) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, hsla(200, 80%, 85%, 0.5) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, hsla(240, 50%, 92%, 0.6) 0%, transparent 70%),
+    radial-gradient(ellipse at 30% 15%, hsla(262, 45%, 90%, 0.6) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 75%, hsla(37, 95%, 88%, 0.45) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 45%, hsla(40, 100%, 99%, 0.8) 0%, transparent 70%),
     linear-gradient(180deg, 
-      hsl(210, 40%, 96%) 0%, 
-      hsl(220, 30%, 94%) 30%,
-      hsl(200, 40%, 95%) 60%,
-      hsl(270, 30%, 95%) 100%
+      hsl(40, 33%, 97%) 0%, 
+      hsl(40, 30%, 95%) 35%,
+      hsl(40, 25%, 94%) 70%,
+      hsl(40, 33%, 97%) 100%
     )
   `;
 
@@ -135,7 +135,7 @@ const ImmersiveBackground = memo(() => {
         style={{
           left: '10%',
           top: '20%',
-          background: isDark ? 'hsla(190, 100%, 50%, 0.12)' : 'hsla(190, 100%, 50%, 0.2)',
+          background: isDark ? 'hsla(37, 91%, 55%, 0.08)' : 'hsla(37, 95%, 45%, 0.1)',
           y: shouldReduceMotion ? 0 : bgTransform2,
         }}
       />
@@ -144,7 +144,7 @@ const ImmersiveBackground = memo(() => {
         style={{
           right: '15%',
           bottom: '30%',
-          background: isDark ? 'hsla(280, 80%, 50%, 0.1)' : 'hsla(280, 80%, 60%, 0.15)',
+          background: isDark ? 'hsla(262, 48%, 81%, 0.08)' : 'hsla(262, 45%, 58%, 0.08)',
           y: shouldReduceMotion ? 0 : bgTransform3,
         }}
       />

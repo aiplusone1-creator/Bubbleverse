@@ -16,6 +16,8 @@ export default {
     extend: {
       fontFamily: {
         fredoka: ["Fredoka", "sans-serif"],
+        editorial: ["'Playfair Display'", "Georgia", "Cambria", "'Amiri'", "serif"],
+        arabic: ["'Amiri'", "'Noto Serif Arabic'", "'Traditional Arabic'", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -23,6 +25,16 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        editorial: {
+          navy: "#0D111C",
+          indigo: "#191C33",
+          ivory: "#FAF8F4",
+          paper: "#FFFDF9",
+          lavender: "#C9B8E6",
+          mist: "#A9C9D5",
+          rose: "#E7BDD1",
+          gold: "#F5A623",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
