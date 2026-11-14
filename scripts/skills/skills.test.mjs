@@ -32,7 +32,8 @@ test('21 project profiles have valid unique names, scoped descriptions and resol
   assert.equal(folders.length, 21);
   for (const name of folders) {
     const file = resolve(canonical, name, 'SKILL.md');
-    const text = await readFile(file, 'utf8');
+    const raw = await readFile(file, 'utf8');
+    const text = raw.replace(/\r\n/g, '\n');
     assert.ok(text.startsWith('---\nname: ' + name + '\n'));
     assert.ok(/^bubbleverse-[a-z0-9-]+$/.test(name));
     assert.ok(text.includes('CODEX_DIRECTIVES.md'));

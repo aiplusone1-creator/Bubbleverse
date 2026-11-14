@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, memo, useState } from 'react';
-import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform, useReducedMotion, type MotionValue } from 'framer-motion';
 import { useMousePosition } from '@/hooks/useMousePosition';
 import { useScrollPosition } from '@/hooks/useScrollPosition';
 import { useTheme } from 'next-themes';
@@ -25,8 +25,9 @@ const BUBBLE_COUNT = 40;
 
 const ImmersiveBackground = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mousePosition = useMousePosition();
-  const scrollY = useScrollPosition();
+  const shouldReduceMotion = Boolean(useReducedMotion());
+  const mousePosition = useMousePosition({ enabled: !shouldReduceMotion });
+  const scrollY = useScrollPosition({ enabled: !shouldReduceMotion });
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   
@@ -38,9 +39,10 @@ const ImmersiveBackground = memo(() => {
 
   // Update mouse motion values
   useEffect(() => {
+    if (shouldReduceMotion) return;
     mouseX.set(mousePosition.x);
     mouseY.set(mousePosition.y);
-  }, [mousePosition, mouseX, mouseY]);
+  }, [mousePosition, mouseX, mouseY, shouldReduceMotion]);
 
   // Generate bubbles with different layers and float animations
   const bubbles: ParallaxBubble[] = useMemo(() => 
@@ -86,6 +88,13 @@ const ImmersiveBackground = memo(() => {
     )
   `;
 
+  const scrollSpring1 = useSpring(scrollY, { stiffness: 50, damping: 20 });
+  const scrollSpring2 = useSpring(scrollY, { stiffness: 30, damping: 15 });
+  const scrollSpring3 = useSpring(scrollY, { stiffness: 40, damping: 18 });
+  const bgTransform1 = useTransform(scrollSpring1, [0, 1000], [0, -100]);
+  const bgTransform2 = useTransform(scrollSpring2, [0, 1000], [0, 200]);
+  const bgTransform3 = useTransform(scrollSpring3, [0, 1000], [0, 150]);
+
   return (
     <div 
       ref={containerRef}
@@ -103,7 +112,7 @@ const ImmersiveBackground = memo(() => {
                radial-gradient(circle at 80% 70%, hsla(280, 100%, 60%, 0.08) 0%, transparent 40%)`
             : `radial-gradient(circle at 20% 30%, hsla(180, 100%, 50%, 0.15) 0%, transparent 40%),
                radial-gradient(circle at 80% 70%, hsla(280, 100%, 60%, 0.12) 0%, transparent 40%)`,
-          y: useTransform(useSpring(scrollY, { stiffness: 50, damping: 20 }), [0, 1000], [0, -100]),
+          y: shouldReduceMotion ? 0 : bgTransform1,
         }}
       />
 
@@ -116,6 +125,7 @@ const ImmersiveBackground = memo(() => {
           mouseX={smoothMouseX}
           mouseY={smoothMouseY}
           isDark={isDark}
+          shouldReduceMotion={shouldReduceMotion}
         />
       ))}
 
@@ -126,7 +136,7 @@ const ImmersiveBackground = memo(() => {
           left: '10%',
           top: '20%',
           background: isDark ? 'hsla(190, 100%, 50%, 0.12)' : 'hsla(190, 100%, 50%, 0.2)',
-          y: useTransform(useSpring(scrollY, { stiffness: 30, damping: 15 }), [0, 1000], [0, 200]),
+          y: shouldReduceMotion ? 0 : bgTransform2,
         }}
       />
       <motion.div 
@@ -135,7 +145,7 @@ const ImmersiveBackground = memo(() => {
           right: '15%',
           bottom: '30%',
           background: isDark ? 'hsla(280, 80%, 50%, 0.1)' : 'hsla(280, 80%, 60%, 0.15)',
-          y: useTransform(useSpring(scrollY, { stiffness: 40, damping: 18 }), [0, 1000], [0, 150]),
+          y: shouldReduceMotion ? 0 : bgTransform3,
         }}
       />
     </div>
@@ -148,13 +158,15 @@ const ParallaxBubbleComponent = memo(({
   scrollY, 
   mouseX, 
   mouseY,
-  isDark 
+  isDark,
+  shouldReduceMotion = false
 }: { 
   bubble: ParallaxBubble;
   scrollY: number;
   mouseX: MotionValue<number>;
   mouseY: MotionValue<number>;
   isDark: boolean;
+  shouldReduceMotion?: boolean;
 }) => {
   const bubbleRef = useRef<HTMLDivElement>(null);
   const [isNearMouse, setIsNearMouse] = useState(false);
@@ -162,10 +174,11 @@ const ParallaxBubbleComponent = memo(({
 
   // Calculate parallax offset based on layer (reverse parallax - bubbles move up when scrolling down)
   const parallaxMultiplier = bubble.layer * 0.15;
-  const parallaxOffset = -scrollY * parallaxMultiplier;
+  const parallaxOffset = shouldReduceMotion ? 0 : -scrollY * parallaxMultiplier;
 
-  // Check if bubble is near mouse
+  // Check if bubble is near mouse - completely disabled when motion is reduced
   useEffect(() => {
+    if (shouldReduceMotion) return;
     const updatePosition = () => {
       if (bubbleRef.current) {
         const rect = bubbleRef.current.getBoundingClientRect();
@@ -176,11 +189,15 @@ const ParallaxBubbleComponent = memo(({
     };
 
     updatePosition();
-    const interval = setInterval(updatePosition, 100);
+    const interval = setInterval(updatePosition, 250);
     return () => clearInterval(interval);
-  }, [parallaxOffset]);
+  }, [parallaxOffset, shouldReduceMotion]);
 
   useEffect(() => {
+    if (shouldReduceMotion) {
+      setIsNearMouse(false);
+      return;
+    }
     const unsubX = mouseX.on('change', (latestX: number) => {
       const distance = Math.sqrt(
         Math.pow(latestX - bubbleCenter.x, 2) + 
@@ -190,7 +207,7 @@ const ParallaxBubbleComponent = memo(({
     });
 
     return () => unsubX();
-  }, [mouseX, mouseY, bubbleCenter]);
+  }, [mouseX, mouseY, bubbleCenter, shouldReduceMotion]);
 
   // Animated hue shift when near mouse - adjust for light/dark mode
   const activeHue = isNearMouse ? (bubble.baseHue > 250 ? 320 : 180) : bubble.baseHue;
@@ -212,7 +229,21 @@ const ParallaxBubbleComponent = memo(({
         height: bubble.size,
         zIndex: bubble.layer,
       }}
-      animate={{
+      animate={shouldReduceMotion ? {
+        x: 0,
+        y: 0,
+        scale: 1,
+        rotate: 0,
+        background: `radial-gradient(circle at 30% 30%, 
+          hsla(${bubble.baseHue}, 100%, ${baseLightness}%, ${baseOpacity}), 
+          hsla(${bubble.baseHue}, 100%, ${midLightness}%, ${baseOpacity * 0.6}) 40%,
+          hsla(${bubble.baseHue + 40}, 80%, ${outerLightness}%, ${baseOpacity * 0.3}) 70%,
+          transparent 100%)`,
+        boxShadow: `
+          inset 0 0 ${bubble.size / 3}px hsla(${bubble.baseHue}, 100%, 90%, ${bubble.glowIntensity}),
+          0 0 ${bubble.size * bubble.glowIntensity}px hsla(${bubble.baseHue}, 100%, 70%, ${bubble.glowIntensity * 0.6})
+        `,
+      } : {
         x: [0, bubble.floatRangeX, 0, -bubble.floatRangeX * 0.5, 0],
         y: [parallaxOffset, parallaxOffset - bubble.floatRangeY, parallaxOffset, parallaxOffset - bubble.floatRangeY * 0.3, parallaxOffset],
         background: `radial-gradient(circle at 30% 30%, 
@@ -228,7 +259,7 @@ const ParallaxBubbleComponent = memo(({
         scale: isNearMouse ? 1.15 : 1,
         rotate: [0, 5, 0, -5, 0],
       }}
-      transition={{
+      transition={shouldReduceMotion ? { duration: 0 } : {
         x: {
           duration: bubble.floatDuration,
           repeat: Infinity,

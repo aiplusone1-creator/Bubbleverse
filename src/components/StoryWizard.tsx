@@ -1,8 +1,9 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/hooks/useLanguage';
 import GlassCard from './GlassCard';
 import BubbleButton from './BubbleButton';
 import StoryLengthSelector from './StoryLengthSelector';
@@ -23,15 +24,17 @@ interface StoryWizardProps {
 }
 
 const steps = [
-  { id: 1, title: 'Story Setup', description: 'Choose length, format & style' },
-  { id: 2, title: 'Characters', description: 'Add your heroes' },
-  { id: 3, title: 'Story Theme', description: 'Personalize the adventure' },
-  { id: 4, title: 'Review', description: 'Ready to create magic!' },
+  { id: 1, titleKey: 'step1Title', descKey: 'step1Desc' },
+  { id: 2, titleKey: 'step2Title', descKey: 'step2Desc' },
+  { id: 3, titleKey: 'step3Title', descKey: 'step3Desc' },
+  { id: 4, titleKey: 'step4Title', descKey: 'step4Desc' },
 ];
 
 const StoryWizard = ({ onBack }: StoryWizardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t, isRTL } = useLanguage();
+  const shouldReduceMotion = useReducedMotion();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -53,36 +56,36 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   });
   const [customInterest, setCustomInterest] = useState('');
 
-  // Validation function for each step
+  // Validation function for each step returning localization keys
   const validateStep = (step: number): string[] => {
     const errors: string[] = [];
     
     switch (step) {
       case 1:
         if (!config.language) {
-          errors.push('Please select a language for your story');
+          errors.push('validationLanguage');
         }
         if (config.artStyle === 'custom' && !config.customArtStyle.trim()) {
-          errors.push('Please describe your custom art style');
+          errors.push('validationArtStyle');
         }
         break;
       case 2: {
         const heroCharacters = config.characters.filter(c => c.role === 'hero');
         if (heroCharacters.length === 0) {
-          errors.push('Please add at least one Hero character (the main child of the story)');
+          errors.push('validationHero');
         }
         const unnamedCharacters = config.characters.filter(c => !c.name.trim());
         if (unnamedCharacters.length > 0) {
-          errors.push('Please give a name to all characters');
+          errors.push('validationCharacterName');
         }
         break;
       }
       case 3:
         if (config.interests.length === 0) {
-          errors.push('Please select at least one interest');
+          errors.push('validationInterest');
         }
         if (config.plotMode === 'manual' && !config.customPlot.trim()) {
-          errors.push('Please write your custom plot');
+          errors.push('validationPlot');
         }
         break;
     }
@@ -94,8 +97,8 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
     const errors = validateStep(currentStep);
     if (errors.length > 0) {
       toast({
-        title: "Please complete required fields",
-        description: errors[0],
+        title: t('validationTitle'),
+        description: t(errors[0]),
         variant: "destructive",
       });
       return;
@@ -115,8 +118,8 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
         const errors = validateStep(i);
         if (errors.length > 0) {
           toast({
-            title: "Please complete required fields",
-            description: errors[0],
+            title: t('validationTitle'),
+            description: t(errors[0]),
             variant: "destructive",
           });
           return;
@@ -179,7 +182,7 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   const handleGenerateStory = async () => {
     const errors = [1, 2, 3].flatMap(validateStep);
     if (errors.length) {
-      toast({ title: 'Please complete required fields', description: errors[0], variant: 'destructive' });
+      toast({ title: t('validationTitle'), description: t(errors[0]), variant: 'destructive' });
       return;
     }
     if (generation.current) return;
@@ -187,12 +190,12 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
     generation.current = controller;
     setIsGenerating(true);
     setIsSaving(false);
-    setGeneratingStep('Writing your story...');
+    setGeneratingStep(t('writingStory'));
     try {
       const result = await generateStory(config, controller.signal);
       if (controller.signal.aborted) return;
       setIsSaving(true);
-      setGeneratingStep('Saving your story...');
+      setGeneratingStep(t('savingStory'));
       await saveStoryToDatabase(config, result);
       if (controller.signal.aborted) return;
       setGeneratedStory({
@@ -201,14 +204,14 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
       });
 
       toast({
-        title: "Story Created! ✨",
+        title: t('storyCreatedTitle'),
         description: `"${result.title}" is ready with ${result.pages.length} magical pages!`,
       });
 
     } catch (error) {
       if (controller.signal.aborted) return;
       toast({
-        title: "Oops! Something went wrong",
+        title: t('oopsTitle'),
         description: error instanceof Error ? error.message : "Failed to generate story. Please try again.",
         variant: "destructive",
       });
@@ -242,8 +245,8 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
         onCancel={isSaving ? undefined : () => {
           setIsGenerating(false);
           generation.current?.abort();
-          setGeneratingStep('Preparing your story...');
-          toast({ title: 'Stopped waiting', description: 'A request already sent to the provider may still finish. Taking you to your profile.' });
+          setGeneratingStep(t('preparingStory'));
+          toast({ title: t('stoppedWaitingTitle'), description: t('stoppedWaitingDesc') });
           navigate('/profile');
         }}
       />
@@ -265,48 +268,65 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   }
 
   return (
-    <section className="min-h-screen py-20 px-4">
+    <section className="min-h-screen py-20 px-3 sm:px-4">
       <div className="max-w-4xl mx-auto">
         {/* Progress Steps */}
         <motion.div 
-          className="flex justify-between mb-12 relative"
-          initial={{ opacity: 0, y: -20 }}
+          className="flex justify-between mb-4 sm:mb-12 relative px-2"
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : -20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.4 }}
         >
           {/* Progress line */}
-          <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted/50" />
+          <div className="absolute top-5 left-4 right-4 h-0.5 bg-muted/50" />
           <motion.div 
-            className="absolute top-5 left-0 h-0.5 bg-primary"
+            className={`absolute top-5 ${isRTL ? 'right-4' : 'left-4'} h-0.5 bg-primary`}
             initial={{ width: '0%' }}
             animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.5 }}
           />
           
-          {steps.map((step) => (
-            <div key={step.id} className="flex flex-col items-center relative z-10">
-              <motion.button
-                onClick={() => handleStepClick(step.id)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 cursor-pointer ${
-                  currentStep >= step.id
-                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {step.id}
-              </motion.button>
-              <span className={`mt-2 text-sm font-medium ${
-                currentStep >= step.id ? 'text-foreground' : 'text-muted-foreground'
-              }`}>
-                {step.title}
-              </span>
-              <span className="text-xs text-muted-foreground hidden md:block">
-                {step.description}
-              </span>
-            </div>
-          ))}
+          {steps.map((step) => {
+            const isCurrent = currentStep === step.id;
+            return (
+              <div key={step.id} className="flex flex-col items-center relative z-10">
+                <motion.button
+                  type="button"
+                  onClick={() => handleStepClick(step.id)}
+                  aria-label={`${t('step')} ${step.id}: ${t(step.titleKey)}`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 cursor-pointer touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                    currentStep >= step.id
+                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                  whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
+                >
+                  {step.id}
+                </motion.button>
+                <span className={`mt-2 text-sm font-medium hidden sm:block ${
+                  currentStep >= step.id ? 'text-foreground' : 'text-muted-foreground'
+                }`}>
+                  {t(step.titleKey)}
+                </span>
+                <span className="text-xs text-muted-foreground hidden md:block">
+                  {t(step.descKey)}
+                </span>
+              </div>
+            );
+          })}
         </motion.div>
+
+        {/* Mobile active step indicator */}
+        <div className="sm:hidden text-center mb-6">
+          <p className="text-sm font-semibold text-foreground">
+            {t('step')} {currentStep} {t('of')} {steps.length}: {t(steps[currentStep - 1].titleKey)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {t(steps[currentStep - 1].descKey)}
+          </p>
+        </div>
 
         {/* Step Content */}
         <GlassCard className="mb-8">
@@ -314,9 +334,10 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
             {currentStep === 1 && (
               <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 20 }}
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: isRTL ? -20 : 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: isRTL ? 20 : -20 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
                 className="space-y-8"
               >
                 <LanguageSelector
@@ -343,9 +364,10 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
             {currentStep === 2 && (
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 20 }}
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: isRTL ? -20 : 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: isRTL ? 20 : -20 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
               >
                 <CharacterUpload
                   characters={config.characters}
@@ -359,9 +381,10 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
             {currentStep === 3 && (
               <motion.div
                 key="step3"
-                initial={{ opacity: 0, x: 20 }}
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: isRTL ? -20 : 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: isRTL ? 20 : -20 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
                 className="space-y-8"
               >
                 <InterestsInput
@@ -374,9 +397,10 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
 
                 {/* Plot Mode Toggle */}
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-foreground">Plot Creation</h3>
+                  <h3 className="text-xl font-semibold text-foreground">{t('plotCreation')}</h3>
                   <div className="flex gap-4">
                     <button
+                      type="button"
                       onClick={() => setConfig(prev => ({ ...prev, plotMode: 'auto' }))}
                       className={`flex-1 p-4 rounded-xl transition-all ${
                         config.plotMode === 'auto'
@@ -385,10 +409,11 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
                       }`}
                     >
                       <Wand2 className="w-6 h-6 mx-auto mb-2 text-primary" />
-                      <p className="font-medium text-foreground">AI Magic</p>
-                      <p className="text-sm text-muted-foreground">Let AI create a surprise plot</p>
+                      <p className="font-medium text-foreground">{t('aiMagic')}</p>
+                      <p className="text-sm text-muted-foreground">{t('aiMagicDesc')}</p>
                     </button>
                     <button
+                      type="button"
                       onClick={() => setConfig(prev => ({ ...prev, plotMode: 'manual' }))}
                       className={`flex-1 p-4 rounded-xl transition-all ${
                         config.plotMode === 'manual'
@@ -397,8 +422,8 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
                       }`}
                     >
                       <span className="text-2xl block mb-2">✍️</span>
-                      <p className="font-medium text-foreground">Custom Plot</p>
-                      <p className="text-sm text-muted-foreground">Write your own story</p>
+                      <p className="font-medium text-foreground">{t('customPlot')}</p>
+                      <p className="text-sm text-muted-foreground">{t('customPlotDesc')}</p>
                     </button>
                   </div>
                   
@@ -416,34 +441,34 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
             {currentStep === 4 && (
               <motion.div
                 key="step4"
-                initial={{ opacity: 0, x: 20 }}
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: isRTL ? -20 : 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: isRTL ? 20 : -20 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
                 className="text-center py-8"
               >
                 <motion.div
                   className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center"
-                  animate={{ scale: [1, 1.1, 1] }}
+                  animate={shouldReduceMotion ? undefined : { scale: [1, 1.1, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
                   <Wand2 className="w-12 h-12 text-primary" />
                 </motion.div>
-                <h3 className="text-2xl font-bold text-foreground mb-4">Ready to Create Magic!</h3>
+                <h3 className="text-2xl font-bold text-foreground mb-4">{t('readyCreateMagic')}</h3>
                 <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                  Your personalized story is about to come to life. 
-                  Click below to start the AI generation process.
+                  {t('readyCreateMagicDesc')}
                 </p>
                 
                 {/* Summary */}
-                <div className="glass-card p-4 max-w-md mx-auto text-left mb-8">
-                  <h4 className="font-semibold text-foreground mb-3">Story Summary</h4>
+                <div className="glass-card p-4 max-w-md mx-auto text-start mb-8">
+                  <h4 className="font-semibold text-foreground mb-3">{t('storySummary')}</h4>
                   <div className="space-y-2 text-sm">
-                    <p><span className="text-muted-foreground">Language:</span> <span className="text-foreground uppercase">{config.language || 'Not selected'}</span></p>
-                    <p><span className="text-muted-foreground">Length:</span> <span className="text-foreground capitalize">{config.storyLength}</span></p>
-                    <p><span className="text-muted-foreground">Format:</span> <span className="text-foreground capitalize">{config.format}</span></p>
-                    <p><span className="text-muted-foreground">Style:</span> <span className="text-foreground capitalize">{config.artStyle === 'custom' ? config.customArtStyle : config.artStyle}</span></p>
-                    <p><span className="text-muted-foreground">Characters:</span> <span className="text-foreground">{config.characters.length ? config.characters.map(c => c.name).join(', ') : 'None added'}</span></p>
-                    <p><span className="text-muted-foreground">Interests:</span> <span className="text-foreground">{config.interests.length ? config.interests.join(', ') : 'None selected'}</span></p>
+                    <p><span className="text-muted-foreground">{t('summaryLanguage')}:</span> <span className="text-foreground uppercase">{config.language || t('notSelected')}</span></p>
+                    <p><span className="text-muted-foreground">{t('summaryLength')}:</span> <span className="text-foreground capitalize">{config.storyLength}</span></p>
+                    <p><span className="text-muted-foreground">{t('summaryFormat')}:</span> <span className="text-foreground capitalize">{config.format}</span></p>
+                    <p><span className="text-muted-foreground">{t('summaryStyle')}:</span> <span className="text-foreground capitalize">{config.artStyle === 'custom' ? config.customArtStyle : config.artStyle}</span></p>
+                    <p><span className="text-muted-foreground">{t('summaryCharacters')}:</span> <span className="text-foreground">{config.characters.length ? config.characters.map(c => c.name).join(', ') : t('noneAdded')}</span></p>
+                    <p><span className="text-muted-foreground">{t('summaryInterests')}:</span> <span className="text-foreground">{config.interests.length ? config.interests.join(', ') : t('noneSelected')}</span></p>
                   </div>
                 </div>
               </motion.div>
@@ -452,21 +477,21 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
         </GlassCard>
 
         {/* Navigation */}
-        <div className="flex justify-between">
-          <BubbleButton variant="outline" onClick={handlePrev}>
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            {currentStep === 1 ? 'Back to Home' : 'Previous'}
+        <div className="flex justify-between items-center gap-3">
+          <BubbleButton variant="outline" onClick={handlePrev} className="touch-manipulation">
+            <ArrowLeft className={`w-5 h-5 ${isRTL ? 'ml-2 rotate-180' : 'mr-2'}`} />
+            {currentStep === 1 ? t('backHome') : t('previous')}
           </BubbleButton>
           
           {currentStep < steps.length ? (
-            <BubbleButton onClick={handleNext}>
-              Next Step
-              <ArrowRight className="w-5 h-5 ml-2" />
+            <BubbleButton onClick={handleNext} className="touch-manipulation">
+              {t('nextStep')}
+              <ArrowRight className={`w-5 h-5 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
             </BubbleButton>
           ) : (
-            <BubbleButton onClick={handleGenerateStory}>
-              <Wand2 className="w-5 h-5 mr-2" />
-              Generate Story
+            <BubbleButton onClick={handleGenerateStory} className="touch-manipulation">
+              <Wand2 className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+              {t('generateStory')}
             </BubbleButton>
           )}
         </div>

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Upload, X, User, Heart, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { readCharacterPhoto } from '@/lib/characterPhoto';
+import { useLanguage } from '@/hooks/useLanguage';
 
 import type { Character } from '@/features/stories/types';
 
@@ -12,17 +13,28 @@ interface CharacterUploadProps {
   onUpdateCharacter: (id: string, updates: Partial<Character>) => void;
 }
 
-const roleOptions = [
-  { value: 'hero', label: 'Hero', icon: Sparkles },
-  { value: 'parent', label: 'Parent', icon: User },
-  { value: 'pet', label: 'Pet', icon: Heart },
-  { value: 'friend', label: 'Friend', icon: User },
-];
-
 const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpdateCharacter }: CharacterUploadProps) => {
+  const { t } = useLanguage();
   const [dragOver, setDragOver] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [readingPhoto, setReadingPhoto] = useState(false);
+
+  const roleOptions = [
+    { value: 'hero', label: t('roleHero'), icon: Sparkles },
+    { value: 'parent', label: t('roleParent'), icon: User },
+    { value: 'pet', label: t('rolePet'), icon: Heart },
+    { value: 'friend', label: t('roleFriend'), icon: User },
+  ];
+
+  const mapPhotoError = (error: unknown): string => {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg.includes('smaller than 10 MB')) return t('photoTooLarge');
+    if (msg.includes('valid PNG or JPG')) return t('photoInvalidType');
+    if (msg.includes('at most 24 megapixels')) return t('photoTooManyPixels');
+    if (msg.includes('could not be opened')) return t('photoCannotOpen');
+    if (msg.includes('could not be read')) return t('photoCannotRead');
+    return t('photoGenericError');
+  };
 
   const addPhoto = async (file: File) => {
     if (readingPhoto) return;
@@ -32,7 +44,7 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
       const imageUrl = await readCharacterPhoto(file);
       onAddCharacter({ id: crypto.randomUUID(), name: '', role: 'hero', imageUrl });
     } catch (error) {
-      setPhotoError(error instanceof Error ? error.message : 'Unable to open this photo.');
+      setPhotoError(mapPhotoError(error));
     } finally {
       setReadingPhoto(false);
     }
@@ -53,8 +65,8 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold text-foreground">Characters</h3>
-      <p className="text-muted-foreground text-sm">Upload photos of characters to include in your story</p>
+      <h3 className="text-xl font-semibold text-foreground">{t('charactersTitle')}</h3>
+      <p className="text-muted-foreground text-sm">{t('charactersDesc')}</p>
       
       {/* Upload Zone */}
       <motion.label
@@ -76,8 +88,8 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
           onChange={handleFileSelect}
         />
         <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-        <p className="text-foreground font-medium">{readingPhoto ? 'Checking your photo…' : 'Drop photos here or click to upload'}</p>
-        <p className="text-muted-foreground text-sm mt-1">PNG or JPG · Up to 10 MB · Up to 24 megapixels</p>
+        <p className="text-foreground font-medium">{readingPhoto ? t('checkingPhoto') : t('dropPhotosOrClick')}</p>
+        <p className="text-muted-foreground text-sm mt-1">{t('photoSpecs')}</p>
       </motion.label>
       {photoError && <p role="alert" className="text-sm text-destructive">{photoError}</p>}
 
@@ -93,8 +105,10 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
             transition={{ delay: index * 0.1 }}
           >
             <button 
+              type="button"
               onClick={() => onRemoveCharacter(character.id)}
-              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-destructive/20 hover:bg-destructive/40 flex items-center justify-center transition-colors"
+              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-destructive/20 hover:bg-destructive/40 flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-destructive focus:outline-none cursor-pointer"
+              aria-label={t('removeCharacter')}
             >
               <X className="w-4 h-4 text-destructive" />
             </button>
@@ -103,7 +117,7 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
               {/* Image preview */}
               <div className="w-20 h-20 rounded-xl bg-muted/50 overflow-hidden flex-shrink-0">
                 {character.imageUrl ? (
-                  <img src={character.imageUrl} alt={character.name} className="w-full h-full object-cover" />
+                  <img src={character.imageUrl} alt={character.name || t('roleHero')} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <User className="w-8 h-8 text-muted-foreground" />
@@ -116,7 +130,7 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Character name *"
+                    placeholder={`${t('characterNamePlaceholder')} *`}
                     value={character.name}
                     onChange={(e) => onUpdateCharacter(character.id, { name: e.target.value })}
                     className={`w-full bg-muted/30 border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 ${
@@ -125,7 +139,7 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
                   />
                   {!character.name.trim() && (
                     <span className="absolute -top-2 right-2 text-xs bg-destructive/20 text-destructive px-1.5 py-0.5 rounded">
-                      Required
+                      *
                     </span>
                   )}
                 </div>

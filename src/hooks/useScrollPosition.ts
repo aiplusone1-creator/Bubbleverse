@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-export const useScrollPosition = () => {
+export interface UseScrollPositionOptions {
+  enabled?: boolean;
+}
+
+export const useScrollPosition = (options?: UseScrollPositionOptions) => {
+  const enabled = options?.enabled !== false;
   const [scrollY, setScrollY] = useState(0);
   const frameRef = useRef<number | null>(null);
   const scrollRef = useRef(0);
@@ -11,6 +16,14 @@ export const useScrollPosition = () => {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+      return;
+    }
+
     const handleScroll = () => {
       scrollRef.current = window.scrollY;
       
@@ -25,9 +38,10 @@ export const useScrollPosition = () => {
       window.removeEventListener('scroll', handleScroll);
       if (frameRef.current) {
         cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
       }
     };
-  }, [updateScroll]);
+  }, [enabled, updateScroll]);
 
   return scrollY;
 };

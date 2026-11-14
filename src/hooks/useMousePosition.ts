@@ -5,7 +5,12 @@ interface MousePosition {
   y: number;
 }
 
-export const useMousePosition = () => {
+export interface UseMousePositionOptions {
+  enabled?: boolean;
+}
+
+export const useMousePosition = (options?: UseMousePositionOptions) => {
+  const enabled = options?.enabled !== false;
   const [mousePosition, setMousePosition] = useState<MousePosition>({ x: 0, y: 0 });
   const frameRef = useRef<number | null>(null);
   const positionRef = useRef<MousePosition>({ x: 0, y: 0 });
@@ -16,6 +21,14 @@ export const useMousePosition = () => {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+      return;
+    }
+
     const handleMouseMove = (event: MouseEvent) => {
       positionRef.current = { x: event.clientX, y: event.clientY };
       
@@ -30,9 +43,10 @@ export const useMousePosition = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       if (frameRef.current) {
         cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
       }
     };
-  }, [updatePosition]);
+  }, [enabled, updatePosition]);
 
   return mousePosition;
 };

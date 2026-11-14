@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useMousePosition } from '@/hooks/useMousePosition';
 import { useTheme } from 'next-themes';
 
@@ -11,7 +11,8 @@ const SIZE = 64;
 const InteractiveBub = memo(() => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
-  const mouse = useMousePosition();
+  const shouldReduceMotion = Boolean(useReducedMotion());
+  const mouse = useMousePosition({ enabled: !shouldReduceMotion });
 
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [vel, setVel] = useState({ x: 0, y: 0 });
@@ -26,6 +27,12 @@ const InteractiveBub = memo(() => {
   }, []);
 
   useEffect(() => {
+    if (shouldReduceMotion) {
+      velRef.current = { x: 0, y: 0 };
+      setVel({ x: 0, y: 0 });
+      return;
+    }
+
     let raf = 0;
     const tick = () => {
       tRef.current += 0.016;
@@ -68,7 +75,7 @@ const InteractiveBub = memo(() => {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [mouse]);
+  }, [mouse, shouldReduceMotion]);
 
   // Squash & stretch based on speed
   const speed = Math.min(Math.sqrt(vel.x * vel.x + vel.y * vel.y), 40);
@@ -90,21 +97,21 @@ const InteractiveBub = memo(() => {
         style={{
           width: '100%',
           height: '100%',
-          transform: `rotate(${angle}deg) scale(${stretch}, ${squash})`,
+          transform: shouldReduceMotion ? 'none' : `rotate(${angle}deg) scale(${stretch}, ${squash})`,
           transformOrigin: 'center',
-          transition: 'transform 80ms linear',
+          transition: shouldReduceMotion ? 'none' : 'transform 80ms linear',
         }}
       >
         <div
-          style={{ transform: `rotate(${-angle}deg)`, width: '100%', height: '100%' }}
+          style={{ transform: shouldReduceMotion ? 'none' : `rotate(${-angle}deg)`, width: '100%', height: '100%' }}
         >
           {/* Iridescent halo */}
           <div
-            className="absolute -inset-4 rounded-full blur-2xl opacity-80 pointer-events-none"
+            className="bub-halo absolute -inset-4 rounded-full blur-2xl opacity-80 pointer-events-none"
             style={{
               background:
                 'conic-gradient(from 0deg, hsla(190,100%,70%,.65), hsla(280,90%,70%,.65), hsla(330,100%,75%,.55), hsla(160,100%,70%,.55), hsla(190,100%,70%,.65))',
-              animation: 'spin 8s linear infinite',
+              animation: shouldReduceMotion ? 'none' : 'spin 8s linear infinite',
             }}
           />
 
@@ -121,12 +128,12 @@ const InteractiveBub = memo(() => {
           >
             {/* Iridescent sheen sweep */}
             <div
-              className="absolute inset-0"
+              className="bub-sheen absolute inset-0"
               style={{
                 background:
                   'linear-gradient(120deg, transparent 28%, hsla(0,0%,100%,.55) 50%, transparent 72%)',
                 mixBlendMode: 'overlay',
-                animation: 'bubSheen 3.2s ease-in-out infinite',
+                animation: shouldReduceMotion ? 'none' : 'bubSheen 3.2s ease-in-out infinite',
               }}
             />
             {/* Thin film rim */}
@@ -146,6 +153,11 @@ const InteractiveBub = memo(() => {
         @keyframes bubSheen {
           0% { transform: translateX(-60%); }
           100% { transform: translateX(60%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bub-halo, .bub-sheen {
+            animation: none !important;
+          }
         }
       `}</style>
     </motion.div>
