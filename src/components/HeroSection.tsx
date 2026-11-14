@@ -3,7 +3,7 @@ import BubbleButton from './BubbleButton';
 import Header from './Header';
 import HeroShowcase from './HeroShowcase';
 import { Sparkles, ArrowRight } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface HeroSectionProps {
   onStartCreating: () => void;

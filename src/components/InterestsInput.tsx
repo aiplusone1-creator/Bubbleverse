@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
-import { useState } from 'react';
 
 const suggestedInterests = [
   '🚀 Space', '🦖 Dinosaurs', '🧚 Fairies', '🏴‍☠️ Pirates', 

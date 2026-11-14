@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Moon, Sun, LogIn, User, Shield, Sparkles } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/hooks/useLanguage';
+import { useAuth } from '@/hooks/useAuth';
 import BubbleverseLogo from './BubbleverseLogo';
 import { Button } from './ui/button';
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface HeaderProps {
   showMascot?: boolean;
@@ -17,53 +15,7 @@ interface HeaderProps {
 const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t, isRTL } = useLanguage();
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    // Set up auth listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Check admin status
-      if (session?.user) {
-        setTimeout(() => {
-          checkAdminStatus(session.user.id);
-        }, 0);
-      } else {
-        setIsAdmin(false);
-      }
-    });
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        checkAdminStatus(session.user.id);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const checkAdminStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
-
-      setIsAdmin(!!data && !error);
-    } catch {
-      setIsAdmin(false);
-    }
-  };
+  const { user, isAdmin } = useAuth();
 
   return (
     <motion.header

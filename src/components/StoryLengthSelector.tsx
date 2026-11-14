@@ -1,6 +1,4 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import GlassCard from './GlassCard';
 
 interface StoryLengthOption {
   id: string;

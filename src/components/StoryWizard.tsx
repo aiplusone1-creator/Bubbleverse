@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Wand2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GlassCard from './GlassCard';
 import BubbleButton from './BubbleButton';
@@ -14,36 +14,9 @@ import GeneratingScreen from './GeneratingScreen';
 import StoryPreview from './StoryPreview';
 import LanguageSelector from './LanguageSelector';
 import CustomPlotInput from './CustomPlotInput';
-import { generateStory, saveStoryToDatabase } from '@/lib/storyService';
+import { generateStory, saveStoryToDatabase } from '@/features/stories/storyService';
 
-interface Character {
-  id: string;
-  name: string;
-  role: string;
-  imageUrl?: string;
-}
-
-interface StoryConfig {
-  storyLength: string;
-  format: string;
-  artStyle: string;
-  customArtStyle: string;
-  language: string;
-  characters: Character[];
-  interests: string[];
-  plotMode: 'auto' | 'manual';
-  customPlot: string;
-}
-
-interface GeneratedStory {
-  title: string;
-  pages: Array<{
-    pageNumber: number;
-    sceneDescription: string;
-    dialogueText: string;
-    panelLayoutType: string;
-  }>;
-}
+import type { Character, StoryConfig, GeneratedStory } from '@/features/stories/types';
 
 interface StoryWizardProps {
   onBack: () => void;
@@ -61,10 +34,11 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatingProgress, setGeneratingProgress] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const generation = useRef<AbortController | null>(null);
+  useEffect(() => () => generation.current?.abort(), []);
   const [generatingStep, setGeneratingStep] = useState('Preparing your story...');
   const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   
   const [config, setConfig] = useState<StoryConfig>({
     storyLength: 'medium',
@@ -119,7 +93,6 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   const handleNext = () => {
     const errors = validateStep(currentStep);
     if (errors.length > 0) {
-      setValidationErrors(errors);
       toast({
         title: "Please complete required fields",
         description: errors[0],
@@ -127,7 +100,6 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
       });
       return;
     }
-    setValidationErrors([]);
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     }
@@ -142,7 +114,6 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
       for (let i = currentStep; i < stepId; i++) {
         const errors = validateStep(i);
         if (errors.length > 0) {
-          setValidationErrors(errors);
           toast({
             title: "Please complete required fields",
             description: errors[0],
@@ -151,7 +122,6 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
           return;
         }
       }
-      setValidationErrors([]);
       setCurrentStep(stepId);
     }
   };
@@ -207,48 +177,24 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   };
 
   const handleGenerateStory = async () => {
+    const errors = [1, 2, 3].flatMap(validateStep);
+    if (errors.length) {
+      toast({ title: 'Please complete required fields', description: errors[0], variant: 'destructive' });
+      return;
+    }
+    if (generation.current) return;
+    const controller = new AbortController();
+    generation.current = controller;
     setIsGenerating(true);
-    setGeneratingProgress(0);
-    setGeneratingStep('Preparing your story...');
-
-    // Simulate progress updates
-    const progressInterval = setInterval(() => {
-      setGeneratingProgress(prev => {
-        if (prev >= 90) return prev;
-        return prev + Math.random() * 15;
-      });
-    }, 500);
-
-    const stepMessages = [
-      'Gathering magical ingredients...',
-      'Crafting your adventure...',
-      'Adding sparkles and wonder...',
-      'Bringing characters to life...',
-      'Polishing the final touches...',
-    ];
-
-    let stepIndex = 0;
-    const stepInterval = setInterval(() => {
-      stepIndex = (stepIndex + 1) % stepMessages.length;
-      setGeneratingStep(stepMessages[stepIndex]);
-    }, 2000);
-
+    setIsSaving(false);
+    setGeneratingStep('Writing your story...');
     try {
-      
-      const result = await generateStory(config);
-      
-      setGeneratingProgress(95);
+      const result = await generateStory(config, controller.signal);
+      if (controller.signal.aborted) return;
+      setIsSaving(true);
       setGeneratingStep('Saving your story...');
-      
-      // Save to database
       await saveStoryToDatabase(config, result);
-      
-      setGeneratingProgress(100);
-      setGeneratingStep('Story complete!');
-      
-      // Short delay to show 100%
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      if (controller.signal.aborted) return;
       setGeneratedStory({
         title: result.title,
         pages: result.pages,
@@ -260,23 +206,21 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
       });
 
     } catch (error) {
-      console.error('Story generation failed:', error);
+      if (controller.signal.aborted) return;
       toast({
         title: "Oops! Something went wrong",
         description: error instanceof Error ? error.message : "Failed to generate story. Please try again.",
         variant: "destructive",
       });
     } finally {
-      clearInterval(progressInterval);
-      clearInterval(stepInterval);
-      setIsGenerating(false);
+      if (!controller.signal.aborted) setIsGenerating(false);
+      if (generation.current === controller) generation.current = null;
     }
   };
 
   const handleCreateNewStory = () => {
     setGeneratedStory(null);
     setCurrentStep(1);
-    setValidationErrors([]);
     setConfig({
       storyLength: 'medium',
       format: 'storyboard',
@@ -294,13 +238,12 @@ const StoryWizard = ({ onBack }: StoryWizardProps) => {
   if (isGenerating) {
     return (
       <GeneratingScreen
-        progress={generatingProgress}
         currentStep={generatingStep}
-        onCancel={() => {
+        onCancel={isSaving ? undefined : () => {
           setIsGenerating(false);
-          setGeneratingProgress(0);
+          generation.current?.abort();
           setGeneratingStep('Preparing your story...');
-          toast({ title: 'Generation cancelled', description: 'Taking you to your profile.' });
+          toast({ title: 'Stopped waiting', description: 'A request already sent to the provider may still finish. Taking you to your profile.' });
           navigate('/profile');
         }}
       />

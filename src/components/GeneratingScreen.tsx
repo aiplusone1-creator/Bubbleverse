@@ -1,30 +1,18 @@
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 
-const bubbleMessages = [
-  "Mixing magical ingredients...",
-  "Painting beautiful scenes...",
-  "Writing enchanting words...",
-  "Sprinkling fairy dust...",
-  "Creating adventures...",
-  "Adding sparkles...",
-  "Brewing imagination...",
-  "Crafting wonder...",
-];
-
 interface GeneratingScreenProps {
-  progress: number;
   currentStep: string;
   onCancel?: () => void;
 }
 
-const GeneratingScreen = ({ progress, currentStep, onCancel }: GeneratingScreenProps) => {
+const GeneratingScreen = ({ currentStep, onCancel }: GeneratingScreenProps) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-lg">
       {onCancel && (
         <button
           onClick={onCancel}
-          aria-label="Cancel generation"
+          aria-label="Stop waiting for generation"
           className="absolute top-6 right-6 w-11 h-11 rounded-full glass-card flex items-center justify-center text-foreground/80 hover:text-foreground hover:scale-110 transition-all border border-primary/30 hover:border-primary/60 z-10"
         >
           <X className="w-5 h-5" />
@@ -130,18 +118,18 @@ const GeneratingScreen = ({ progress, currentStep, onCancel }: GeneratingScreenP
             style={{
               background: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--accent)))',
             }}
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.5 }}
+            initial={{ width: '35%', x: '-100%' }}
+            animate={{ x: ['-100%', '300%'] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
 
-        {/* Progress text */}
+        {/* No percentage is available until durable job progress is implemented. */}
         <p className="text-muted-foreground text-sm">
-          {Math.round(progress)}% complete
+          This may take a moment. Your story is still processing.
         </p>
 
-        {/* Fun message rotation */}
+        {/* Processing guidance */}
         <motion.div
           className="mt-8 p-4 glass-card"
           initial={{ opacity: 0 }}
@@ -149,12 +137,11 @@ const GeneratingScreen = ({ progress, currentStep, onCancel }: GeneratingScreenP
           transition={{ delay: 0.5 }}
         >
           <motion.p
-            key={Math.floor(progress / 15)}
             className="text-muted-foreground text-sm italic"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            💫 {bubbleMessages[Math.floor(progress / 15) % bubbleMessages.length]}
+            💫 We’ll show your story once writing and saving are complete.
           </motion.p>
         </motion.div>
       </div>

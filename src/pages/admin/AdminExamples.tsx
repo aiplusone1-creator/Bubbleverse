@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Upload, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Example {

@@ -1,4 +1,4 @@
-import { Globe, ChevronDown } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import {
   Select,
   SelectContent,

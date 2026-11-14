@@ -3,12 +3,7 @@ import { Upload, X, User, Heart, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { readCharacterPhoto } from '@/lib/characterPhoto';
 
-interface Character {
-  id: string;
-  name: string;
-  role: string;
-  imageUrl?: string;
-}
+import type { Character } from '@/features/stories/types';
 
 interface CharacterUploadProps {
   characters: Character[];

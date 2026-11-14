@@ -1,73 +1,73 @@
-# Welcome to your Lovable project
+# Bubbleverse
 
-## Project info
+Personalized children’s storybooks, built incrementally with React, TypeScript, Vite and Supabase.
+The current application generates and previews **text**. Personalized illustrations, PDF export,
+payments and delivery remain on the MVP roadmap; their visible controls are not proof of implementation.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Development
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Use Node 24 (`.nvmrc`). From the existing repository checkout:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm ci
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Vite binds port 8080 and fails clearly if it is occupied. In this machine’s browser, open
+`http://localhost:8080`. A cloud machine’s localhost is separate from your computer’s;
+remote viewing requires the client’s supported preview/port-forwarding or Desktop feature.
+Starting Vite alone does not create a public URL.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The frontend reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
+These are public application settings, not server credentials. Never put service-role or AI keys
+in Vite variables. On the managed cloud machine, use `npm ci --cache /workspace/.npm` if the
+home-directory package cache is not writable.
 
-**Use GitHub Codespaces**
+## Verification
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+npm run check           # zero-warning lint, types/unused-code checks, production build
+npm test                # request validation, architecture/recovery, isolated PostgreSQL tests
+```
 
-## What technologies are used for this project?
+Database tests require Docker and download the digest-pinned PostgreSQL image when absent.
+They create disposable, networkless containers and do not load a hosted database URL.
+The tests simulate selected Supabase contracts; they do not verify hosted Auth/Storage settings.
 
-This project is built with:
+Edge Functions use Deno 2.9.6 with a frozen dependency lock:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sh
+npx --yes --package=deno@2.9.6 deno check --frozen --node-modules-dir=none supabase/functions/generate-story/index.ts supabase/functions/enhance-plot/index.ts
+```
 
-## How can I deploy this project?
+GitHub Actions runs these checks on pull requests and pushes to main.
+Tests use synthetic data and stub AI transport; they do not spend AI credits.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Structure and boundaries
 
-## Can I connect a custom domain to my Lovable project?
+- `src/features/auth`: shared session lifecycle and admin route gate.
+- `src/features/stories`: story contracts, service orchestration and database adapter.
+- `src/components`: visual components; reusable UI primitives remain under `ui/`.
+- `supabase/functions/_shared`: request validation, authenticated quota access, text-provider
+  adapter and story/plot generation. Function entry points only wire these modules together.
+- `supabase/migrations` and `supabase/tests`: schema changes and isolated authorization tests.
 
-Yes, you can!
+See [current architecture](docs/CURRENT_ARCHITECTURE.md), [code review](docs/CODE_REVIEW_AR.md),
+[the MVP plan](docs/MVP_EXECUTION_PLAN_AR.md), and [security rollout notes](docs/WEEK1_PROGRESS_AR.md).
+Earlier audit documents explicitly describe their historical baselines.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Hosted setup is separate
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Do not replay/reset migrations against the configured hosted project during development setup.
+Review deployed schema history and legacy ownership data in independent staging first. The historical
+admin bootstrap was retired in source, but any deployed/reused credential and sessions still require
+owner-led containment. Source removal cannot revoke a real credential.
+
+AI generation is disabled by default in the request-limit migration. Enabling it is an explicit
+operator action after staging/provider/account verification. Deploy compatible schema, functions
+and frontend together. The provider key `LOVABLE_API_KEY` stays in server settings. The editor’s
+Lovable tagging tool was removed; the existing AI gateway remains behind a replaceable adapter.
+
+Current quotas limit request counts, not dollar spend. Durable jobs, atomic server-side story saving,
+private normalized photo uploads/consent/retention, and live payment/delivery validation remain
+required before the commercial MVP is ready.

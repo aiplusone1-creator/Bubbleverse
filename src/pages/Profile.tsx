@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Settings, BookOpen, LogOut, Moon, Sun, Globe, Edit2, Check, DollarSign } from 'lucide-react';
+import { ArrowLeft, Settings, BookOpen, LogOut, Moon, Sun, Globe, Edit2, Check, DollarSign } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,61 +12,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import ImmersiveBackground from '@/components/ImmersiveBackground';
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { useAuth } from '@/hooks/useAuth';
 
 const Profile = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isLoading: loading, signOut } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preferredCurrency, setPreferredCurrency] = useState<'EGP' | 'USD'>('EGP');
   
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage, t, isRTL } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (!session) {
-        navigate('/auth');
-      }
-    });
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setDisplayName(session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '');
-        // Fetch currency preference
-        fetchCurrencyPreference(session.user.id);
-      }
-      setLoading(false);
-      if (!session) {
-        navigate('/auth');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const fetchCurrencyPreference = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('preferred_currency')
-      .eq('user_id', userId)
-      .single();
-    
-    if (data?.preferred_currency) {
-      setPreferredCurrency(data.preferred_currency as 'EGP' | 'USD');
-    }
-  };
+    if (loading) return;
+    if (!user) { navigate('/auth'); return; }
+    setDisplayName(user.user_metadata?.full_name || user.email?.split('@')[0] || '');
+    let active = true;
+    void supabase.from('profiles').select('preferred_currency').eq('user_id', user.id).single()
+      .then(({ data }) => {
+        if (active && (data?.preferred_currency === 'EGP' || data?.preferred_currency === 'USD')) {
+          setPreferredCurrency(data.preferred_currency);
+        }
+      });
+    return () => { active = false; };
+  }, [user, loading, navigate]);
 
   const handleCurrencyChange = async (currency: 'EGP' | 'USD') => {
     setPreferredCurrency(currency);
@@ -79,7 +51,7 @@ const Profile = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate('/');
   };
 

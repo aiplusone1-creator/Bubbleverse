@@ -133,7 +133,7 @@ export default function AdminBrand() {
       const blob = await svgToPng(LOGO_SVG, size, transparent);
       triggerDownload(blob, `bubbleverse-logo-${size}.png`);
       toast.success(`PNG ${size}px downloaded`);
-    } catch (e) {
+    } catch {
       toast.error('Failed to export PNG');
     } finally {
       setBusy(null);

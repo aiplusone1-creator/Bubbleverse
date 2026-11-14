@@ -1,4 +1,4 @@
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Switch } from '@/components/ui/switch';
 import { Sparkles } from 'lucide-react';
 

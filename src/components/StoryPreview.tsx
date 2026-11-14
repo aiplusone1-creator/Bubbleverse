@@ -1,17 +1,12 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Download, RefreshCw, Sparkles, Lock, Crown } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import BubbleButton from './BubbleButton';
 import GlassCard from './GlassCard';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
-interface StoryPage {
-  pageNumber: number;
-  sceneDescription: string;
-  dialogueText: string;
-  panelLayoutType: string;
-}
+import type { StoryPage } from '@/features/stories/types';
 
 interface StoryPreviewProps {
   title: string;
@@ -27,33 +22,8 @@ const FREE_PAGES_LIMIT = 3;
 
 const StoryPreview = ({ title, pages, artStyle, format, onBack, onCreateNew }: StoryPreviewProps) => {
   const [currentPage, setCurrentPage] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isCheckingRole, setIsCheckingRole] = useState(true);
+  const { isAdmin, isLoading: isCheckingRole } = useAuth();
   const { toast } = useToast();
-
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  const checkAdminStatus = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-
-        setIsAdmin(!!data && !error);
-      }
-    } catch {
-      setIsAdmin(false);
-    } finally {
-      setIsCheckingRole(false);
-    }
-  };
 
   // Check if a page is locked for normal users
   const isPageLocked = (pageIndex: number): boolean => {
