@@ -317,7 +317,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_story_inquiry: {
+      submit_story_inquiry: {
         Args: {
           p_request_key: string
           p_country: string
@@ -325,6 +325,7 @@ export type Database = {
           p_language: string
           p_child_first_name: string
           p_shipping_address: string | null
+          p_story: Json
         }
         Returns: Json
       }
@@ -356,9 +357,23 @@ export type Database = {
         Args: { p_order_id: string; p_message: string }
         Returns: undefined
       }
-      correct_story_order: {
-        Args: { p_order_id: string; p_child_first_name: string; p_shipping_address: string | null }
-        Returns: undefined
+      validate_order_story: {
+        Args: { p_story: Json }
+        Returns: Json
+      }
+      resume_story_inquiry: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
+      update_story_inquiry: {
+        Args: {
+          p_order_id: string
+          p_expected_updated_at: string
+          p_child_first_name: string
+          p_shipping_address: string | null
+          p_story: Json
+        }
+        Returns: Json
       }
       is_order_staff: {
         Args: Record<PropertyKey, never>

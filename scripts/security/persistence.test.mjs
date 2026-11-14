@@ -84,8 +84,12 @@ const commitAs = (source, id = user(1)) =>
   `BEGIN; SET LOCAL ROLE authenticated; SET LOCAL "request.jwt.claim.sub" = '${id}'; ${source}; COMMIT;`;
 const save = (key = randomUUID(), body = payload(), owner = user(1)) => ok(commitAs(call(key, body, owner), owner));
 const total = () => ok(`SELECT (SELECT count(*) FROM public.stories)::text || '/' || (SELECT count(*) FROM public.characters)::text || '/' || (SELECT count(*) FROM public.pages)::text || '/' || (SELECT count(*) FROM public.story_save_requests)::text`);
-const inquiry = (key, name = 'Synthetic child') =>
-  `SELECT public.create_story_inquiry('${key}', 'EG', 'digital_pdf', 'ar', '${name}', NULL)`;
+const orderStory = () => ({
+  storyLength: 'short', storyFormat: 'storyboard', artStyle: 'watercolor', customArtStyle: '',
+  plotMode: 'auto', customPlot: '', characters: [{ name: 'Synthetic hero', role: 'hero' }], interests: ['space'],
+});
+const inquiry = (key, name = 'Synthetic child', story = orderStory()) =>
+  `SELECT public.submit_story_inquiry('${key}', 'EG', 'digital_pdf', 'ar', '${name}', NULL, ${literal(story)})`;
 
 test('order inquiry retries are owner-scoped and cannot change payment or expose staff data', () => {
   const key = randomUUID();
@@ -100,7 +104,65 @@ test('order inquiry retries are owner-scoped and cannot change payment or expose
   const owner = JSON.parse(ok(asUser(`SELECT public.get_story_order('${result.id}')`)));
   assert.equal(owner.paymentStatus, 'unpaid');
   assert.equal(Object.hasOwn(owner, 'internalNotes'), false);
+  denied(`SELECT public.create_story_inquiry('${key}', 'EG', 'digital_pdf', 'ar', 'Synthetic', NULL)`);
+  denied(inquiry(randomUUID(), 'Synthetic', { ...orderStory(), photoPath: 'private/test' }), '22023');
+  denied(`INSERT INTO public.user_roles(user_id, role) VALUES ('${user(1)}', 'operator')`);
+  denied('SELECT * FROM public.b2b_inquiries');
   ok(`DELETE FROM public.story_orders WHERE id = '${result.id}'`);
+});
+
+test('concurrent inquiry retries snapshot server pricing and survive a customer correction', async () => {
+  const key = randomUUID();
+  ok("INSERT INTO public.order_prices VALUES ('EG', 'digital_pdf', 1, 12300, 2000)");
+  const results = await Promise.all([1, 2].map(() => sqlAsync(commitAs(inquiry(key)))));
+  assert.ok(results.every(result => result.status === 0));
+  const orders = results.map(result => JSON.parse(result.stdout));
+  const { id } = orders[0];
+  assert.equal(orders[1].id, id);
+  const resume = `SELECT public.resume_story_inquiry('${id}')`;
+  denied(resume, 'PT404', user(2));
+  const before = JSON.parse(ok(asUser(resume)));
+  assert.equal(before.totalMinor, 12300);
+  assert.equal(before.photoUploadEnabled, false);
+  assert.equal(before.editable, false);
+  const update = (timestamp) => `SELECT public.update_story_inquiry('${id}', '${timestamp}',
+    'Corrected synthetic child', NULL, ${literal({ ...orderStory(), interests: ['music'] })})`;
+  denied(update(before.updatedAt), 'PT409');
+  denied(`SELECT public.request_order_correction('${id}', 'Please correct')`);
+  ok(commitAs(`SELECT public.request_order_correction('${id}', 'Please correct')`, user(3)));
+  const correction = JSON.parse(ok(asUser(resume)));
+  assert.equal(correction.editable, true);
+  denied(update(before.updatedAt), 'PT409');
+  const changes = await Promise.all([1, 2].map(() => sqlAsync(commitAs(update(correction.updatedAt)))));
+  assert.equal(changes.filter(result => result.status === 0).length, 1);
+  assert.match(changes.find(result => result.status !== 0).stderr, /PT409/);
+  const updated = JSON.parse(changes.find(result => result.status === 0).stdout);
+  assert.deepEqual(updated.story.interests, ['music']);
+  assert.equal(updated.editable, false);
+  assert.equal(JSON.parse(ok(commitAs(inquiry(key)))).id, id);
+  denied(inquiry(key, 'Corrected synthetic child'), 'PT409');
+  ok(`DELETE FROM public.story_orders WHERE id = '${id}';
+     DELETE FROM public.order_prices WHERE country = 'EG' AND format = 'digital_pdf' AND version = 1`);
+});
+
+test('order photo bucket denies customer access even with a broad permissive Storage policy', () => {
+  ok(`INSERT INTO storage.objects (bucket_id, name) VALUES ('order-child-photos', 'synthetic');
+     CREATE POLICY order_photo_test_allow ON storage.objects FOR ALL TO authenticated USING (true) WITH CHECK (true)`);
+  assert.equal(ok(asUser("SELECT count(*) FROM storage.objects WHERE bucket_id = 'order-child-photos'")), '0');
+  denied("INSERT INTO storage.objects (bucket_id, name) VALUES ('order-child-photos', 'synthetic-write')");
+  ok(`DROP POLICY order_photo_test_allow ON storage.objects;
+     DELETE FROM storage.objects WHERE bucket_id = 'order-child-photos'`);
+});
+
+test('B2B intake is authenticated and keeps submitted contact records private', () => {
+  const submit = `SELECT public.submit_b2b_inquiry('Synthetic school', 'Synthetic contact',
+    'contact@example.invalid', '+20123456789', 'EG', 'digital_pdf', 'ar', 12, NULL)`;
+  denied(submit, '42501', user(1), 'anon');
+  const id = ok(commitAs(submit));
+  assert.match(id, /^[0-9a-f-]{36}$/);
+  denied(`SELECT contact_email FROM public.b2b_inquiries WHERE id = '${id}'`, '42501', user(2));
+  assert.equal(ok(`SELECT customer_id FROM public.b2b_inquiries WHERE id = '${id}'`), user(1));
+  ok(`DELETE FROM public.b2b_inquiries WHERE id = '${id}'`);
 });
 
 test('concurrent order claims have one winner and private detail stays assignment-scoped', async () => {
@@ -121,6 +183,10 @@ test('concurrent order claims have one winner and private detail stays assignmen
   denied(detail, 'PT404', operators[loser]);
   const winner = operators[1 - loser];
   assert.equal(JSON.parse(ok(asUser(detail, winner))).assignedOperatorId, winner);
+  const assign = `SELECT public.assign_story_order('${id}', '${operators[loser]}')`;
+  denied(assign, '42501', winner);
+  assert.equal(ok(commitAs(assign, user(3))), id);
+  denied(detail, 'PT404', winner);
   ok(`DELETE FROM public.story_orders WHERE id = '${id}'`);
 });
 function sqlAsync(source) {

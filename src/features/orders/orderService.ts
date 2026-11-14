@@ -4,6 +4,17 @@ export type OrderCountry = 'EG' | 'SA';
 export type OrderFormat = 'digital_pdf' | 'hardcopy_book';
 export type OrderLanguage = 'ar' | 'en';
 
+export type OrderStoryConfiguration = {
+  storyLength: 'short' | 'medium' | 'epic';
+  storyFormat: 'comic' | 'storyboard';
+  artStyle: 'disney' | 'pixar' | 'watercolor' | 'anime' | 'realistic' | 'comic' | 'pastel' | 'horror' | 'custom';
+  customArtStyle: string;
+  plotMode: 'auto' | 'manual';
+  customPlot: string;
+  characters: { name: string; role: 'hero' | 'parent' | 'pet' | 'friend' }[];
+  interests: string[];
+};
+
 export interface StoryInquiry {
   requestKey: string;
   country: OrderCountry;
@@ -11,6 +22,7 @@ export interface StoryInquiry {
   language: OrderLanguage;
   childFirstName: string;
   shippingAddress: string | null;
+  story: OrderStoryConfiguration;
 }
 
 export interface OrderQuote {
@@ -36,15 +48,80 @@ export async function getOrderQuote(country: OrderCountry, format: OrderFormat):
   return data as unknown as OrderQuote;
 }
 
+export interface StoryInquiryDetail extends OrderAcknowledgment {
+  language: OrderLanguage;
+  childFirstName: string;
+  shippingAddress: string | null;
+  story: OrderStoryConfiguration | null;
+  editable: boolean;
+  photoUploadEnabled: false;
+  correctionRequest: string | null;
+  paymentStatus: 'unpaid' | 'verification_pending' | 'paid';
+  generationStatus: 'idle' | 'running' | 'failed' | 'complete';
+  fulfillmentStatus: 'pending' | 'printing' | 'shipping' | 'delivered';
+  priceVersion: number | null;
+  totalMinor: number | null;
+  depositMinor: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StoryInquirySummary {
+  id: string;
+  reference: string;
+  country: OrderCountry;
+  format: OrderFormat;
+  status: string;
+  payment_status: StoryInquiryDetail['paymentStatus'];
+  generation_status: StoryInquiryDetail['generationStatus'];
+  fulfillment_status: StoryInquiryDetail['fulfillmentStatus'];
+  correction_request: string | null;
+  created_at: string;
+}
+
+export async function validateOrderStory(story: OrderStoryConfiguration): Promise<OrderStoryConfiguration> {
+  const { data, error } = await supabase.rpc('validate_order_story', { p_story: story });
+  if (error) throw error;
+  return data as OrderStoryConfiguration;
+}
+
 export async function createStoryInquiry(input: StoryInquiry): Promise<OrderAcknowledgment> {
-  const { data, error } = await supabase.rpc('create_story_inquiry', {
+  const { data, error } = await supabase.rpc('submit_story_inquiry', {
     p_request_key: input.requestKey,
     p_country: input.country,
     p_format: input.format,
     p_language: input.language,
     p_child_first_name: input.childFirstName,
     p_shipping_address: input.shippingAddress,
+    p_story: input.story,
   });
   if (error) throw error;
   return data as unknown as OrderAcknowledgment;
+}
+
+export async function listStoryInquiries(before?: string): Promise<StoryInquirySummary[]> {
+  const { data, error } = await supabase.rpc('list_story_orders', { p_before: before });
+  if (error) throw error;
+  return data as unknown as StoryInquirySummary[];
+}
+
+export async function resumeStoryInquiry(orderId: string): Promise<StoryInquiryDetail> {
+  const { data, error } = await supabase.rpc('resume_story_inquiry', { p_order_id: orderId });
+  if (error) throw error;
+  return data as unknown as StoryInquiryDetail;
+}
+
+export async function updateStoryInquiry(input: Pick<StoryInquiry, 'childFirstName' | 'shippingAddress' | 'story'> & {
+  orderId: string;
+  expectedUpdatedAt: string;
+}): Promise<StoryInquiryDetail> {
+  const { data, error } = await supabase.rpc('update_story_inquiry', {
+    p_order_id: input.orderId,
+    p_expected_updated_at: input.expectedUpdatedAt,
+    p_child_first_name: input.childFirstName,
+    p_shipping_address: input.shippingAddress,
+    p_story: input.story,
+  });
+  if (error) throw error;
+  return data as unknown as StoryInquiryDetail;
 }
