@@ -26,7 +26,7 @@ const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
       transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.2 }}
     >
       <div className="flex items-center justify-between gap-1 sm:gap-2">
-        <div className="shrink min-w-0 [&_.w-12]:w-8 [&_.w-12]:h-8 sm:[&_.w-12]:w-12 sm:[&_.w-12]:h-12 [&_h1]:text-lg sm:[&_h1]:text-2xl [&_h1+div]:hidden sm:[&_h1+div]:flex">
+        <div className="shrink min-w-0 [&_.w-12]:w-8 [&_.w-12]:h-8 sm:[&_.w-12]:w-12 sm:[&_.w-12]:h-12 [&_h1]:text-base sm:[&_h1]:text-2xl [&_h1+div]:hidden sm:[&_h1+div]:flex">
           <BubbleverseLogo />
         </div>
 
@@ -37,7 +37,7 @@ const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
               variant="ghost"
               size="icon"
               onClick={onToggleMascot}
-              className={`glass-card h-8 w-8 sm:h-10 sm:w-10 p-0 border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all ${
+              className={`glass-card h-8 w-8 sm:h-10 sm:w-10 p-0 border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all touch-manipulation relative before:absolute before:-inset-1 before:content-[''] ${
                 showMascot ? 'text-primary' : 'text-muted-foreground'
               }`}
               title={showMascot ? t('hideBub') : t('showBub')}
@@ -51,10 +51,20 @@ const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
           <Button
             variant="ghost"
             onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-            className="glass-card h-8 px-2 sm:h-10 sm:px-3 border-primary/20 hover:border-primary/40 hover:bg-primary/10 text-xs sm:text-sm font-medium"
+            className="glass-card h-8 px-2 sm:h-10 sm:px-3 border-primary/20 hover:border-primary/40 hover:bg-primary/10 text-xs sm:text-sm font-medium touch-manipulation relative before:absolute before:-inset-1 before:content-['']"
             aria-label={language === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
           >
-            {language === 'en' ? 'العربية' : 'English'}
+            {language === 'en' ? (
+              <>
+                <span className="hidden min-[380px]:inline">العربية</span>
+                <span className="min-[380px]:hidden">عربي</span>
+              </>
+            ) : (
+              <>
+                <span className="hidden min-[380px]:inline">English</span>
+                <span className="min-[380px]:hidden">EN</span>
+              </>
+            )}
           </Button>
 
           {/* Theme Toggle */}
@@ -62,7 +72,7 @@ const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="glass-card h-8 w-8 sm:h-10 sm:w-10 p-0 border-primary/20 hover:border-primary/40 hover:bg-primary/10"
+            className="glass-card h-8 w-8 sm:h-10 sm:w-10 p-0 border-primary/20 hover:border-primary/40 hover:bg-primary/10 touch-manipulation relative before:absolute before:-inset-1 before:content-['']"
             title={theme === 'dark' ? t('lightMode') : t('darkMode')}
             aria-label={theme === 'dark' ? t('lightMode') : t('darkMode')}
           >
@@ -76,7 +86,7 @@ const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="glass-card h-8 w-8 sm:h-10 sm:w-10 p-0 border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/10"
+                className="glass-card h-8 w-8 sm:h-10 sm:w-10 p-0 border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/10 touch-manipulation relative before:absolute before:-inset-1 before:content-['']"
                 title="Admin Panel"
                 aria-label="Admin Panel"
               >
@@ -89,7 +99,7 @@ const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
           {user ? (
             <Link to="/profile">
               <Button
-                className="bubble-button h-8 px-2 sm:h-10 sm:px-4 text-xs sm:text-sm md:text-base flex items-center gap-1.5 sm:gap-2"
+                className="bubble-button h-8 px-2 sm:h-10 sm:px-4 text-xs sm:text-sm md:text-base flex items-center gap-1.5 sm:gap-2 touch-manipulation relative before:absolute before:-inset-1 before:content-['']"
                 aria-label={t('profile')}
               >
                 <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -99,7 +109,7 @@ const Header = ({ showMascot, onToggleMascot }: HeaderProps) => {
           ) : (
             <Link to="/auth">
               <Button
-                className="bubble-button h-8 px-2 sm:h-10 sm:px-4 text-xs sm:text-sm md:text-base flex items-center gap-1.5 sm:gap-2"
+                className="bubble-button h-8 px-2 sm:h-10 sm:px-4 text-xs sm:text-sm md:text-base flex items-center gap-1.5 sm:gap-2 touch-manipulation relative before:absolute before:-inset-1 before:content-['']"
                 aria-label={t('signIn')}
               >
                 <LogIn className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
