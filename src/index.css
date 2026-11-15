@@ -4,141 +4,131 @@
 
 @layer base {
   :root {
-    /* Bubbleverse Premium Whimsical Editorial Palette — Dark Foundation Default */
-    --background: 224 37% 8%; /* Midnight Navy #0D111C */
-    --foreground: 40 33% 97%;  /* Warm Ivory #FAF8F4 */
+    /* Bubbleverse Magical Color Palette — Vibrant Cyan / Purple / Pink Identity */
+    --background: 220 60% 8%;
+    --foreground: 200 100% 98%;
 
-    --card: 234 34% 13%;      /* Deep Twilight Indigo surface */
-    --card-foreground: 40 33% 97%;
+    --card: 220 40% 12%;
+    --card-foreground: 200 100% 98%;
 
-    --popover: 234 34% 13%;
-    --popover-foreground: 40 33% 97%;
+    --popover: 220 40% 12%;
+    --popover-foreground: 200 100% 98%;
 
-    /* Starlight Gold - Primary #F5A623 */
-    --primary: 37 91% 55%;
-    --primary-foreground: 224 37% 8%;
-    --primary-glow: 37 91% 72%;
+    /* Iridescent Cyan - Primary */
+    --primary: 190 100% 50%;
+    --primary-foreground: 220 60% 8%;
+    --primary-glow: 190 100% 70%;
 
-    /* Pearl Lavender - Secondary #C9B8E6 */
-    --secondary: 262 48% 81%;
-    --secondary-foreground: 224 37% 8%;
+    /* Magical Pink/Lavender - Secondary */
+    --secondary: 280 60% 75%;
+    --secondary-foreground: 220 60% 8%;
 
     /* Soft magical muted tones */
-    --muted: 234 25% 18%;
-    --muted-foreground: 220 20% 72%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 200 40% 70%;
 
-    /* Soft Rose - Accent #E7BDD1 */
-    --accent: 331 46% 82%;
-    --accent-foreground: 224 37% 8%;
+    /* Accent - Bubble Iridescent Fuchsia/Pink */
+    --accent: 300 80% 70%;
+    --accent-foreground: 220 60% 8%;
 
-    --destructive: 0 72% 58%;
-    --destructive-foreground: 40 33% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-    /* Editorial glassmorphism borders */
-    --border: 234 25% 20%;
-    --input: 234 25% 18%;
-    --ring: 37 91% 55%;
+    /* Glassmorphism borders */
+    --border: 200 40% 30%;
+    --input: 200 30% 25%;
+    --ring: 190 100% 50%;
 
     --radius: 1rem;
 
-    /* Custom Editorial Tokens */
-    --midnight-navy: 224 37% 8%;
-    --twilight-indigo: 234 34% 15%;
-    --warm-ivory: 40 33% 97%;
-    --paper-white: 40 100% 99%;
-    --pearl-lavender: 262 48% 81%;
-    --mist-blue: 196 36% 75%;
-    --soft-rose: 331 46% 82%;
-    --starlight-gold: 37 91% 55%;
+    /* Custom Bubbleverse tokens */
+    --bubble-cyan: 190 100% 50%;
+    --bubble-pink: 320 80% 70%;
+    --bubble-lavender: 280 60% 75%;
+    --bubble-gold: 45 100% 60%;
+    --glass-bg: 220 40% 15%;
+    --glass-border: 200 60% 60%;
 
-    --bubble-cyan: 196 36% 75%; /* Mist Blue */
-    --bubble-pink: 331 46% 82%; /* Soft Rose */
-    --bubble-lavender: 262 48% 81%; /* Pearl Lavender */
-    --bubble-gold: 37 91% 55%; /* Starlight Gold */
-    --glass-bg: 234 34% 14%;
-    --glass-border: 262 35% 45%;
+    /* Gradients as CSS variables */
+    --gradient-magical: linear-gradient(135deg, hsl(190 100% 50%), hsl(280 60% 75%), hsl(320 80% 70%));
+    --gradient-button: linear-gradient(135deg, hsl(190 100% 55%), hsl(200 100% 60%));
+    --gradient-button-hover: linear-gradient(135deg, hsl(190 100% 65%), hsl(210 100% 70%));
+    --gradient-background: radial-gradient(ellipse at 50% 0%, hsl(280 40% 20%) 0%, hsl(220 60% 8%) 70%);
 
-    /* Restrained, luxurious gradients */
-    --gradient-magical: linear-gradient(135deg, hsl(37 91% 60%), hsl(262 48% 81%), hsl(331 46% 82%));
-    --gradient-button: linear-gradient(135deg, hsl(37 91% 55%), hsl(26 90% 58%));
-    --gradient-button-hover: linear-gradient(135deg, hsl(37 95% 62%), hsl(28 92% 64%));
-    --gradient-background: radial-gradient(ellipse at 50% -10%, hsl(234 34% 18%) 0%, hsl(224 37% 8%) 70%);
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(190 100% 50% / 0.4);
+    --shadow-bubble: 0 8px 32px hsl(190 100% 50% / 0.2);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.3);
 
-    /* Soft, multi-layered shadows */
-    --shadow-glow: 0 0 35px hsl(37 91% 55% / 0.25);
-    --shadow-bubble: 0 10px 30px -5px hsl(262 48% 81% / 0.2);
-    --shadow-card: 0 12px 36px -4px hsl(224 40% 4% / 0.5), 0 4px 12px -2px hsl(224 40% 4% / 0.3);
-
-    --sidebar-background: 224 37% 8%;
-    --sidebar-foreground: 40 33% 97%;
-    --sidebar-primary: 37 91% 55%;
-    --sidebar-primary-foreground: 224 37% 8%;
-    --sidebar-accent: 262 48% 81%;
-    --sidebar-accent-foreground: 224 37% 8%;
-    --sidebar-border: 234 25% 20%;
-    --sidebar-ring: 37 91% 55%;
+    --sidebar-background: 220 60% 8%;
+    --sidebar-foreground: 200 100% 98%;
+    --sidebar-primary: 190 100% 50%;
+    --sidebar-primary-foreground: 220 60% 8%;
+    --sidebar-accent: 280 60% 75%;
+    --sidebar-accent-foreground: 220 60% 8%;
+    --sidebar-border: 200 40% 30%;
+    --sidebar-ring: 190 100% 50%;
   }
 
   .light {
-    /* Warm Ivory & Paper White Foundation */
-    --background: 40 33% 97%;  /* Warm Ivory #FAF8F4 */
-    --foreground: 224 37% 12%; /* Deep Midnight Ink */
-    --card: 40 100% 99%;       /* Soft Paper White #FFFDF9 */
-    --card-foreground: 224 37% 12%;
-    --popover: 40 100% 99%;
-    --popover-foreground: 224 37% 12%;
-    --primary: 37 95% 42%;     /* Starlight Amber/Gold (AAA contrast) */
-    --primary-foreground: 40 100% 99%;
-    --primary-glow: 37 95% 55%;
-    --secondary: 262 45% 58%;
-    --secondary-foreground: 40 100% 99%;
-    --muted: 40 20% 92%;
-    --muted-foreground: 224 20% 42%;
-    --accent: 331 45% 60%;
-    --accent-foreground: 40 100% 99%;
-    --destructive: 0 75% 50%;
-    --destructive-foreground: 40 100% 99%;
-    --border: 40 20% 86%;
-    --input: 40 20% 88%;
-    --ring: 37 95% 42%;
+    --background: 210 40% 96%;
+    --foreground: 220 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 15%;
+    --primary: 190 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 190 100% 60%;
+    --secondary: 280 60% 65%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 30% 90%;
+    --muted-foreground: 220 20% 40%;
+    --accent: 300 70% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 30% 80%;
+    --input: 210 30% 85%;
+    --ring: 190 100% 40%;
     
-    --bubble-cyan: 196 45% 50%;
-    --bubble-pink: 331 50% 65%;
-    --bubble-lavender: 262 45% 65%;
-    --bubble-gold: 37 95% 45%;
-    --glass-bg: 40 100% 99%;
-    --glass-border: 40 25% 82%;
+    --bubble-cyan: 190 100% 40%;
+    --bubble-pink: 320 70% 60%;
+    --bubble-lavender: 280 50% 65%;
+    --bubble-gold: 45 100% 50%;
+    --glass-bg: 0 0% 100%;
+    --glass-border: 200 50% 70%;
     
-    --gradient-magical: linear-gradient(135deg, hsl(37 95% 42%), hsl(262 45% 58%), hsl(331 45% 60%));
-    --gradient-button: linear-gradient(135deg, hsl(37 95% 44%), hsl(26 90% 50%));
-    --gradient-button-hover: linear-gradient(135deg, hsl(37 95% 48%), hsl(28 92% 54%));
-    --gradient-background: radial-gradient(ellipse at 50% -10%, hsl(40 40% 94%) 0%, hsl(40 33% 97%) 70%);
+    --gradient-magical: linear-gradient(135deg, hsl(190 100% 40%), hsl(280 60% 65%), hsl(320 70% 60%));
+    --gradient-button: linear-gradient(135deg, hsl(190 100% 42%), hsl(200 100% 48%));
+    --gradient-button-hover: linear-gradient(135deg, hsl(190 100% 48%), hsl(210 100% 55%));
+    --gradient-background: radial-gradient(ellipse at 50% 0%, hsl(280 30% 90%) 0%, hsl(210 40% 96%) 70%);
 
-    --shadow-glow: 0 0 35px hsl(37 95% 42% / 0.15);
-    --shadow-bubble: 0 10px 30px -5px hsl(262 45% 58% / 0.12);
-    --shadow-card: 0 12px 36px -4px hsl(40 25% 65% / 0.25), 0 4px 12px -2px hsl(40 25% 65% / 0.15);
+    --shadow-glow: 0 0 30px hsl(190 100% 40% / 0.25);
+    --shadow-bubble: 0 8px 30px hsl(190 100% 40% / 0.15);
+    --shadow-card: 0 10px 30px hsl(220 30% 15% / 0.1);
   }
 
   .dark {
-    --background: 224 37% 8%;
-    --foreground: 40 33% 97%;
-    --card: 234 34% 13%;
-    --card-foreground: 40 33% 97%;
-    --popover: 234 34% 13%;
-    --popover-foreground: 40 33% 97%;
-    --primary: 37 91% 55%;
-    --primary-foreground: 224 37% 8%;
-    --secondary: 262 48% 81%;
-    --secondary-foreground: 224 37% 8%;
-    --muted: 234 25% 18%;
-    --muted-foreground: 220 20% 72%;
-    --accent: 331 46% 82%;
-    --accent-foreground: 224 37% 8%;
-    --destructive: 0 62.8% 45%;
-    --destructive-foreground: 40 33% 98%;
-    --border: 234 25% 20%;
-    --input: 234 25% 18%;
-    --ring: 37 91% 55%;
+    --background: 220 60% 8%;
+    --foreground: 200 100% 98%;
+    --card: 220 40% 12%;
+    --card-foreground: 200 100% 98%;
+    --popover: 220 40% 12%;
+    --popover-foreground: 200 100% 98%;
+    --primary: 190 100% 50%;
+    --primary-foreground: 220 60% 8%;
+    --secondary: 280 60% 75%;
+    --secondary-foreground: 220 60% 8%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 200 40% 70%;
+    --accent: 300 80% 70%;
+    --accent-foreground: 220 60% 8%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 200 40% 30%;
+    --input: 200 30% 25%;
+    --ring: 190 100% 50%;
   }
 }
 
@@ -159,7 +149,7 @@
     min-height: 100dvh;
   }
 
-  /* First-class typography styling for Premium Whimsical Editorial */
+  /* First-class typography styling for display headings */
   .font-editorial {
     font-family: 'Playfair Display', Georgia, Cambria, 'Amiri', serif;
     letter-spacing: -0.015em;
@@ -174,87 +164,127 @@
 }
 
 @layer components {
-  /* Premium Glassmorphism Card (Restrained & Elegant) */
+  /* Glassmorphism Card with Magical Cyan/Purple Horizon Highlight */
   .glass-card {
     @apply relative overflow-hidden rounded-2xl;
     background: linear-gradient(
       135deg,
-      hsl(var(--card) / 0.8),
-      hsl(var(--card) / 0.55)
+      hsl(var(--glass-bg) / 0.6),
+      hsl(var(--glass-bg) / 0.3)
     );
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(var(--border) / 0.6);
+    border: 1px solid hsl(var(--glass-border) / 0.3);
     box-shadow: 
-      var(--shadow-card),
-      inset 0 1px 0 0 hsl(var(--foreground) / 0.08);
+      0 8px 32px hsl(0 0% 0% / 0.2),
+      inset 0 1px 0 hsl(var(--glass-border) / 0.2);
     transition: transform 200ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms ease, border-color 200ms ease;
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary) / 0.5),
+      hsl(var(--secondary) / 0.5),
+      transparent
+    );
   }
 
   @media (hover: hover) and (pointer: fine) {
     .glass-card:hover {
-      border-color: hsl(var(--primary) / 0.35);
+      border-color: hsl(var(--primary) / 0.4);
       box-shadow: 
-        var(--shadow-card),
-        0 0 25px hsl(var(--primary) / 0.1),
-        inset 0 1px 0 0 hsl(var(--foreground) / 0.15);
+        0 12px 36px hsl(0 0% 0% / 0.25),
+        0 0 25px hsl(var(--primary) / 0.15),
+        inset 0 1px 0 hsl(var(--glass-border) / 0.3);
     }
   }
 
-  /* Bubble Button — Emil Kowalski & Apple Design Polish */
+  /* Bubble Button — Vibrant Cyan / Iridescent */
   .bubble-button {
     @apply relative px-8 py-3.5 rounded-full font-semibold text-base sm:text-lg overflow-hidden select-none touch-manipulation inline-flex items-center justify-center;
     background: var(--gradient-button);
     color: hsl(var(--primary-foreground));
     box-shadow: 
-      0 4px 18px hsl(var(--primary) / 0.3),
-      inset 0 1px 1px hsl(0 0% 100% / 0.35);
+      0 4px 20px hsl(var(--primary) / 0.4),
+      inset 0 2px 4px hsl(0 0% 100% / 0.25);
     transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), box-shadow 150ms ease, background 150ms ease;
   }
 
   @media (hover: hover) and (pointer: fine) {
     .bubble-button:hover {
       background: var(--gradient-button-hover);
-      transform: translateY(-1.5px) scale(1.02);
+      transform: translateY(-2px) scale(1.03);
       box-shadow: 
-        0 8px 26px hsl(var(--primary) / 0.4),
-        inset 0 1px 2px hsl(0 0% 100% / 0.45);
+        0 8px 30px hsl(var(--primary) / 0.5),
+        inset 0 2px 4px hsl(0 0% 100% / 0.35);
     }
   }
 
   .bubble-button:active {
     transform: scale(0.97);
-    box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
+    box-shadow: 0 2px 10px hsl(var(--primary) / 0.3);
   }
 
-  /* Secondary Bubble Button */
+  .bubble-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: hsl(0 0% 100% / 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+  }
+
+  .bubble-button:active::after {
+    width: 200%;
+    height: 200%;
+  }
+
+  /* Secondary Bubble Button — Purple/Pink */
   .bubble-button-secondary {
     @apply bubble-button;
     background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)));
     color: hsl(var(--secondary-foreground));
     box-shadow: 
-      0 4px 18px hsl(var(--secondary) / 0.3),
-      inset 0 1px 1px hsl(0 0% 100% / 0.3);
+      0 4px 20px hsl(var(--secondary) / 0.4),
+      inset 0 2px 4px hsl(0 0% 100% / 0.25);
   }
 
-  /* Outline Bubble Button (Editorial Frame) */
+  @media (hover: hover) and (pointer: fine) {
+    .bubble-button-secondary:hover {
+      box-shadow: 
+        0 8px 30px hsl(var(--secondary) / 0.5),
+        inset 0 2px 4px hsl(0 0% 100% / 0.35);
+    }
+  }
+
+  /* Outline Bubble Button */
   .bubble-button-outline {
     @apply relative px-8 py-3.5 rounded-full font-semibold text-base sm:text-lg overflow-hidden select-none touch-manipulation inline-flex items-center justify-center;
-    background: hsl(var(--card) / 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: hsl(var(--foreground));
-    border: 1px solid hsl(var(--border) / 0.8);
-    box-shadow: 0 4px 16px -2px hsl(0 0% 0% / 0.1);
-    transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), border-color 150ms ease, background 150ms ease;
+    background: transparent;
+    color: hsl(var(--primary));
+    border: 2px solid hsl(var(--primary) / 0.5);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
+    transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
   }
 
   @media (hover: hover) and (pointer: fine) {
     .bubble-button-outline:hover {
-      background: hsl(var(--card) / 0.8);
-      border-color: hsl(var(--primary) / 0.5);
-      color: hsl(var(--primary));
-      transform: translateY(-1.5px);
+      background: hsl(var(--primary) / 0.12);
+      border-color: hsl(var(--primary));
+      box-shadow: 0 0 30px hsl(var(--primary) / 0.4);
+      transform: translateY(-2px) scale(1.02);
     }
   }
 
@@ -270,15 +300,15 @@
     background-clip: text;
   }
 
-  /* Refined Starlight Gold Editorial Text */
+  /* Backward compatibility alias mapped directly to magical gradient */
   .text-editorial-gold {
-    background: linear-gradient(135deg, hsl(37 95% 62%), hsl(26 90% 55%));
+    background: var(--gradient-magical);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Glow Effect */
+  /* Glow Effects */
   .glow-cyan {
     box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
   }

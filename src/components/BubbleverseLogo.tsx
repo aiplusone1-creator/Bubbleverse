@@ -2,10 +2,9 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 
 /**
- * Bubbleverse Logo — Premium Whimsical Editorial Redesign
- * - Iridescent soap-bubble mark with Starlight Gold, Pearl Lavender, and Mist Blue reflections
- * - Refined editorial typography with gentle starlight shimmer
- * - Fully respects prefers-reduced-motion
+ * Bubbleverse Logo — Restored Original Magical Identity
+ * - Iridescent soap-bubble mark with vibrant Cyan, Purple, and Pink reflections
+ * - Preserves responsive hierarchy (320px..1280px) and prefers-reduced-motion
  */
 const BubbleverseLogo = () => {
   const { resolvedTheme } = useTheme();
@@ -25,32 +24,32 @@ const BubbleverseLogo = () => {
         animate={shouldReduceMotion ? {} : { y: [0, -2, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
       >
-        {/* Ambient warm starlight & lavender glow halo */}
+        {/* Ambient vibrant cyan/purple/pink glow halo */}
         <div
-          className="absolute -inset-1.5 rounded-full blur-lg opacity-60"
+          className="absolute -inset-1.5 rounded-full blur-lg opacity-70"
           style={{
             background:
-              'radial-gradient(circle, hsla(37,91%,55%,.35) 0%, hsla(262,48%,81%,.3) 50%, transparent 75%)',
+              'conic-gradient(from 0deg, hsla(190,100%,70%,.7), hsla(280,90%,70%,.7), hsla(330,100%,75%,.6), hsla(190,100%,70%,.7))',
           }}
         />
 
-        {/* Orbiting celestial satellites */}
+        {/* Orbiting micro-bubbles */}
         {!shouldReduceMotion && (
           <>
             <motion.div
               className="absolute inset-0"
               animate={{ rotate: 360 }}
-              transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
+              transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
             >
-              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-200/90 shadow-[0_0_8px_hsla(37,91%,65%,.9)]" />
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-rose-200/80 shadow-[0_0_6px_hsla(331,46%,82%,.9)]" />
+              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-cyan-200/90 shadow-[0_0_8px_hsla(190,100%,80%,.9)]" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-fuchsia-200/80 shadow-[0_0_6px_hsla(300,100%,80%,.9)]" />
             </motion.div>
             <motion.div
               className="absolute inset-0"
               animate={{ rotate: -360 }}
-              transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
             >
-              <span className="absolute top-1/2 left-0 -translate-y-1/2 w-1 h-1 rounded-full bg-violet-200/80 shadow-[0_0_6px_hsla(262,48%,81%,.9)]" />
+              <span className="absolute top-1/2 left-0 -translate-y-1/2 w-1 h-1 rounded-full bg-violet-200/80 shadow-[0_0_6px_hsla(270,100%,80%,.9)]" />
             </motion.div>
           </>
         )}
@@ -59,12 +58,11 @@ const BubbleverseLogo = () => {
         <div
           className="absolute inset-1 rounded-full overflow-hidden"
           style={{
-            background: isDark
-              ? 'radial-gradient(circle at 32% 28%, hsla(0,0%,100%,.95), hsla(37,91%,65%,.75) 25%, hsla(262,48%,75%,.65) 55%, hsla(331,46%,75%,.5) 80%, hsla(234,34%,15%,.7) 100%)'
-              : 'radial-gradient(circle at 32% 28%, hsla(0,0%,100%,.95), hsla(37,91%,60%,.65) 25%, hsla(262,45%,65%,.6) 55%, hsla(331,45%,70%,.45) 80%, hsla(40,33%,90%,.6) 100%)',
+            background:
+              'radial-gradient(circle at 32% 28%, hsla(0,0%,100%,.95), hsla(190,100%,75%,.85) 28%, hsla(260,90%,70%,.75) 55%, hsla(320,90%,70%,.6) 78%, hsla(220,80%,40%,.7) 100%)',
             boxShadow: isDark
-              ? 'inset 0 0 14px hsla(0,0%,100%,.3), inset -4px -6px 14px hsla(234,34%,20%,.6), 0 6px 20px hsla(37,91%,55%,.25)'
-              : 'inset 0 0 14px hsla(0,0%,100%,.55), inset -4px -6px 14px hsla(262,45%,60%,.25), 0 6px 20px hsla(37,91%,45%,.2)',
+              ? 'inset 0 0 16px hsla(0,0%,100%,.35), inset -4px -6px 14px hsla(260,80%,40%,.5), 0 6px 24px hsla(190,100%,50%,.35)'
+              : 'inset 0 0 16px hsla(0,0%,100%,.55), inset -4px -6px 14px hsla(260,80%,40%,.35), 0 6px 24px hsla(190,100%,50%,.3)',
           }}
         >
           {/* Subtle iridescent sheen */}
@@ -73,18 +71,18 @@ const BubbleverseLogo = () => {
               className="absolute inset-0"
               style={{
                 background:
-                  'linear-gradient(120deg, transparent 30%, hsla(0,0%,100%,.4) 50%, transparent 70%)',
+                  'linear-gradient(120deg, transparent 30%, hsla(0,0%,100%,.45) 50%, transparent 70%)',
                 mixBlendMode: 'overlay',
               }}
               animate={{ x: ['-60%', '60%'] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
             />
           )}
           {/* Refraction rim */}
           <div
             className="absolute inset-0 rounded-full"
             style={{
-              boxShadow: 'inset 0 0 0 1px hsla(0,0%,100%,.4)',
+              boxShadow: 'inset 0 0 0 1px hsla(0,0%,100%,.35)',
             }}
           />
           {/* Primary specular highlight */}
@@ -102,9 +100,10 @@ const BubbleverseLogo = () => {
           <span
             className="bg-clip-text text-transparent"
             style={{
-              backgroundImage: isDark
-                ? 'linear-gradient(120deg, hsl(37,91%,60%) 0%, hsl(262,48%,81%) 55%, hsl(331,46%,82%) 100%)'
-                : 'linear-gradient(120deg, hsl(37,95%,44%) 0%, hsl(262,45%,58%) 55%, hsl(331,45%,60%) 100%)',
+              backgroundImage:
+                'linear-gradient(100deg, hsl(190,100%,55%) 0%, hsl(260,90%,65%) 45%, hsl(320,95%,65%) 75%, hsl(190,100%,55%) 100%)',
+              backgroundSize: shouldReduceMotion ? '100% 100%' : '220% 100%',
+              animation: shouldReduceMotion ? 'none' : 'bv-shine 6s linear infinite',
             }}
           >
             Bubble
@@ -113,11 +112,12 @@ const BubbleverseLogo = () => {
         </motion.h1>
         {/* Tagline rule */}
         <div className="mt-1 flex items-center gap-1.5">
-          <span className="h-px w-5 sm:w-6 bg-gradient-to-r from-amber-400/80 to-purple-400/80" />
+          <span className="h-px w-5 sm:w-6 bg-gradient-to-r from-cyan-400/80 to-fuchsia-400/80" />
           <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.22em] text-muted-foreground font-medium">
             stories in bubbles
           </span>
         </div>
+        <style>{`@keyframes bv-shine{0%{background-position:0% 50%}100%{background-position:220% 50%}}`}</style>
       </div>
     </motion.div>
   );

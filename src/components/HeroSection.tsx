@@ -41,7 +41,7 @@ const HeroSection = ({ onStartCreating, showMascot, onToggleMascot }: HeroSectio
           transition={{ duration: 0.7, delay: 0.3 }}
         >
           {t('heroHeadlineMain')}{' '}
-          <span className="text-editorial-gold italic font-normal">
+          <span className="text-magical italic font-normal">
             {t('heroHeadlineAccent')}
           </span>
           {t('heroHeadlineSuffix')}
@@ -91,8 +91,8 @@ const HeroSection = ({ onStartCreating, showMascot, onToggleMascot }: HeroSectio
             { value: 'EN · AR', label: t('bilingualStories') },
             { value: 'PDF', label: t('instantPreview') },
           ].map((stat) => (
-            <div key={stat.label} className="glass-card p-3 sm:p-4 text-center border-border/40 hover:border-primary/30">
-              <div className="text-xl sm:text-2xl font-bold text-editorial-gold mb-1 font-editorial">{stat.value}</div>
+            <div key={stat.label} className="glass-card p-3 sm:p-4 text-center border-border/40 hover:border-primary/40">
+              <div className="text-xl sm:text-2xl font-bold text-primary mb-1 font-editorial">{stat.value}</div>
               <div className="text-muted-foreground text-xs sm:text-sm font-medium leading-tight">{stat.label}</div>
             </div>
           ))}

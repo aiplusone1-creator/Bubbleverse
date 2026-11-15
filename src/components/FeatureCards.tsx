@@ -15,9 +15,9 @@ const FeatureCards = () => {
       title: t('feature1Title'),
       description: t('feature1Desc'),
       colorStyle: {
-        bg: isDark ? 'hsla(37, 91%, 55%, 0.15)' : 'hsla(37, 95%, 45%, 0.12)',
-        icon: isDark ? 'hsl(37, 91%, 65%)' : 'hsl(37, 95%, 42%)',
-        border: isDark ? 'hsla(37, 91%, 55%, 0.25)' : 'hsla(37, 95%, 45%, 0.2)',
+        bg: isDark ? 'hsla(190, 100%, 50%, 0.18)' : 'hsla(190, 100%, 40%, 0.18)',
+        icon: isDark ? 'hsl(190, 100%, 70%)' : 'hsl(190, 100%, 35%)',
+        border: isDark ? 'hsla(190, 100%, 50%, 0.3)' : 'hsla(190, 100%, 40%, 0.25)',
       },
     },
     {
@@ -25,9 +25,9 @@ const FeatureCards = () => {
       title: t('feature2Title'),
       description: t('feature2Desc'),
       colorStyle: {
-        bg: isDark ? 'hsla(262, 48%, 81%, 0.15)' : 'hsla(262, 45%, 58%, 0.12)',
-        icon: isDark ? 'hsl(262, 48%, 85%)' : 'hsl(262, 45%, 52%)',
-        border: isDark ? 'hsla(262, 48%, 81%, 0.25)' : 'hsla(262, 45%, 58%, 0.2)',
+        bg: isDark ? 'hsla(280, 75%, 70%, 0.18)' : 'hsla(280, 65%, 55%, 0.18)',
+        icon: isDark ? 'hsl(280, 75%, 78%)' : 'hsl(280, 65%, 48%)',
+        border: isDark ? 'hsla(280, 75%, 70%, 0.3)' : 'hsla(280, 65%, 55%, 0.25)',
       },
     },
     {
@@ -35,9 +35,9 @@ const FeatureCards = () => {
       title: t('feature3Title'),
       description: t('feature3Desc'),
       colorStyle: {
-        bg: isDark ? 'hsla(331, 46%, 82%, 0.15)' : 'hsla(331, 45%, 60%, 0.12)',
-        icon: isDark ? 'hsl(331, 46%, 85%)' : 'hsl(331, 45%, 55%)',
-        border: isDark ? 'hsla(331, 46%, 82%, 0.25)' : 'hsla(331, 45%, 60%, 0.2)',
+        bg: isDark ? 'hsla(320, 85%, 70%, 0.18)' : 'hsla(320, 75%, 55%, 0.18)',
+        icon: isDark ? 'hsl(320, 85%, 78%)' : 'hsl(320, 75%, 48%)',
+        border: isDark ? 'hsla(320, 85%, 70%, 0.3)' : 'hsla(320, 75%, 55%, 0.25)',
       },
     },
   ];
@@ -52,7 +52,7 @@ const FeatureCards = () => {
         transition={{ duration: 0.6 }}
       >
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 font-editorial tracking-tight">
-          <span className="text-editorial-gold">{t('featuresTitle')}</span>
+          <span className="text-magical">{t('featuresTitle')}</span>
         </h2>
         <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-normal">
           {t('featuresSubtitle')}

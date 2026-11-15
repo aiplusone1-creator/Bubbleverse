@@ -40,7 +40,7 @@ const ExamplesSection = () => {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 font-editorial tracking-tight">
-            <span className="text-editorial-gold">{t('examplesTitle')}</span>
+            <span className="text-magical">{t('examplesTitle')}</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-normal">
             {t('examplesSubtitle')}
@@ -90,7 +90,7 @@ const ExamplesSection = () => {
                       <h3 className="text-white font-bold text-sm leading-snug mb-1 font-editorial">
                         {example.title}
                       </h3>
-                      <span className="text-amber-200/90 text-xs font-medium">
+                      <span className="text-cyan-200/90 text-xs font-medium">
                         {example.style}
                       </span>
                     </div>
