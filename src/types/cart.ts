@@ -1,0 +1,65 @@
+export interface CartItem {
+  id: string;
+  itemType?: 'book' | 'merch' | 'gwp_gift';
+  storyId: string;
+  merchId?: string;
+  sku?: string;
+  variantId?: string;
+  variantLabelAr?: string;
+  variantLabelEn?: string;
+  ribbonName?: string;
+  isFreeGift?: boolean;
+  retailValueEgp?: number;
+  retailValueSar?: number;
+  retailValueAed?: number;
+  photoVaultTempId?: string;
+  titleAr: string;
+  titleEn: string;
+  coverImage: string;
+  format: 'digital_pdf' | 'hardcover_book' | 'physical_merch';
+  formatLabelAr: string;
+  formatLabelEn: string;
+  pagesCount: number;
+  priceEgp: number;
+  priceSar: number;
+  priceAed?: number;
+  quantity: number;
+  childName: string;
+  childGender: 'boy' | 'girl';
+  childAge: string;
+  storyLanguage: 'ar' | 'en' | 'bilingual';
+  giftMessage?: string;
+  photoPreview?: string;
+  hasColoringBookAddon?: boolean;
+  hasGiftBoxAddon?: boolean;
+  hasStickersAddon?: boolean;
+  hasAudioStoryAddon?: boolean;
+  hasCoHeroAddon?: boolean;
+  coHeroName?: string;
+  occasion?: string;
+  createdAt: number;
+}
+
+export interface GuestCheckoutOrder {
+  reference: string;
+  items: CartItem[];
+  customerName: string;
+  phone: string;
+  email: string;
+  country: 'EG' | 'SA' | 'AE';
+  city?: string;
+  address?: string;
+  orderNotes?: string;
+  subtotalEgp: number;
+  subtotalSar: number;
+  subtotalAed?: number;
+  depositEgp: number;
+  depositSar: number;
+  depositAed?: number;
+  promoCode?: string;
+  discountAmount?: number;
+  isGiftOrder?: boolean;
+  giftRecipientName?: string;
+  giftHidePrice?: boolean;
+  createdAt: string;
+}

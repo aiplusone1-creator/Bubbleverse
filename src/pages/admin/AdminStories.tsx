@@ -3,7 +3,8 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { ExternalLink, Trash2, Search, Loader2, RefreshCw } from 'lucide-react';
+import { Trash2, Search, Loader2, RefreshCw, Phone, Printer } from 'lucide-react';
+import { generateStorybookPDFHTML } from '@/features/pdf/storybookTemplate';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -239,17 +240,52 @@ export default function AdminStories() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {story.pdf_url && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => window.open(story.pdf_url!, '_blank')}
-                              className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                            >
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              PDF
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (story.pdf_url) {
+                                window.open(story.pdf_url, '_blank');
+                              } else {
+                                const html = generateStorybookPDFHTML({
+                                  title: story.title || 'قصة Bubbleverse السحرية',
+                                  childName: 'بطل القصة',
+                                  language: 'ar',
+                                  artStyle: story.art_style || '3D Pixar',
+                                  pages: [
+                                    {
+                                      pageNumber: 1,
+                                      text: 'في مغامرة شيقة ملؤها الخيال والألوان المتلألئة...',
+                                      imageUrl: '/bubble-books/space.webp',
+                                    },
+                                  ],
+                                });
+                                const w = window.open('', '_blank');
+                                if (w) {
+                                  w.document.write(html);
+                                  w.document.close();
+                                }
+                              }
+                            }}
+                            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                            title="Preview 210×210mm Storybook PDF"
+                          >
+                            <Printer className="h-4 w-4 mr-1 text-cyan-400" />
+                            PDF
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const msg = encodeURIComponent(`قصتكم "${story.title || 'Bubbleverse Story'}" جاهزة للمعاينة.`);
+                              window.open(`https://wa.me/?text=${msg}`, '_blank');
+                            }}
+                            className="border-emerald-600/40 text-emerald-400 hover:bg-emerald-500/20"
+                            title="Share via WhatsApp"
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
                           {story.is_deleted ? (
                             <Button
                               size="sm"

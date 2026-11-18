@@ -105,45 +105,47 @@ const Auth = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex items-center justify-center p-4">
+    <div className="relative min-h-screen overflow-x-hidden flex items-center justify-center px-4 sm:px-6 py-8">
       <ImmersiveBackground />
 
       {/* Decorative floating bubbles */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 40 + Math.random() * 90,
-            height: 40 + Math.random() * 90,
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            background:
-              'radial-gradient(circle at 32% 26%, hsla(0,0%,100%,.85) 0%, hsla(190,100%,82%,.55) 30%, hsla(260,90%,72%,.35) 65%, hsla(220,80%,38%,.25) 100%)',
-            boxShadow: 'inset 0 0 18px hsla(0,0%,100%,.5), 0 0 28px hsla(200,100%,65%,.35)',
-            filter: 'blur(0.5px)',
-          }}
-          animate={{
-            y: [0, -30, 0],
-            x: [0, 10, 0],
-            opacity: [0.4, 0.8, 0.4],
-          }}
-          transition={{
-            duration: 6 + Math.random() * 4,
-            repeat: Infinity,
-            delay: i * 0.4,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: 40 + Math.random() * 90,
+              height: 40 + Math.random() * 90,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              background:
+                'radial-gradient(circle at 32% 26%, hsla(0,0%,100%,.85) 0%, hsla(190,100%,82%,.55) 30%, hsla(260,90%,72%,.35) 65%, hsla(220,80%,38%,.25) 100%)',
+              boxShadow: 'inset 0 0 18px hsla(0,0%,100%,.5), 0 0 28px hsla(200,100%,65%,.35)',
+              filter: 'blur(0.5px)',
+            }}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, 10, 0],
+              opacity: [0.4, 0.8, 0.4],
+            }}
+            transition={{
+              duration: 6 + Math.random() * 4,
+              repeat: Infinity,
+              delay: i * 0.4,
+              ease: 'easeInOut',
+            }}
+          />
+        ))}
+      </div>
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md"
+        className="relative z-10 w-full max-w-lg"
       >
-        <div className="glass-card p-8 md:p-10 border border-primary/20 shadow-[0_20px_80px_-20px_hsla(200,100%,55%,.45)]">
+        <div className="glass-card p-6 sm:p-8 md:p-10 border border-primary/20 shadow-[0_20px_80px_-20px_hsla(200,100%,55%,.45)]">
           {/* Back Button */}
           <Link
             to={target}

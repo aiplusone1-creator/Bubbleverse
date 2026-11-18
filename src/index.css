@@ -4,130 +4,150 @@
 
 @layer base {
   :root {
-    /* Bubbleverse Magical Color Palette — Vibrant Cyan / Purple / Pink Identity */
-    --background: 220 60% 8%;
-    --foreground: 200 100% 98%;
+    /* Bubbleverse Refined Midnight Magic — Cosmic Dark Identity with Cyan / Dream Purple / Starlight Pink */
+    --background: 226 52% 7%;
+    --foreground: 205 100% 98%;
 
-    --card: 220 40% 12%;
-    --card-foreground: 200 100% 98%;
+    --card: 226 42% 11%;
+    --card-foreground: 205 100% 98%;
 
-    --popover: 220 40% 12%;
-    --popover-foreground: 200 100% 98%;
+    --popover: 226 44% 11%;
+    --popover-foreground: 205 100% 98%;
 
-    /* Iridescent Cyan - Primary */
+    /* Signature Iridescent Cyan (#00D9FF) */
     --primary: 190 100% 50%;
-    --primary-foreground: 220 60% 8%;
-    --primary-glow: 190 100% 70%;
+    --primary-foreground: 226 55% 8%;
+    --primary-glow: 190 100% 72%;
 
-    /* Magical Pink/Lavender - Secondary */
-    --secondary: 280 60% 75%;
-    --secondary-foreground: 220 60% 8%;
+    /* Dream Purple */
+    --secondary: 268 78% 72%;
+    --secondary-foreground: 226 55% 8%;
 
-    /* Soft magical muted tones */
-    --muted: 220 30% 18%;
-    --muted-foreground: 200 40% 70%;
+    /* Soft Cosmic Muted Tones */
+    --muted: 226 32% 16%;
+    --muted-foreground: 210 34% 72%;
 
-    /* Accent - Bubble Iridescent Fuchsia/Pink */
-    --accent: 300 80% 70%;
-    --accent-foreground: 220 60% 8%;
+    /* Starlight Pink (#F472B6) */
+    --accent: 330 86% 70%;
+    --accent-foreground: 226 55% 8%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Glassmorphism borders */
-    --border: 200 40% 30%;
-    --input: 200 30% 25%;
+    /* Softened Midnight Borders */
+    --border: 215 36% 24%;
+    --input: 220 32% 20%;
     --ring: 190 100% 50%;
 
     --radius: 1rem;
+    --radius-card: 1.5rem;
+    --radius-inner: 1rem;
 
-    /* Custom Bubbleverse tokens */
+    /* Bubbleverse Brand & Glass Tokens */
     --bubble-cyan: 190 100% 50%;
-    --bubble-pink: 320 80% 70%;
-    --bubble-lavender: 280 60% 75%;
+    --bubble-pink: 330 86% 70%;
+    --bubble-lavender: 268 78% 72%;
     --bubble-gold: 45 100% 60%;
-    --glass-bg: 220 40% 15%;
-    --glass-border: 200 60% 60%;
 
-    /* Gradients as CSS variables */
-    --gradient-magical: linear-gradient(135deg, hsl(190 100% 50%), hsl(280 60% 75%), hsl(320 80% 70%));
+    --glass-bg: 226 42% 13%;
+    --glass-border: 205 55% 74%;
+    --glass-surface-strong: hsl(226 44% 12% / 0.72);
+    --glass-surface-soft: hsl(226 38% 15% / 0.44);
+    --glass-border-subtle: hsl(205 60% 78% / 0.14);
+    --glass-border-hover: hsl(190 100% 55% / 0.34);
+    --glass-highlight: hsl(205 100% 96% / 0.14);
+
+    /* Motion Tokens */
+    --motion-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --motion-spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Gradients */
+    --gradient-magical: linear-gradient(135deg, #00D9FF 0%, #A78BFA 52%, #F472B6 100%);
+    --gradient-magical-flow: linear-gradient(90deg, #00D9FF 0%, #A78BFA 34%, #F472B6 67%, #00D9FF 100%);
     --gradient-button: linear-gradient(135deg, hsl(190 100% 55%), hsl(200 100% 60%));
     --gradient-button-hover: linear-gradient(135deg, hsl(190 100% 65%), hsl(210 100% 70%));
-    --gradient-background: radial-gradient(ellipse at 50% 0%, hsl(280 40% 20%) 0%, hsl(220 60% 8%) 70%);
+    --gradient-background: radial-gradient(ellipse at 50% 0%, hsl(268 42% 15%) 0%, hsl(226 52% 7%) 70%);
 
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(190 100% 50% / 0.4);
-    --shadow-bubble: 0 8px 32px hsl(190 100% 50% / 0.2);
-    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.3);
+    --shadow-glow: 0 0 40px hsl(190 100% 50% / 0.34);
+    --shadow-bubble: 0 8px 32px hsl(190 100% 50% / 0.22);
+    --shadow-card: 0 12px 40px hsl(226 70% 3% / 0.42);
 
-    --sidebar-background: 220 60% 8%;
-    --sidebar-foreground: 200 100% 98%;
+    --sidebar-background: 226 52% 7%;
+    --sidebar-foreground: 205 100% 98%;
     --sidebar-primary: 190 100% 50%;
-    --sidebar-primary-foreground: 220 60% 8%;
-    --sidebar-accent: 280 60% 75%;
-    --sidebar-accent-foreground: 220 60% 8%;
-    --sidebar-border: 200 40% 30%;
+    --sidebar-primary-foreground: 226 55% 8%;
+    --sidebar-accent: 268 78% 72%;
+    --sidebar-accent-foreground: 226 55% 8%;
+    --sidebar-border: 215 36% 24%;
     --sidebar-ring: 190 100% 50%;
   }
 
   .light {
-    --background: 210 40% 96%;
-    --foreground: 220 30% 15%;
+    --background: 214 40% 97%;
+    --foreground: 224 34% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 220 30% 15%;
+    --card-foreground: 224 34% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 15%;
+    --popover-foreground: 224 34% 14%;
     --primary: 190 100% 40%;
     --primary-foreground: 0 0% 100%;
     --primary-glow: 190 100% 60%;
-    --secondary: 280 60% 65%;
+    --secondary: 268 62% 62%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 30% 90%;
-    --muted-foreground: 220 20% 40%;
-    --accent: 300 70% 60%;
+    --muted: 214 30% 92%;
+    --muted-foreground: 222 20% 42%;
+    --accent: 330 74% 60%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 30% 80%;
-    --input: 210 30% 85%;
+    --border: 214 28% 84%;
+    --input: 214 28% 88%;
     --ring: 190 100% 40%;
-    
+
     --bubble-cyan: 190 100% 40%;
-    --bubble-pink: 320 70% 60%;
-    --bubble-lavender: 280 50% 65%;
+    --bubble-pink: 330 74% 60%;
+    --bubble-lavender: 268 62% 62%;
     --bubble-gold: 45 100% 50%;
+
     --glass-bg: 0 0% 100%;
-    --glass-border: 200 50% 70%;
-    
-    --gradient-magical: linear-gradient(135deg, hsl(190 100% 40%), hsl(280 60% 65%), hsl(320 70% 60%));
+    --glass-border: 210 42% 72%;
+    --glass-surface-strong: hsl(0 0% 100% / 0.82);
+    --glass-surface-soft: hsl(214 45% 98% / 0.65);
+    --glass-border-subtle: hsl(214 36% 74% / 0.45);
+    --glass-border-hover: hsl(190 100% 42% / 0.42);
+    --glass-highlight: hsl(0 0% 100% / 0.85);
+
+    --gradient-magical: linear-gradient(135deg, hsl(190 100% 40%), hsl(268 62% 62%), hsl(330 74% 60%));
+    --gradient-magical-flow: linear-gradient(90deg, hsl(190 100% 38%) 0%, hsl(268 68% 58%) 34%, hsl(330 78% 56%) 67%, hsl(190 100% 38%) 100%);
     --gradient-button: linear-gradient(135deg, hsl(190 100% 42%), hsl(200 100% 48%));
     --gradient-button-hover: linear-gradient(135deg, hsl(190 100% 48%), hsl(210 100% 55%));
-    --gradient-background: radial-gradient(ellipse at 50% 0%, hsl(280 30% 90%) 0%, hsl(210 40% 96%) 70%);
+    --gradient-background: radial-gradient(ellipse at 50% 0%, hsl(268 32% 92%) 0%, hsl(214 40% 97%) 70%);
 
-    --shadow-glow: 0 0 30px hsl(190 100% 40% / 0.25);
-    --shadow-bubble: 0 8px 30px hsl(190 100% 40% / 0.15);
-    --shadow-card: 0 10px 30px hsl(220 30% 15% / 0.1);
+    --shadow-glow: 0 0 30px hsl(190 100% 40% / 0.22);
+    --shadow-bubble: 0 8px 30px hsl(190 100% 40% / 0.14);
+    --shadow-card: 0 12px 32px hsl(224 34% 14% / 0.08);
   }
 
   .dark {
-    --background: 220 60% 8%;
-    --foreground: 200 100% 98%;
-    --card: 220 40% 12%;
-    --card-foreground: 200 100% 98%;
-    --popover: 220 40% 12%;
-    --popover-foreground: 200 100% 98%;
+    --background: 226 52% 7%;
+    --foreground: 205 100% 98%;
+    --card: 226 42% 11%;
+    --card-foreground: 205 100% 98%;
+    --popover: 226 44% 11%;
+    --popover-foreground: 205 100% 98%;
     --primary: 190 100% 50%;
-    --primary-foreground: 220 60% 8%;
-    --secondary: 280 60% 75%;
-    --secondary-foreground: 220 60% 8%;
-    --muted: 220 30% 18%;
-    --muted-foreground: 200 40% 70%;
-    --accent: 300 80% 70%;
-    --accent-foreground: 220 60% 8%;
+    --primary-foreground: 226 55% 8%;
+    --secondary: 268 78% 72%;
+    --secondary-foreground: 226 55% 8%;
+    --muted: 226 32% 16%;
+    --muted-foreground: 210 34% 72%;
+    --accent: 330 86% 70%;
+    --accent-foreground: 226 55% 8%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 200 40% 30%;
-    --input: 200 30% 25%;
+    --border: 215 36% 24%;
+    --input: 220 32% 20%;
     --ring: 190 100% 50%;
   }
 }
@@ -140,181 +160,362 @@
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
+    font-size: clamp(100%, calc(0.55rem + 0.52vw), 135%);
   }
 
   body {
-    @apply bg-background text-foreground font-fredoka antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Plus Jakarta Sans', 'Fredoka', system-ui, -apple-system, sans-serif;
     background: var(--gradient-background);
     min-height: 100vh;
     min-height: 100dvh;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* First-class typography styling for display headings */
-  .font-editorial {
-    font-family: 'Playfair Display', Georgia, Cambria, 'Amiri', serif;
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary) / 0.85);
+    outline-offset: 2px;
+  }
+
+  [dir="rtl"],
+  .rtl,
+  body[dir="rtl"] {
+    font-family: 'Tajawal', 'Baloo Bhaijaan 2', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Storybook Display Headings: Friendly, Whimsical & Ultra-Refined */
+  .font-editorial,
+  .font-display {
+    font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif;
     letter-spacing: -0.015em;
   }
 
   [dir="rtl"] .font-editorial,
-  .rtl .font-editorial {
-    font-family: 'Amiri', 'Noto Serif Arabic', 'Traditional Arabic', serif;
+  [dir="rtl"] .font-display,
+  .rtl .font-editorial,
+  .rtl .font-display {
+    font-family: 'Baloo Bhaijaan 2', 'Tajawal', system-ui, sans-serif;
     letter-spacing: 0;
-    line-height: 1.35;
+    line-height: 1.3;
+  }
+
+  /* Precision Tabular Figures for Prices, Counts & Order Codes */
+  .font-numeric,
+  .num-tabular {
+    font-family: 'Plus Jakarta Sans', 'Tajawal', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    letter-spacing: -0.01em;
+  }
+
+  [dir="rtl"] .font-numeric,
+  [dir="rtl"] .num-tabular {
+    letter-spacing: 0;
   }
 }
 
 @layer components {
-  /* Glassmorphism Card with Magical Cyan/Purple Horizon Highlight */
+  /* Fluid Viewport Containers & Section Rhythm */
+  .bv-container {
+    width: 100%;
+    max-width: min(92vw, 94rem);
+    margin-inline: auto;
+  }
+
+  .bv-container-wide {
+    width: 100%;
+    max-width: min(95vw, 108rem);
+    margin-inline: auto;
+  }
+
+  .bv-container-narrow {
+    width: 100%;
+    max-width: min(92vw, 72rem);
+    margin-inline: auto;
+  }
+
+  .bv-section {
+    padding-block: clamp(3.25rem, 5vw, 6.25rem);
+    padding-inline: clamp(1rem, 2.5vw, 2.25rem);
+  }
+
+  /* Refined Midnight Magic Glassmorphism Card — Standardized Main Card (rounded-3xl) */
   .glass-card {
-    @apply relative overflow-hidden rounded-2xl;
+    @apply relative overflow-hidden rounded-3xl;
     background: linear-gradient(
-      135deg,
-      hsl(var(--glass-bg) / 0.6),
-      hsl(var(--glass-bg) / 0.3)
+      145deg,
+      var(--glass-surface-strong) 0%,
+      var(--glass-surface-soft) 100%
     );
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(var(--glass-border) / 0.3);
-    box-shadow: 
-      0 8px 32px hsl(0 0% 0% / 0.2),
-      inset 0 1px 0 hsl(var(--glass-border) / 0.2);
-    transition: transform 200ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms ease, border-color 200ms ease;
+    backdrop-filter: blur(22px) saturate(135%);
+    -webkit-backdrop-filter: blur(22px) saturate(135%);
+    border: 1px solid var(--glass-border-subtle);
+    box-shadow:
+      var(--shadow-card),
+      inset 0 1px 0 var(--glass-highlight);
+    transition:
+      transform 220ms var(--motion-ease-out),
+      box-shadow 220ms var(--motion-ease-out),
+      border-color 220ms var(--motion-ease-out);
   }
 
   .glass-card::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    right: 0;
+    left: 10%;
+    right: 10%;
     height: 1px;
+    pointer-events: none;
     background: linear-gradient(
       90deg,
       transparent,
-      hsl(var(--primary) / 0.5),
-      hsl(var(--secondary) / 0.5),
+      hsl(var(--primary) / 0.42),
+      hsl(var(--accent) / 0.36),
       transparent
     );
   }
 
   @media (hover: hover) and (pointer: fine) {
     .glass-card:hover {
-      border-color: hsl(var(--primary) / 0.4);
-      box-shadow: 
-        0 12px 36px hsl(0 0% 0% / 0.25),
-        0 0 25px hsl(var(--primary) / 0.15),
-        inset 0 1px 0 hsl(var(--glass-border) / 0.3);
+      border-color: var(--glass-border-hover);
+      box-shadow:
+        0 16px 44px hsl(226 70% 3% / 0.48),
+        0 0 28px hsl(var(--primary) / 0.12),
+        inset 0 1px 0 hsl(205 100% 96% / 0.22);
     }
   }
 
-  /* Bubble Button — Vibrant Cyan / Iridescent */
+  /* Standardized Inner / Nested Glass Surface (rounded-2xl) */
+  .glass-card-inner {
+    @apply relative overflow-hidden rounded-2xl;
+    background: hsl(var(--glass-bg) / 0.46);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border-subtle);
+    box-shadow: inset 0 1px 0 hsl(205 100% 96% / 0.08);
+    transition:
+      border-color 180ms var(--motion-ease-out),
+      background-color 180ms var(--motion-ease-out);
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* Bubble Button System — 3D Glossy Iridescent Spherical & Pill Buttons       */
+  /* -------------------------------------------------------------------------- */
+
+  .bubble-btn,
   .bubble-button {
-    @apply relative px-8 py-3.5 rounded-full font-semibold text-base sm:text-lg overflow-hidden select-none touch-manipulation inline-flex items-center justify-center;
-    background: var(--gradient-button);
-    color: hsl(var(--primary-foreground));
-    box-shadow: 
-      0 4px 20px hsl(var(--primary) / 0.4),
-      inset 0 2px 4px hsl(0 0% 100% / 0.25);
-    transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), box-shadow 150ms ease, background 150ms ease;
+    @apply relative rounded-full font-bold select-none touch-manipulation inline-flex items-center justify-center overflow-hidden cursor-pointer;
+    transition:
+      transform 140ms var(--motion-spring-snappy),
+      box-shadow 180ms var(--motion-ease-out),
+      background 180ms var(--motion-ease-out),
+      border-color 180ms var(--motion-ease-out);
+  }
+
+  /* 3D Bubble Specular Curved Reflection (Shine highlight on the upper hemisphere) */
+  .bubble-btn::before,
+  .bubble-button::before {
+    content: '';
+    position: absolute;
+    top: 1.5px;
+    left: 8%;
+    right: 8%;
+    height: 44%;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.62) 0%,
+      rgba(255, 255, 255, 0.18) 65%,
+      transparent 100%
+    );
+    border-radius: 9999px 9999px 100% 100% / 9999px 9999px 45% 45%;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.88;
+    transition: opacity 160ms ease, transform 160ms ease;
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .bubble-button:hover {
-      background: var(--gradient-button-hover);
-      transform: translateY(-2px) scale(1.03);
-      box-shadow: 
-        0 8px 30px hsl(var(--primary) / 0.5),
-        inset 0 2px 4px hsl(0 0% 100% / 0.35);
+    .bubble-btn:hover::before,
+    .bubble-button:hover::before {
+      opacity: 1;
+      transform: scaleY(1.06);
     }
   }
 
-  .bubble-button:active {
-    transform: scale(0.97);
-    box-shadow: 0 2px 10px hsl(var(--primary) / 0.3);
+  .bubble-btn:active::before,
+  .bubble-button:active::before {
+    opacity: 0.45;
+    transform: scaleY(0.92);
   }
 
+  /* Primary Magical Bubble (Cyan -> Dream Purple) with subtle living iridescent shimmer */
+  .bubble-btn-primary,
+  .bubble-button {
+    background: linear-gradient(135deg, #00D9FF 0%, #0284c7 36%, #7c3aed 76%, #a855f7 100%);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    box-shadow:
+      0 6px 22px -4px rgba(0, 217, 255, 0.42),
+      0 10px 34px -6px rgba(124, 58, 237, 0.34),
+      inset 0 2px 2px 0 rgba(255, 255, 255, 0.78),
+      inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.24);
+  }
+
+  .bubble-btn-primary::after,
   .bubble-button::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: hsl(0 0% 100% / 0.3);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.4s, height 0.4s;
+    inset: -20% -35%;
+    background: linear-gradient(
+      112deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.24) 48%,
+      rgba(244, 114, 182, 0.18) 53%,
+      transparent 62%
+    );
+    transform: translateX(-115%);
+    pointer-events: none;
+    z-index: 1;
+    animation: bubble-iridescent-shimmer 5.6s var(--motion-ease-out) infinite;
   }
 
-  .bubble-button:active::after {
-    width: 200%;
-    height: 200%;
+  @media (hover: hover) and (pointer: fine) {
+    .bubble-btn-primary:hover,
+    .bubble-button:hover {
+      transform: translateY(-2px) scale(1.025);
+      box-shadow:
+        0 10px 30px -2px rgba(0, 217, 255, 0.58),
+        0 18px 44px -6px rgba(124, 58, 237, 0.46),
+        inset 0 2.5px 3px 0 rgba(255, 255, 255, 0.92),
+        inset 0 -2px 4px 0 rgba(0, 0, 0, 0.2);
+    }
   }
 
-  /* Secondary Bubble Button — Purple/Pink */
+  .bubble-btn-primary:active,
+  .bubble-button:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow:
+      0 2px 10px rgba(0, 217, 255, 0.34),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 3px 0 rgba(0, 0, 0, 0.32);
+  }
+
+  /* Secondary Bubble Button — Dream Purple -> Starlight Pink */
+  .bubble-btn-secondary,
   .bubble-button-secondary {
-    @apply bubble-button;
-    background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)));
-    color: hsl(var(--secondary-foreground));
-    box-shadow: 
-      0 4px 20px hsl(var(--secondary) / 0.4),
-      inset 0 2px 4px hsl(0 0% 100% / 0.25);
+    @apply bubble-btn;
+    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 38%, #ec4899 78%, #f472b6 100%);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    box-shadow:
+      0 6px 22px -4px rgba(244, 114, 182, 0.4),
+      0 10px 34px -6px rgba(139, 92, 246, 0.32),
+      inset 0 2px 2px 0 rgba(255, 255, 255, 0.78),
+      inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.24);
   }
 
   @media (hover: hover) and (pointer: fine) {
+    .bubble-btn-secondary:hover,
     .bubble-button-secondary:hover {
-      box-shadow: 
-        0 8px 30px hsl(var(--secondary) / 0.5),
-        inset 0 2px 4px hsl(0 0% 100% / 0.35);
+      transform: translateY(-2px) scale(1.025);
+      box-shadow:
+        0 10px 30px -2px rgba(244, 114, 182, 0.56),
+        0 18px 44px -6px rgba(139, 92, 246, 0.44),
+        inset 0 2.5px 3px 0 rgba(255, 255, 255, 0.92),
+        inset 0 -2px 4px 0 rgba(0, 0, 0, 0.2);
     }
   }
 
-  /* Outline Bubble Button */
-  .bubble-button-outline {
-    @apply relative px-8 py-3.5 rounded-full font-semibold text-base sm:text-lg overflow-hidden select-none touch-manipulation inline-flex items-center justify-center;
-    background: transparent;
-    color: hsl(var(--primary));
-    border: 2px solid hsl(var(--primary) / 0.5);
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
-    transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+  .bubble-btn-secondary:active,
+  .bubble-button-secondary:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow: 0 2px 10px rgba(244, 114, 182, 0.34);
+  }
+
+  /* Emerald Bubble Button — WhatsApp / Verified Orders */
+  .bubble-btn-emerald {
+    @apply bubble-btn;
+    background: linear-gradient(135deg, #059669 0%, #10b981 42%, #34d399 100%);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    box-shadow:
+      0 6px 22px -4px rgba(16, 185, 129, 0.46),
+      inset 0 2px 2px 0 rgba(255, 255, 255, 0.78),
+      inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.24);
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .bubble-button-outline:hover {
-      background: hsl(var(--primary) / 0.12);
-      border-color: hsl(var(--primary));
-      box-shadow: 0 0 30px hsl(var(--primary) / 0.4);
-      transform: translateY(-2px) scale(1.02);
+    .bubble-btn-emerald:hover {
+      transform: translateY(-2px) scale(1.025);
+      box-shadow:
+        0 10px 30px -2px rgba(16, 185, 129, 0.62),
+        inset 0 2.5px 3px 0 rgba(255, 255, 255, 0.92);
     }
   }
 
+  .bubble-btn-emerald:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.34);
+  }
+
+  /* Outline Glass Bubble Button */
+  .bubble-btn-outline,
+  .bubble-button-outline {
+    @apply bubble-btn;
+    background: rgba(0, 217, 255, 0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #00D9FF;
+    border: 1.5px solid rgba(0, 217, 255, 0.45);
+    box-shadow:
+      0 4px 18px rgba(0, 217, 255, 0.18),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.36),
+      inset 0 -1.5px 3px rgba(0, 0, 0, 0.18);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .bubble-btn-outline:hover,
+    .bubble-button-outline:hover {
+      background: rgba(0, 217, 255, 0.16);
+      border-color: #00D9FF;
+      color: #ffffff;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow:
+        0 8px 28px rgba(0, 217, 255, 0.42),
+        inset 0 2px 3px rgba(255, 255, 255, 0.65);
+    }
+  }
+
+  .bubble-btn-outline:active,
   .bubble-button-outline:active {
-    transform: scale(0.97);
+    transform: translateY(1px) scale(0.97);
   }
 
-  /* Magical Text Gradient */
-  .text-magical {
-    background: var(--gradient-magical);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Backward compatibility alias mapped directly to magical gradient */
+  /* Magical Liquid Moving Text Gradient (Cyan -> Dream Purple -> Starlight Pink) */
+  .text-magical,
   .text-editorial-gold {
-    background: var(--gradient-magical);
+    background-image: var(--gradient-magical-flow);
+    background-size: 200% 100%;
+    background-position: 0% 50%;
+    background-repeat: repeat;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    color: transparent;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    animation: magical-gradient-flow 5s linear infinite;
   }
 
   /* Glow Effects */
   .glow-cyan {
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
+    box-shadow: 0 0 36px hsl(var(--primary) / 0.42);
   }
 
   .glow-pink {
-    box-shadow: 0 0 40px hsl(var(--secondary) / 0.5);
+    box-shadow: 0 0 36px hsl(var(--accent) / 0.42);
   }
 
   /* Breathing Animation */
@@ -354,17 +555,43 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 /* Keyframes */
+@keyframes magical-gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes bubble-iridescent-shimmer {
+  0%, 58% {
+    transform: translateX(-115%);
+  }
+  100% {
+    transform: translateX(135%);
+  }
+}
+
 @keyframes breathe {
   0%, 100% {
     transform: scale(1);
     opacity: 1;
   }
   50% {
-    transform: scale(1.05);
-    opacity: 0.9;
+    transform: scale(1.04);
+    opacity: 0.92;
   }
 }
 
@@ -373,7 +600,7 @@
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-20px);
+    transform: translateY(-16px);
   }
 }
 
@@ -411,5 +638,54 @@
   50% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* Full Reduced Motion Compliance */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-breathe,
+  .animate-float,
+  .animate-float-slow,
+  .animate-pulse-glow,
+  .animate-sparkle,
+  .shimmer::after,
+  .bubble-btn-primary::after,
+  .bubble-button::after {
+    animation: none !important;
+  }
+
+  .text-magical,
+  .text-editorial-gold {
+    animation: none !important;
+    background-image: var(--gradient-magical) !important;
+    background-size: 100% 100% !important;
+    background-position: 0% 50% !important;
+  }
+
+  .bubble-btn,
+  .bubble-button,
+  .bubble-btn-primary,
+  .bubble-btn-secondary,
+  .bubble-button-secondary,
+  .bubble-btn-emerald,
+  .bubble-btn-outline,
+  .bubble-button-outline,
+  .glass-card,
+  .glass-card-inner {
+    transition-duration: 0.01ms !important;
+  }
+
+  .bubble-btn-primary:hover,
+  .bubble-button:hover,
+  .bubble-btn-secondary:hover,
+  .bubble-button-secondary:hover,
+  .bubble-btn-emerald:hover,
+  .bubble-btn-outline:hover,
+  .bubble-button-outline:hover {
+    transform: none !important;
   }
 }

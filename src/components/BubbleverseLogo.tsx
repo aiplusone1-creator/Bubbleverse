@@ -98,13 +98,17 @@ const BubbleverseLogo = () => {
           style={{ letterSpacing: '-0.025em' }}
         >
           <span
-            className="bg-clip-text text-transparent"
-            style={{
-              backgroundImage:
-                'linear-gradient(100deg, hsl(190,100%,55%) 0%, hsl(260,90%,65%) 45%, hsl(320,95%,65%) 75%, hsl(190,100%,55%) 100%)',
-              backgroundSize: shouldReduceMotion ? '100% 100%' : '220% 100%',
-              animation: shouldReduceMotion ? 'none' : 'bv-shine 6s linear infinite',
-            }}
+            className="text-magical"
+            style={
+              shouldReduceMotion
+                ? {
+                    animation: 'none',
+                    backgroundImage: 'var(--gradient-magical)',
+                    backgroundSize: '100% 100%',
+                    backgroundPosition: '0% 50%',
+                  }
+                : undefined
+            }
           >
             Bubble
           </span>
@@ -117,7 +121,6 @@ const BubbleverseLogo = () => {
             stories in bubbles
           </span>
         </div>
-        <style>{`@keyframes bv-shine{0%{background-position:0% 50%}100%{background-position:220% 50%}}`}</style>
       </div>
     </motion.div>
   );

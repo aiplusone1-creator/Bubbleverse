@@ -125,3 +125,96 @@ export async function updateStoryInquiry(input: Pick<StoryInquiry, 'childFirstNa
   if (error) throw error;
   return data as unknown as StoryInquiryDetail;
 }
+
+export interface B2BInquiryInput {
+  institution: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  country: OrderCountry;
+  format: OrderFormat;
+  language: OrderLanguage;
+  quantity: number;
+  notes?: string;
+}
+
+export async function submitB2BInquiry(input: B2BInquiryInput): Promise<string> {
+  const { data, error } = await supabase.rpc('submit_b2b_inquiry', {
+    p_institution: input.institution.trim(),
+    p_contact_name: input.contactName.trim(),
+    p_contact_email: input.contactEmail.trim(),
+    p_contact_phone: input.contactPhone.trim(),
+    p_country: input.country,
+    p_format: input.format,
+    p_language: input.language,
+    p_quantity: input.quantity,
+    p_notes: (input.notes || '').trim(),
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+export interface OrderQueueItem {
+  id: string;
+  reference: string;
+  country: OrderCountry;
+  format: OrderFormat;
+  status: string;
+  assigned_operator_id: string | null;
+  created_at: string;
+}
+
+export interface FullStoryOrder {
+  id: string;
+  reference: string;
+  country: OrderCountry;
+  currency: string;
+  format: OrderFormat;
+  language: 'ar' | 'en';
+  status: string;
+  paymentStatus: string;
+  generationStatus: string;
+  fulfillmentStatus: string;
+  childFirstName: string;
+  shippingAddress: string | null;
+  correctionRequest: string | null;
+  priceVersion: number | null;
+  totalMinor: number | null;
+  depositMinor: number | null;
+  createdAt: string;
+  updatedAt: string;
+  assignedOperatorId?: string | null;
+  internalNotes?: string | null;
+  storyConfiguration?: OrderStoryConfiguration | null;
+}
+
+export async function listOrderQueue(): Promise<OrderQueueItem[]> {
+  const { data, error } = await supabase.rpc('list_order_queue');
+  if (error) throw error;
+  return ((data || []) as unknown) as OrderQueueItem[];
+}
+
+export async function getStoryOrder(orderId: string): Promise<FullStoryOrder> {
+  const { data, error } = await supabase.rpc('get_story_order', {
+    p_order_id: orderId,
+  });
+  if (error) throw error;
+  return data as unknown as FullStoryOrder;
+}
+
+export async function updateOrderStatus(orderId: string, status: string, notes?: string): Promise<void> {
+  const updateData: Record<string, unknown> = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
+  if (notes !== undefined) {
+    updateData.internal_notes = notes;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('story_orders')
+    .update(updateData)
+    .eq('id', orderId);
+  if (error) throw error;
+}
+

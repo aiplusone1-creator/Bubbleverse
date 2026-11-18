@@ -15,9 +15,12 @@ export default {
     },
     extend: {
       fontFamily: {
-        fredoka: ["Fredoka", "sans-serif"],
-        editorial: ["'Playfair Display'", "Georgia", "Cambria", "'Amiri'", "serif"],
-        arabic: ["'Amiri'", "'Noto Serif Arabic'", "'Traditional Arabic'", "serif"],
+        fredoka: ["Fredoka", "'Plus Jakarta Sans'", "sans-serif"],
+        display: ["'Baloo Bhaijaan 2'", "Fredoka", "'Plus Jakarta Sans'", "sans-serif"],
+        editorial: ["'Baloo Bhaijaan 2'", "'Plus Jakarta Sans'", "Fredoka", "sans-serif"],
+        arabic: ["'Baloo Bhaijaan 2'", "Tajawal", "sans-serif"],
+        ui: ["Tajawal", "'Plus Jakarta Sans'", "system-ui", "sans-serif"],
+        numeric: ["'Plus Jakarta Sans'", "Tajawal", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -96,14 +96,14 @@ const Profile = () => {
   const isDark = resolvedTheme === 'dark';
 
   return (
-    <div className="relative min-h-screen overflow-hidden p-4 md:p-8">
+    <div className="relative min-h-screen overflow-x-hidden p-4 sm:p-6 md:p-8">
       <ImmersiveBackground />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 max-w-4xl mx-auto"
+        className="relative z-10 bv-container-narrow"
       >
         {/* Header */}
         <div className={`flex items-center justify-between mb-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
