@@ -25,6 +25,8 @@ import {
   PlugZap,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   FolderClock,
   FileText,
   FileDown,
@@ -36,6 +38,9 @@ import {
   ShieldCheck,
   Loader2,
   Lightbulb,
+  HelpCircle,
+  Layers,
+  ArrowUpRight,
 } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -78,6 +83,8 @@ import {
   reformatScenePromptForEngine,
   type PrintResolutionCheck,
 } from '@/features/studio/stage2PromptEngine';
+
+type StudioStep = 1 | 2 | 3 | 4;
 
 const ART_STYLE_PRESETS = [
   {
@@ -340,6 +347,11 @@ export default function AdminStudio() {
   const orderIdParam = searchParams.get('orderId');
 
   const initial = useMemo(() => buildInitialDraftState(), []);
+
+  // 4-Step Pipeline State & UI Controls
+  const [activeStep, setActiveStep] = useState<StudioStep>(1);
+  const [showGuideBanner, setShowGuideBanner] = useState<boolean>(true);
+  const [isOverviewMode, setIsOverviewMode] = useState<boolean>(false);
 
   const [orders, setOrders] = useState<OrderRecord[]>(() => getOrders());
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
@@ -803,8 +815,8 @@ export default function AdminStudio() {
       setChecklist((prev) => ({ ...prev, characterSheetLocked: true }));
       toast.success(
         isAr
-          ? 'تم حفظ ورقة ثبات الشخصية وقفل الخطوة الثانية تلقائياً ✓'
-          : 'Character Sheet saved to vault & Step 2 locked automatically ✓'
+          ? 'تم حفظ ورقة ثبات الشخصية وقفل الخطوة تلقائياً ✓'
+          : 'Character Sheet saved to vault & locked automatically ✓'
       );
     } catch {
       toast.error(
@@ -1352,7 +1364,14 @@ export default function AdminStudio() {
   const BackOrderIcon = isRTL ? ArrowRight : ArrowLeft;
   const PrevSpreadIcon = isRTL ? ChevronRight : ChevronLeft;
   const NextSpreadIcon = isRTL ? ChevronLeft : ChevronRight;
+  const NextStepIcon = isRTL ? ArrowLeft : ArrowRight;
+  const PrevStepIcon = isRTL ? ArrowRight : ArrowLeft;
 
+  const isNonStandardPageCount = !STANDARD_PAGE_COUNTS.includes(
+    pageCount as (typeof STANDARD_PAGE_COUNTS)[number]
+  );
+
+  // 6 Interactive checklist steps (used in Step 4 & quick checklist view)
   const pipelineSteps: Array<{
     key: keyof StudioProductionChecklist;
     num: number;
@@ -1399,9 +1418,101 @@ export default function AdminStudio() {
     },
   ];
 
-  const isNonStandardPageCount = !STANDARD_PAGE_COUNTS.includes(
-    pageCount as (typeof STANDARD_PAGE_COUNTS)[number]
-  );
+  // 4 Guided Pipeline Steps Definitions for Navigation Tabs
+  const studioPipelineSteps: Array<{
+    id: StudioStep;
+    num: string;
+    titleAr: string;
+    titleEn: string;
+    subtitleAr: string;
+    subtitleEn: string;
+    statusTextAr: string;
+    statusTextEn: string;
+    isComplete: boolean;
+    isInProgress: boolean;
+    icon: typeof UserCheck;
+  }> = [
+    {
+      id: 1,
+      num: '01',
+      titleAr: 'البطل وبصمة الشخصية',
+      titleEn: 'Hero & Character DNA',
+      subtitleAr: 'الملامح، الزي، وورقة الثبات (3 وضعيات)',
+      subtitleEn: 'Likeness, Outfit & Turnaround Sheet',
+      statusTextAr: checklist.characterSheetLocked
+        ? 'مقفول ✓'
+        : childRefPhoto
+        ? 'الصورة جاهزة'
+        : childName.trim()
+        ? 'قيد الإعداد'
+        : 'مطلوب',
+      statusTextEn: checklist.characterSheetLocked
+        ? 'Locked ✓'
+        : childRefPhoto
+        ? 'Photo Ready'
+        : childName.trim()
+        ? 'In Progress'
+        : 'Pending',
+      isComplete: Boolean(checklist.characterSheetLocked || characterSheetPreview),
+      isInProgress: Boolean(childName.trim() || childRefPhoto),
+      icon: UserCheck,
+    },
+    {
+      id: 2,
+      num: '02',
+      titleAr: 'سيناريو القصة وفصولها',
+      titleEn: 'Story Script & Arc',
+      subtitleAr: `${pageCount} مشهد • ${storyLang === 'ar' ? 'عربي' : 'EN'} • بدون تكرار`,
+      subtitleEn: `${pageCount} Scenes • ${storyLang.toUpperCase()} • Zero Repetition`,
+      statusTextAr: pages.length >= 10 ? `${pages.length} مشهد جاهز ✓` : 'مسودة مبدئية',
+      statusTextEn: pages.length >= 10 ? `${pages.length} Scenes Ready ✓` : 'Draft Arc',
+      isComplete: pages.length >= 10 && Boolean(storyTitle.trim()),
+      isInProgress: pages.length > 0,
+      icon: FileText,
+    },
+    {
+      id: 3,
+      num: '03',
+      titleAr: 'الرسومات وبرومبتات 300 DPI',
+      titleEn: 'Scene Artwork & 300 DPI',
+      subtitleAr: `${uploadedArtCount}/${pages.length} لوحة • ${ready300DpiCount} بدقة الطباعة`,
+      subtitleEn: `${uploadedArtCount}/${pages.length} Art • ${ready300DpiCount} at 300 DPI`,
+      statusTextAr:
+        uploadedArtCount === pages.length && ready300DpiCount === pages.length
+          ? '300 DPI جاهز 100% ✓'
+          : uploadedArtCount > 0
+          ? `${uploadedArtCount}/${pages.length} لوحة`
+          : '0 لوحة',
+      statusTextEn:
+        uploadedArtCount === pages.length && ready300DpiCount === pages.length
+          ? '300 DPI 100% Ready ✓'
+          : uploadedArtCount > 0
+          ? `${uploadedArtCount}/${pages.length} Art`
+          : '0 Art',
+      isComplete: uploadedArtCount === pages.length && ready300DpiCount === pages.length,
+      isInProgress: uploadedArtCount > 0,
+      icon: Sparkles,
+    },
+    {
+      id: 4,
+      num: '04',
+      titleAr: 'مراجعة الجودة وتصدير KDP',
+      titleEn: 'Quality Review & KDP Export',
+      subtitleAr: `${checklistProgress.completed}/${checklistProgress.total} معايير • واتساب و KDP`,
+      subtitleEn: `${checklistProgress.completed}/${checklistProgress.total} Checks • WhatsApp & PDF`,
+      statusTextAr:
+        checklistProgress.completed === checklistProgress.total
+          ? 'معتمد للطباعة ✓'
+          : `${checklistProgress.completed}/${checklistProgress.total} معايير`,
+      statusTextEn:
+        checklistProgress.completed === checklistProgress.total
+          ? 'Print Approved ✓'
+          : `${checklistProgress.completed}/${checklistProgress.total} Checks`,
+      isComplete: checklistProgress.completed === checklistProgress.total,
+      isInProgress: checklistProgress.completed > 0,
+      icon: ShieldCheck,
+    },
+  ];
 
   return (
     <AdminLayout>
@@ -1425,8 +1536,8 @@ export default function AdminStudio() {
                   </div>
                   <p className="text-sm text-slate-300 mt-0.5">
                     {isAr
-                      ? 'ورقة ثبات الشخصية، برومبتات KDP 8.5"×8.5" (Nano Banana / Midjourney / Flux)، فحص دقة 300 DPI، وتصدير فوري.'
-                      : 'Character Consistency Sheet, 5-block KDP 8.5"×8.5" prompts (Nano Banana / Midjourney / Flux), 300 DPI print check & seamless KDP handoff.'}
+                      ? 'خط إنتاج موجه في 4 خطوات: من بصمة البطل والسيناريو، حتى توليد رسومات 300 DPI وتصدير KDP.'
+                      : 'Guided 4-step production pipeline: from Hero DNA & script to 300 DPI scene art & KDP print export.'}
                   </p>
                 </div>
               </div>
@@ -1450,7 +1561,7 @@ export default function AdminStudio() {
                 className="h-10 px-4 rounded-full bg-cyan-500/15 border-cyan-400/35 text-cyan-100 hover:bg-cyan-500/25 text-xs font-bold gap-2"
               >
                 <FileDown className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{isAr ? 'تحميل حزمة الأوامر (.txt)' : 'Download Prompt Pack (.txt)'}</span>
+                <span>{isAr ? 'تحميل الأوامر (.txt)' : 'Download Prompts (.txt)'}</span>
               </Button>
 
               <Button
@@ -1460,7 +1571,7 @@ export default function AdminStudio() {
                 className="h-10 px-4 rounded-full bg-slate-900/75 border-white/15 text-slate-100 hover:bg-slate-800/90 hover:border-cyan-400/40 text-xs font-semibold gap-2"
               >
                 <Copy className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{isAr ? 'نسخ كل الأوامر' : 'Copy All Prompts'}</span>
+                <span>{isAr ? 'نسخ الأوامر' : 'Copy All'}</span>
               </Button>
 
               {selectedOrder && whatsAppHelpers && (
@@ -1471,20 +1582,8 @@ export default function AdminStudio() {
                 >
                   <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>
-                    {isAr ? 'إرسال المسودة للاعتماد عبر واتساب' : 'Send Draft Approval on WhatsApp'}
+                    {isAr ? 'إرسال مسودة واتساب' : 'WhatsApp Draft'}
                   </span>
-                </Button>
-              )}
-
-              {selectedOrder && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleMarkDraftReady}
-                  className="h-10 px-3.5 rounded-full bg-emerald-500/15 border-emerald-400/35 text-emerald-100 hover:bg-emerald-500/25 text-xs font-bold gap-1.5"
-                >
-                  <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>{isAr ? 'المسودة جاهزة' : 'Mark Draft Ready'}</span>
                 </Button>
               )}
 
@@ -1497,11 +1596,11 @@ export default function AdminStudio() {
                 <span>
                   {isAr ? (
                     <>
-                      فتح في صانع <span className="font-numeric">KDP 8.5×8.5</span>
+                      فتح صانع <span className="font-numeric">KDP 8.5×8.5</span>
                     </>
                   ) : (
                     <>
-                      Open in <span className="font-numeric">KDP 8.5×8.5</span> PDF Builder
+                      Open in <span className="font-numeric">KDP 8.5×8.5</span>
                     </>
                   )}
                 </span>
@@ -1514,7 +1613,7 @@ export default function AdminStudio() {
                 className="h-10 px-3.5 rounded-full bg-slate-900/75 border-white/15 text-slate-200 hover:bg-slate-800/90 text-xs font-semibold gap-1.5"
               >
                 <Printer className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{isAr ? 'معاينة طباعة' : 'Quick Proof'}</span>
+                <span>{isAr ? 'معاينة سريعة' : 'Quick Proof'}</span>
               </Button>
             </div>
           </div>
@@ -1575,6 +1674,32 @@ export default function AdminStudio() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowGuideBanner((prev) => !prev)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all cursor-pointer ${
+                  showGuideBanner
+                    ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-100'
+                    : 'bg-white/5 hover:bg-white/10 border-white/15 text-slate-300'
+                }`}
+              >
+                <HelpCircle className="w-4 h-4 text-cyan-300 shrink-0" aria-hidden="true" />
+                <span>
+                  {isAr
+                    ? showGuideBanner
+                      ? 'إخفاء الدليل التفاعلي'
+                      : 'كيف يعمل الاستوديو؟'
+                    : showGuideBanner
+                    ? 'Hide Studio Guide'
+                    : 'How Story Studio Works'}
+                </span>
+                {showGuideBanner ? (
+                  <ChevronUp className="w-3.5 h-3.5 text-cyan-300 shrink-0" aria-hidden="true" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 text-cyan-300 shrink-0" aria-hidden="true" />
+                )}
+              </button>
+
               <a
                 href="/docs/BUBBLEVERSE_FIRST_STORY_PLAYBOOK.pdf"
                 target="_blank"
@@ -1582,7 +1707,7 @@ export default function AdminStudio() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-xs font-semibold text-slate-200 transition-colors"
               >
                 <BookOpen className="w-4 h-4 text-cyan-300 shrink-0" aria-hidden="true" />
-                <span>{isAr ? 'دليل التنفيذ PDF' : 'Playbook PDF'}</span>
+                <span>{isAr ? 'دليل PDF' : 'Playbook PDF'}</span>
               </a>
 
               <Link
@@ -1623,1178 +1748,587 @@ export default function AdminStudio() {
           </div>
         </div>
 
-        {/* 1. Order Production Pipeline Checklist Bar (6 Interactive Auto-Saved Steps) */}
-        <div className="glass-card rounded-3xl p-4 sm:p-5 border-cyan-400/20 space-y-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <ClipboardCheck className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
-              <h2 className="text-sm sm:text-base font-bold text-white">
-                {isAr ? 'خط إنتاج الطلب — 6 خطوات تفاعلية' : 'Order Production Pipeline — 6 Interactive Steps'}
-              </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/35 text-emerald-200 text-xs font-bold font-numeric">
-                {checklistProgress.completed}/{checklistProgress.total}
-              </span>
-            </div>
-            <span className="text-xs text-slate-400">
-              {isAr
-                ? 'اضغط على أي خطوة للتعليم عليها — تُحفظ تلقائياً في مسودة الطلب'
-                : 'Click any step to toggle completion — auto-saved in this draft'}
-            </span>
-          </div>
+        {/* Intuitive Interactive "How Story Studio Works" Guide Banner */}
+        {showGuideBanner && (
+          <div className="glass-card rounded-3xl p-5 sm:p-6 border-cyan-400/25 bg-gradient-to-br from-slate-950/90 via-slate-900/90 to-purple-950/25 space-y-4 shadow-[0_16px_40px_rgba(0,0,0,0.4)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center shrink-0">
+                  <Lightbulb className="w-4 h-4 text-cyan-300" aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    <span>
+                      {isAr
+                        ? 'كيف يعمل استوديو القصص — دليل خط الإنتاج في 4 خطوات'
+                        : 'How Story Studio Works — 4-Step Production Pipeline Guide'}
+                    </span>
+                    <Badge className="bg-cyan-500/20 text-cyan-200 border-cyan-400/30 text-[10px] font-bold">
+                      {isAr ? 'خطوات موجهة' : 'Guided Workflow'}
+                    </Badge>
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {isAr
+                      ? 'من صورة الطفل وحتى تصدير ملف KDP 8.5"×8.5" الجاهز للمطبعة بدقة 300 DPI — اضغط أي بطاقة للانتقال الفوري للخطوة.'
+                      : 'From child photo to 300 DPI press-ready KDP 8.5"×8.5" hardcover PDF — click any card to jump directly to that step.'}
+                  </p>
+                </div>
+              </div>
 
-          <div className="h-1.5 w-full rounded-full bg-slate-900/90 overflow-hidden border border-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-purple-400 to-emerald-400 transition-all duration-300"
-              style={{
-                width: `${Math.round((checklistProgress.completed / checklistProgress.total) * 100)}%`,
-              }}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5">
-            {pipelineSteps.map((step) => {
-              const checked = checklist[step.key];
-              return (
+              <div className="flex items-center gap-2">
                 <button
-                  key={step.key}
                   type="button"
-                  aria-pressed={checked}
-                  onClick={() => handleToggleChecklistStep(step.key)}
-                  className={`min-h-[52px] px-3 py-2.5 rounded-2xl border text-start flex items-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    checked
-                      ? 'bg-emerald-500/15 border-emerald-400/45 text-emerald-100 shadow-[0_0_16px_rgba(16,185,129,0.16)]'
-                      : 'bg-slate-950/60 border-white/10 text-slate-300 hover:border-cyan-400/35 hover:text-white'
+                  onClick={() => setIsOverviewMode((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all cursor-pointer ${
+                    isOverviewMode
+                      ? 'bg-purple-500/20 border-purple-400/40 text-purple-100'
+                      : 'bg-white/5 hover:bg-white/10 border-white/15 text-slate-300'
                   }`}
                 >
-                  {checked ? (
-                    <CheckCircle2
-                      className="w-4 h-4 text-emerald-400 shrink-0"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Circle className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <span className="block text-xs font-bold leading-snug">
-                      <span className="font-numeric">{step.num}.</span>{' '}
-                      {isAr ? step.labelAr : step.labelEn}
-                    </span>
-                    {step.meta && (
-                      <span className="block text-[11px] font-numeric text-cyan-300 mt-0.5">
-                        ({step.meta})
-                      </span>
+                  <Layers className="w-4 h-4 text-purple-300 shrink-0" aria-hidden="true" />
+                  <span>
+                    {isAr
+                      ? isOverviewMode
+                        ? 'الوضع: عرض شامل'
+                        : 'الوضع: خطوة بخطوة'
+                      : isOverviewMode
+                      ? 'Mode: All Steps'
+                      : 'Mode: Step by Step'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+              {studioPipelineSteps.map((step) => {
+                const Icon = step.icon;
+                const isActive = activeStep === step.id;
+                return (
+                  <div
+                    key={step.id}
+                    onClick={() => {
+                      setActiveStep(step.id);
+                      setIsOverviewMode(false);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        setActiveStep(step.id);
+                        setIsOverviewMode(false);
+                      }
+                    }}
+                    className={`rounded-2xl p-4 border text-start transition-all cursor-pointer space-y-2.5 relative group ${
+                      isActive
+                        ? 'bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-pink-500/10 border-cyan-400/60 shadow-[0_0_20px_rgba(0,217,255,0.18)]'
+                        : 'bg-slate-900/60 border-white/10 hover:border-cyan-400/35 hover:bg-slate-900/90'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-numeric text-xs font-bold ${
+                            step.isComplete
+                              ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/40'
+                              : isActive
+                              ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400/40'
+                              : 'bg-white/10 text-slate-300'
+                          }`}
+                        >
+                          {step.num}
+                        </div>
+                        <Icon className="w-4 h-4 text-cyan-300" aria-hidden="true" />
+                      </div>
+                      <Badge
+                        className={`text-[10px] font-bold px-2 py-0.5 ${
+                          step.isComplete
+                            ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40'
+                            : step.isInProgress
+                            ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/40'
+                            : 'bg-slate-800 text-slate-400 border-white/10'
+                        }`}
+                      >
+                        {isAr ? step.statusTextAr : step.statusTextEn}
+                      </Badge>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-200 transition-colors">
+                        {isAr ? step.titleAr : step.titleEn}
+                      </h3>
+                      <p className="text-[11px] text-slate-300/90 mt-1 leading-relaxed">
+                        {isAr ? step.subtitleAr : step.subtitleEn}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-cyan-300 font-semibold">
+                      <span>{isAr ? 'الانتقال إلى الخطوة' : 'Go to step'}</span>
+                      <ArrowUpRight className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Quick Production Rules Strip */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 border-t border-white/10 text-[11px] text-slate-400 font-numeric">
+              <span className="flex items-center gap-1.5 text-amber-200">
+                <Lightbulb className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>{isAr ? 'قاعدة 300 DPI:' : '300 DPI Rule:'}</span>
+                <span className="text-slate-300">{isAr ? 'المقاس المستهدف 2588×2625 px للطباعة الكاملة' : '2588×2625 px target for full bleed'}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-cyan-200">
+                <ShieldCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>{isAr ? 'خزنة الصور:' : 'PhotoVault:'}</span>
+                <span className="text-slate-300">{isAr ? 'صفر تصغير للدقة، حفظ كامل في متصفحك' : 'Zero downscaling, full resolution in IndexedDB'}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-purple-200">
+                <FolderClock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>{isAr ? 'استئناف فوري:' : 'Instant Resume:'}</span>
+                <span className="text-slate-300">{isAr ? 'إعادة فتح الطلب تسترجع البرومبتات والصور فوراً' : 'Reopening orders restores prompts & art automatically'}</span>
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* 4-Step Pipeline Navigation Tabs with Progress Indicators */}
+        <div className="glass-card rounded-3xl p-3 sm:p-4 border-cyan-400/20 bg-slate-950/70 space-y-2">
+          <div className="flex items-center justify-between px-2 pb-2 border-b border-white/10">
+            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Layers className="w-4 h-4 text-cyan-300" aria-hidden="true" />
+              <span>{isAr ? 'مراحل خط الإنتاج الأربعة' : '4-Step Production Pipeline'}</span>
+            </span>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-slate-400 hidden sm:inline">
+                {isAr ? 'التقدم الإجمالي:' : 'Overall Progress:'}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/35 text-cyan-200 font-bold font-numeric">
+                {checklistProgress.completed} / {checklistProgress.total} {isAr ? 'معايير' : 'checks'}
+              </span>
+            </div>
+          </div>
+
+          <div
+            role="tablist"
+            aria-label={isAr ? 'خطوات إنتاج القصة' : 'Story production steps'}
+            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5"
+          >
+            {studioPipelineSteps.map((step) => {
+              const Icon = step.icon;
+              const isActive = !isOverviewMode && activeStep === step.id;
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    setActiveStep(step.id);
+                    setIsOverviewMode(false);
+                  }}
+                  className={`min-h-[58px] p-3 rounded-2xl border text-start flex items-center gap-3 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary relative overflow-hidden ${
+                    isActive
+                      ? 'bg-gradient-to-r from-cyan-500/25 via-purple-500/25 to-pink-500/15 border-cyan-400/60 text-white shadow-[0_0_20px_rgba(0,217,255,0.22)]'
+                      : 'bg-slate-900/60 border-white/10 text-slate-300 hover:border-cyan-400/30 hover:bg-slate-900/90'
+                  }`}
+                >
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-colors ${
+                      step.isComplete
+                        ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
+                        : isActive
+                        ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-200'
+                        : 'bg-white/5 border-white/10 text-slate-400'
+                    }`}
+                  >
+                    {step.isComplete ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" aria-hidden="true" />
+                    ) : (
+                      <Icon className="w-5 h-5 text-cyan-300" aria-hidden="true" />
                     )}
                   </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="text-xs font-extrabold truncate">
+                        <span className="font-numeric text-cyan-300 me-1">{step.num}.</span>
+                        {isAr ? step.titleAr : step.titleEn}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                          step.isComplete
+                            ? 'bg-emerald-500/15 border-emerald-400/35 text-emerald-200'
+                            : step.isInProgress
+                            ? 'bg-cyan-500/15 border-cyan-400/35 text-cyan-200'
+                            : 'bg-slate-950/60 border-white/10 text-slate-400'
+                        }`}
+                      >
+                        {isAr ? step.statusTextAr : step.statusTextEn}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300/80 truncate mt-0.5 font-numeric">
+                      {isAr ? step.subtitleAr : step.subtitleEn}
+                    </p>
+                  </div>
+
+                  {isActive && (
+                    <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400" />
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Saved Drafts Quick Resume Strip */}
-        <div className="glass-card rounded-3xl p-4 sm:p-5 border-white/10 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-sm font-bold text-white">
-              <FolderClock className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
-              <span>
-                {isAr ? 'المسودات المحفوظة للاستئناف السريع' : 'Saved Drafts — Quick Resume'}
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 text-xs font-numeric">
-                {savedDrafts.length}
-              </span>
-            </div>
-            <span className="text-xs text-slate-400">
-              {isAr
-                ? 'يتم استرجاع آخر تقدم وورقة الشخصية تلقائياً عند إعادة فتح الطلب'
-                : 'Reopening any order restores prompts, character sheet & checklist automatically'}
-            </span>
-          </div>
-
-          {savedDrafts.length === 0 ? (
-            <p className="text-xs text-slate-400 rounded-2xl bg-slate-950/45 border border-white/5 px-4 py-3">
-              {isAr
-                ? 'لا توجد مسودات محفوظة بعد — ابدأ بتعديل أي صفحة أو خطوة لتظهر هنا تلقائياً.'
-                : 'No saved drafts yet — edit any page or checklist step and it will appear here automatically.'}
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {savedDrafts.map((draft) => {
-                const isCurrent = draft.key === activeDraftKey;
-                const badgeLabel =
-                  draft.orderReference ||
-                  (draft.key === 'standalone'
-                    ? isAr
-                      ? 'مستقلة'
-                      : 'Standalone'
-                    : draft.key);
-                const draftSteps = countChecklistCompleted(draft.checklist);
-
-                return (
-                  <div
-                    key={draft.key}
-                    className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs transition-all ${
-                      isCurrent
-                        ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border-cyan-400/50 text-white shadow-[0_0_16px_rgba(0,217,255,0.18)]'
-                        : 'bg-slate-950/60 border-white/10 text-slate-300 hover:border-white/25'
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleResumeDraftFromList(draft)}
-                      className="flex items-center gap-2 text-start cursor-pointer focus-visible:outline-none"
-                    >
-                      <span className="px-2 py-0.5 rounded-full bg-white/10 text-cyan-200 font-semibold font-numeric">
-                        {badgeLabel}
-                      </span>
-                      <span className="font-semibold text-white max-w-[160px] truncate">
-                        {draft.childName} — {draft.storyTitle}
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-numeric">
-                        ({draft.pages.length} {isAr ? 'ص' : 'p'} • {draftSteps.completed}/
-                        {draftSteps.total})
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSavedDraft(draft.key)}
-                      aria-label={isAr ? 'حذف المسودة' : 'Delete draft'}
-                      className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Order Selector + Story Metadata + Page Count (10/15/20/24) + Script Actions */}
-        <div className="glass-card rounded-3xl p-5 border-white/10 space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-            <div className="lg:col-span-4 space-y-1.5 min-w-0">
-              <div className="text-xs font-semibold text-slate-200 flex items-center justify-between gap-2">
-                <label htmlFor="studio-order-select">
-                  {isAr ? 'تحميل من طلبات العملاء' : 'Load From Customer Order'}
-                </label>
-                <button
-                  type="button"
-                  onClick={() => navigate('/admin/orders')}
-                  className="text-cyan-300 hover:text-cyan-200 hover:underline inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <BackOrderIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>{isAr ? 'كل الطلبات' : 'All Orders'}</span>
-                </button>
-              </div>
-              <select
-                id="studio-order-select"
-                value={selectedOrder?.id || ''}
-                onChange={(e) => handleSelectOrder(e.target.value)}
-                className="w-full h-11 rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-3.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <option value="">
-                  {isAr ? '— وضع القصة المستقلة الحر —' : '— Free Standalone Story Mode —'}
-                </option>
-                {orders.map((o) => {
-                  const hasDraft = Boolean(getStudioDraft(o.id));
-                  return (
-                    <option key={o.id} value={o.id}>
-                      {o.reference} — {o.customerName} (
-                      {o.items[0]?.childName || (isAr ? 'البطل' : 'Hero')})
-                      {hasDraft ? (isAr ? ' [مسودة محفوظة]' : ' [Saved Draft]') : ''}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-12 gap-3">
-              <div className="sm:col-span-5 space-y-1.5 min-w-0">
-                <label htmlFor="studio-story-title" className="text-xs text-slate-300 font-medium">
-                  {isAr ? 'عنوان الكتاب' : 'Book Title'}
-                </label>
-                <Input
-                  id="studio-story-title"
-                  value={storyTitle}
-                  onChange={(e) => setStoryTitle(e.target.value)}
-                  className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
-                />
-              </div>
-
-              <div className="sm:col-span-3 space-y-1.5 min-w-0">
-                <label htmlFor="studio-hero-name" className="text-xs text-slate-300 font-medium">
-                  {isAr ? 'اسم البطل' : 'Hero Name'}
-                </label>
-                <Input
-                  id="studio-hero-name"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
-                  className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
-                />
-              </div>
-
-              <div className="sm:col-span-4 space-y-1.5 min-w-0">
-                <label htmlFor="studio-lang-select" className="text-xs text-slate-300 font-medium">
-                  {isAr ? 'اللغة والصفحات (حد KDP: 24)' : 'Lang / Pages (KDP Min: 24)'}
-                </label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <select
-                    id="studio-lang-select"
-                    value={storyLang}
-                    onChange={(e) => setStoryLang(e.target.value as 'ar' | 'en')}
-                    aria-label={isAr ? 'لغة القصة' : 'Story language'}
-                    className="h-11 w-full min-w-0 rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-2 cursor-pointer"
-                  >
-                    <option value="ar">{isAr ? 'عربي' : 'AR'}</option>
-                    <option value="en">{isAr ? 'إنجليزي' : 'EN'}</option>
-                  </select>
-                  <select
-                    value={pageCount}
-                    onChange={(e) => setPageCount(Number(e.target.value))}
-                    aria-label={isAr ? 'عدد الصفحات' : 'Page count'}
-                    className="h-11 w-full min-w-0 rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-2 font-numeric cursor-pointer"
-                  >
-                    <option value={10}>{isAr ? '10 صفحات' : '10 pages'}</option>
-                    <option value={15}>{isAr ? '15 صفحة' : '15 pages'}</option>
-                    <option value={20}>{isAr ? '20 صفحة' : '20 pages'}</option>
-                    <option value={24}>
-                      {isAr ? '24 صفحة (حد KDP)' : '24 pages (KDP Min)'}
-                    </option>
-                    {isNonStandardPageCount && (
-                      <option value={pageCount}>
-                        {isAr ? `${pageCount} صفحة` : `${pageCount} pages`}
-                      </option>
-                    )}
-                  </select>
+        {/* STEP 1: Hero & Character DNA Studio */}
+        {(isOverviewMode || activeStep === 1) && (
+          <div className="glass-card rounded-3xl p-5 sm:p-6 border-cyan-400/25 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-400/35 flex items-center justify-center shrink-0">
+                  <UserCheck className="w-5 h-5 text-cyan-300" aria-hidden="true" />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
-            <p className="text-xs text-slate-400">
-              {isAr
-                ? 'يدعم الاستوديو 24 مشهداً فريداً بدون تكرار مع الحفاظ على لوحاتك المرفوعة عند إعادة التوليد.'
-                : 'Generates up to 24 unique story beats with zero repetition while preserving any artwork you already uploaded.'}
-            </p>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button
-                type="button"
-                onClick={handleAutoGenerate}
-                className="bubble-btn-secondary h-10 px-4 text-xs font-bold gap-2"
-              >
-                <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>
-                  {isAr ? (
-                    <>
-                      توليد مسودة القصة <span className="font-numeric">({pageCount})</span>
-                    </>
-                  ) : (
-                    <>
-                      Auto-Draft <span className="font-numeric">({pageCount}p)</span>
-                    </>
-                  )}
-                </span>
-              </Button>
-
-              {isAiTextCapable ? (
-                <Button
-                  type="button"
-                  disabled={isEnhancingAi}
-                  onClick={() => void handleEnhanceWithAi()}
-                  className="h-10 px-4 rounded-full bg-gradient-to-r from-purple-500/25 to-pink-500/25 hover:from-purple-500/35 hover:to-pink-500/35 border border-purple-400/45 text-purple-100 text-xs font-bold gap-2"
-                >
-                  {isEnhancingAi ? (
-                    <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden="true" />
-                  ) : (
-                    <Cpu className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  )}
-                  <span>
-                    {isEnhancingAi
-                      ? isAr
-                        ? 'جاري التحسين بالذكاء الاصطناعي...'
-                        : 'Enhancing with AI...'
-                      : isAr
-                      ? 'تحسين السيناريو عبر AI المتصل'
-                      : 'Enhance Script with Connected AI'}
-                  </span>
-                </Button>
-              ) : (
-                <Link
-                  to="/admin/integrations"
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/35 text-amber-200 text-xs font-semibold transition-colors"
-                >
-                  <PlugZap className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>
-                    {isAr
-                      ? 'تحسين السيناريو عبر AI (اربط مفتاح Gemini / OpenAI)'
-                      : 'Enhance Script with AI (Connect Gemini / OpenAI)'}
-                  </span>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 2. Stage 2 — Step 1: Character Consistency Sheet Studio Card */}
-        <div className="glass-card rounded-3xl p-5 sm:p-6 border-cyan-400/25 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center shrink-0">
-                <UserCheck className="w-5 h-5 text-cyan-300" aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="text-base sm:text-lg font-extrabold text-white">
-                  {isAr
-                    ? 'المرحلة 2 — الخطوة 1: استوديو ورقة ثبات الشخصية'
-                    : 'Stage 2 — Step 1: Character Consistency Sheet Studio'}
-                </h2>
-                <p className="text-xs text-slate-300">
-                  {isAr
-                    ? 'ثبّت ملامح البطل، الشعر، والملابس الرسمية أولاً بـ 3 وضعيات ثم أرفق الورقة المرجعية في كل مشهد.'
-                    : 'Lock facial likeness, hair & signature outfit across 3 poses first, then attach the turnaround sheet to every scene.'}
-                </p>
-              </div>
-            </div>
-            <Badge className="bg-purple-500/15 text-purple-200 border border-purple-400/35 rounded-full px-3 py-1 text-xs font-semibold font-numeric">
-              {isAr ? '3 وضعيات • خلفية كريمي • 1:1' : '3 Poses • Cream Studio • 1:1'}
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
-            {/* Left Column: Child Reference Photo + Character Turnaround Sheet Upload Slot */}
-            <div className="xl:col-span-4 space-y-4">
-              {/* Child Reference Photo Panel */}
-              <div className="glass-card-inner rounded-2xl p-4 border-cyan-400/25 bg-slate-950/60 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-cyan-200">
-                    {isAr ? 'الصورة المرجعية للطفل' : 'Child Reference Photo'}
-                  </span>
-                  {childRefPhoto && (
-                    <Badge className="bg-emerald-500/15 text-emerald-200 border border-emerald-400/30 text-[10px]">
-                      {isAr ? 'مرفوعة من الطلب' : 'From Order'}
-                    </Badge>
-                  )}
-                </div>
-
-                {childRefPhoto ? (
-                  <div className="flex items-center gap-3.5">
-                    <img
-                      src={childRefPhoto}
-                      alt={childName}
-                      className="w-20 h-20 rounded-2xl object-cover border-2 border-cyan-400/60 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <p className="text-xs text-slate-200 font-semibold truncate">{childName}</p>
-                      <a
-                        href={childRefPhoto}
-                        download={`${sanitizeFileSlug(childName)}-reference.png`}
-                        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/35 text-cyan-100 text-xs font-bold transition-colors"
-                      >
-                        <Download className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        <span>{isAr ? 'تحميل الصورة' : 'Download Photo'}</span>
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-white/15 bg-slate-900/50 p-3.5 text-xs text-slate-400 leading-relaxed">
-                    {selectedOrder
-                      ? isAr
-                        ? 'لم يرفع ولي الأمر صورة في خزنة الطلب بعد — يمكنك طلب صورة نهارية واضحة عبر واتساب بضغطة زر.'
-                        : 'No reference photo stored in this order vault yet — request a clear daylight photo via WhatsApp below.'
-                      : isAr
-                      ? 'اختر طلباً من الأعلى لعرض صورة الطفل المرجعية هنا مع زر التحميل وطلب صورة أوضح عبر واتساب.'
-                      : 'Select a customer order above to view and download the child’s reference photo here.'}
-                  </div>
-                )}
-
-                {selectedOrder && whatsAppHelpers && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleOpenWhatsAppPhotoRequest}
-                    className="w-full h-10 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border-amber-400/35 text-amber-100 text-xs font-bold gap-2"
-                  >
-                    <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>
-                      {isAr
-                        ? 'طلب صورة أوضح عبر واتساب (ضبابية / نظارة)'
-                        : 'Request Clearer Photo on WhatsApp'}
-                    </span>
-                  </Button>
-                )}
-              </div>
-
-              {/* Character Sheet Upload & Preview Slot */}
-              <div className="glass-card-inner rounded-2xl p-4 border-purple-400/25 bg-slate-950/60 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-purple-200">
-                    {isAr ? 'ورقة ثبات الشخصية المولّدة' : 'Locked Character Turnaround Sheet'}
-                  </span>
-                  {checklist.characterSheetLocked && (
-                    <Badge className="bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 text-[10px]">
-                      {isAr ? 'مقفولة ✓' : 'Locked ✓'}
-                    </Badge>
-                  )}
-                </div>
-
-                {characterSheetPreview ? (
-                  <div className="space-y-2.5">
-                    <div className="relative aspect-square rounded-2xl overflow-hidden border border-emerald-400/40 bg-slate-900">
-                      <img
-                        src={characterSheetPreview}
-                        alt={
-                          isAr
-                            ? `ورقة ثبات الشخصية للبطل ${childName}`
-                            : `Character consistency sheet for ${childName}`
-                        }
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <a
-                        href={characterSheetPreview}
-                        download={`${sanitizeFileSlug(childName)}-character-sheet.png`}
-                        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold transition-colors"
-                      >
-                        <Download className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        <span>{isAr ? 'تحميل' : 'Download'}</span>
-                      </a>
-                      <label className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/35 text-purple-100 text-xs font-bold cursor-pointer transition-colors">
-                        <Upload className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        <span>{isAr ? 'استبدال' : 'Replace'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => void handleCharacterSheetUpload(e)}
-                          className="hidden"
-                        />
-                      </label>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => void handleRemoveCharacterSheet()}
-                        className="h-9 px-2.5 rounded-full text-rose-300 hover:text-rose-200 hover:bg-rose-500/15"
-                        aria-label={isAr ? 'حذف ورقة الشخصية' : 'Remove character sheet'}
-                      >
-                        <Trash2 className="w-4 h-4" aria-hidden="true" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-purple-400/35 hover:border-cyan-400/60 bg-slate-900/50 hover:bg-slate-900/80 p-5 text-center cursor-pointer transition-all">
-                    <Upload className="w-5 h-5 text-cyan-300" aria-hidden="true" />
-                    <span className="text-xs font-bold text-white">
-                      {isAr
-                        ? 'ارفع ورقة ثبات الشخصية المولّدة'
-                        : 'Upload Generated Character Sheet'}
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      {isAr
-                        ? 'يُحفظ في الخزنة ويقفل الخطوة 2 تلقائياً'
-                        : 'Saves to photoVault & locks Step 2 automatically'}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => void handleCharacterSheetUpload(e)}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-            </div>
-
-            {/* Right Column: Character DNA Inputs + Live Master Character Sheet Prompt */}
-            <div className="xl:col-span-8 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                <div className="sm:col-span-3 space-y-1.5 min-w-0">
-                  <label htmlFor="studio-hero-age" className="text-xs text-slate-300 font-medium">
-                    {isAr ? 'عمر البطل' : 'Hero Age'}
-                  </label>
-                  <Input
-                    id="studio-hero-age"
-                    value={characterDna.childAge}
-                    onChange={(e) => updateDnaField('childAge', e.target.value)}
-                    placeholder="5"
-                    className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white font-numeric"
-                  />
-                </div>
-
-                <div className="sm:col-span-4 space-y-1.5 min-w-0">
-                  <span className="text-xs text-slate-300 font-medium block">
-                    {isAr ? 'جنس البطل' : 'Hero Gender'}
-                  </span>
-                  <div className="grid grid-cols-2 gap-1.5 h-11 p-1 rounded-2xl bg-slate-950/80 border border-white/15">
-                    <button
-                      type="button"
-                      aria-pressed={characterDna.childGender === 'boy'}
-                      onClick={() => updateDnaField('childGender', 'boy')}
-                      className={`rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        characterDna.childGender === 'boy'
-                          ? 'bg-cyan-500/25 text-cyan-100 border border-cyan-400/45'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      {isAr ? 'ولد' : 'Boy'}
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={characterDna.childGender === 'girl'}
-                      onClick={() => updateDnaField('childGender', 'girl')}
-                      className={`rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        characterDna.childGender === 'girl'
-                          ? 'bg-pink-500/25 text-pink-100 border border-pink-400/45'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      {isAr ? 'بنت' : 'Girl'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="sm:col-span-5 space-y-1.5 min-w-0">
-                  <label htmlFor="studio-dna-hair" className="text-xs text-slate-300 font-medium">
-                    {isAr ? 'الشعر وملامح الوجه (بالإنجليزية للأمر)' : 'Hair & Facial Features'}
-                  </label>
-                  <Input
-                    id="studio-dna-hair"
-                    dir="ltr"
-                    value={characterDna.hairAndFeatures}
-                    onChange={(e) => updateDnaField('hairAndFeatures', e.target.value)}
-                    placeholder="curly dark hair, expressive warm eyes, natural joyful smile"
-                    className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
-                  />
-                </div>
-
-                <div className="sm:col-span-12 space-y-1.5 min-w-0">
-                  <label htmlFor="studio-dna-outfit" className="text-xs text-slate-300 font-medium">
-                    {isAr
-                      ? 'الزي الرسمي الثابت للبطل في هذا الكتاب'
-                      : 'Signature Outfit for This Book'}
-                  </label>
-                  <Input
-                    id="studio-dna-outfit"
-                    dir="ltr"
-                    value={characterDna.signatureOutfit}
-                    onChange={(e) => updateDnaField('signatureOutfit', e.target.value)}
-                    placeholder="turquoise-and-navy junior astronaut jacket with star patches, blue sneakers"
-                    className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Live Auto-Generated Master Character Sheet Prompt */}
-              <div className="space-y-2.5 pt-2 border-t border-white/10">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label
-                    htmlFor="studio-master-sheet-prompt"
-                    className="text-xs sm:text-sm font-bold text-cyan-200 flex items-center gap-2"
-                  >
-                    <Sparkles className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
-                    <span>
-                      {isAr
-                        ? 'أمر ورقة ثبات الشخصية الرئيسي (مُحدّث تلقائياً)'
-                        : 'Master Character Sheet Prompt (Live Auto-Generated)'}
-                    </span>
-                  </label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={handleSyncDnaToAllPrompts}
-                      className="h-9 px-3 rounded-full bg-purple-500/15 border-purple-400/35 text-purple-100 hover:bg-purple-500/25 text-xs font-semibold gap-1.5"
-                    >
-                      <RefreshCw className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span>
-                        {isAr ? 'تحديث كل المشاهد بمواصفات البطل' : 'Sync DNA to All Scenes'}
-                      </span>
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() =>
-                        void handleCopyText(
-                          masterCharacterSheetPrompt,
-                          'تم نسخ أمر ورقة ثبات الشخصية بنجاح ✓',
-                          'Master Character Sheet Prompt copied ✓'
-                        )
-                      }
-                      className="bubble-btn-outline h-9 px-3.5 text-xs font-bold gap-1.5"
-                    >
-                      <Copy className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span>{isAr ? 'نسخ أمر الورقة' : 'Copy Master Prompt'}</span>
-                    </Button>
-                  </div>
-                </div>
-                <Textarea
-                  id="studio-master-sheet-prompt"
-                  dir="ltr"
-                  readOnly
-                  rows={4}
-                  value={masterCharacterSheetPrompt}
-                  className="rounded-2xl bg-slate-950/90 border-cyan-400/25 text-cyan-100 text-xs font-mono leading-relaxed select-all"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Stage 2 — Step 2 & 3: Prompt Engine Switcher Bar */}
-        <div className="glass-card rounded-3xl p-4 sm:p-5 border-purple-400/25 space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-purple-300 shrink-0" aria-hidden="true" />
-                <h2 className="text-sm sm:text-base font-extrabold text-white">
-                  {isAr
-                    ? 'الخطوة 2 و 3: محول محرك الأوامر الهجين (صيغة KDP الخماسية)'
-                    : 'Step 2 & 3: Hybrid AI Prompt Engine Switcher (5-Block KDP Formula)'}
-                </h2>
-              </div>
-              <p className="text-xs text-slate-300">
-                {isAr
-                  ? 'التبديل بين المحركات يعيد صياغة أمر ورقة الشخصية وجميع مشاهد القصة فوراً بمقاس 8.5"×8.5" الآمن للطباعة.'
-                  : 'Switching engines instantly reformats the Master Sheet and every scene prompt for 8.5"×8.5" KDP print safety.'}
-              </p>
-            </div>
-
-            {/* Segmented 3-Engine Switcher */}
-            <div
-              role="group"
-              aria-label={isAr ? 'اختيار محرك توليد الصور' : 'Select illustration prompt engine'}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 rounded-2xl bg-slate-950/85 border border-white/10"
-            >
-              {PROMPT_ENGINE_OPTIONS.map((opt) => {
-                const active = promptEngine === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => handleSwitchPromptEngine(opt.id)}
-                    className={`px-3.5 py-2 rounded-xl text-start transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                      active
-                        ? 'bg-gradient-to-r from-cyan-500/25 via-purple-500/25 to-pink-500/20 border border-cyan-400/55 text-white shadow-[0_0_18px_rgba(0,217,255,0.2)]'
-                        : 'border border-transparent text-slate-300 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <span className="block text-xs font-extrabold">{opt.labelEn}</span>
-                    <span className="block text-[10px] text-cyan-200/85 mt-0.5">
-                      {isAr ? opt.tagAr : opt.tagEn}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Optional Midjourney --cref URL Input */}
-          {promptEngine === 'midjourney' && (
-            <div className="rounded-2xl bg-purple-950/30 border border-purple-400/30 p-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
-              <label
-                htmlFor="studio-mj-cref"
-                className="text-xs font-bold text-purple-200 shrink-0"
-              >
-                {isAr ? 'رابط ورقة الشخصية لـ Midjourney (--cref):' : 'Midjourney --cref Sheet URL:'}
-              </label>
-              <Input
-                id="studio-mj-cref"
-                dir="ltr"
-                value={characterDna.midjourneyCrefUrl || ''}
-                onChange={(e) => updateDnaField('midjourneyCrefUrl', e.target.value)}
-                placeholder="https://cdn.discordapp.com/attachments/.../character-sheet.png"
-                className="h-10 rounded-xl bg-slate-950/85 border-purple-400/30 text-xs text-white font-mono flex-1"
-              />
-              <span className="text-[11px] text-purple-200/80 font-numeric shrink-0">
-                --cw 85 --ar 1:1
-              </span>
-            </div>
-          )}
-
-          {/* Stage 2 Print & Fallback Production Tip */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-slate-300 pt-2 border-t border-white/10">
-            <span className="inline-flex items-center gap-1.5">
-              <Lightbulb className="w-4 h-4 text-amber-300 shrink-0" aria-hidden="true" />
-              <span>
-                {isAr ? (
-                  <>
-                    <strong>نصيحة طباعة:</strong> الورق يطبع أغمق بنسبة{' '}
-                    <span className="font-numeric">8–10%</span> من شاشة الهاتف — ارفع إضاءة الظلال قليلاً.
-                  </>
-                ) : (
-                  <>
-                    <strong>Print Tip:</strong> Paper prints{' '}
-                    <span className="font-numeric">8–10%</span> darker than phone screens — lift deep shadows slightly.
-                  </>
-                )}
-              </span>
-            </span>
-            <span className="text-slate-400 font-numeric">
-              {isAr
-                ? 'المقاس المستهدف: 2588×2625 px @ 300 DPI (KDP 8.5"×8.5" Full Bleed)'
-                : 'Target Spec: 2588×2625 px @ 300 DPI (KDP 8.5"×8.5" Full Bleed)'}
-            </span>
-          </div>
-        </div>
-
-        {/* 4. Main Studio Workspace: Pages Rail (Bulk Upload + 300 DPI) + Spread Preview & Editor */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Story Pages Rail */}
-          <div className="lg:col-span-3 glass-card rounded-3xl p-4 border-white/10 space-y-3 lg:sticky lg:top-6">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <span className="text-sm font-bold text-white flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
-                <span>
-                  {isAr ? 'الصفحات' : 'Pages'}{' '}
-                  <span className="font-numeric text-cyan-300">({pages.length})</span>
-                </span>
-              </span>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleAddPage}
-                className="h-9 px-3 rounded-full bg-white/10 hover:bg-cyan-500/25 border border-white/15 text-white text-xs font-semibold gap-1.5"
-              >
-                <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{isAr ? 'إضافة' : 'Add'}</span>
-              </Button>
-            </div>
-
-            {/* Stage 2 Step 4: Bulk Upload Scenes (Natural Numeric Sort + Full 300 DPI Vault) */}
-            <div className="space-y-1.5 pb-2 border-b border-white/10">
-              <label className="bubble-btn-secondary w-full h-10 px-3 text-xs font-bold gap-2 cursor-pointer flex items-center justify-center">
-                {isBulkUploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden="true" />
-                ) : (
-                  <Images className="w-4 h-4 shrink-0" aria-hidden="true" />
-                )}
-                <span>
-                  {isBulkUploading
-                    ? isAr
-                      ? 'جاري حفظ اللوحات...'
-                      : 'Saving full-res scenes...'
-                    : isAr
-                    ? 'رفع جماعي للوحات (300 DPI)'
-                    : 'Bulk Upload Scenes (300 DPI)'}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  disabled={isBulkUploading}
-                  onChange={(e) => void handleBulkScenesUpload(e)}
-                  className="hidden"
-                />
-              </label>
-              <p className="text-[10px] text-slate-400 leading-snug text-center font-numeric">
-                {isAr
-                  ? 'ترتيب تلقائي (01-cover.png, 02-scene.png…) بدون تصغير الدقة'
-                  : 'Natural sort (01-cover.png, 02-scene.png…) • No downscaling'}
-              </p>
-            </div>
-
-            <div className="space-y-2 max-h-[600px] overflow-y-auto pe-1">
-              {pages.map((p, idx) => {
-                const isSelected = idx === activePageIndex;
-                const pageResCheck =
-                  typeof p.imageWidth === 'number' &&
-                  typeof p.imageHeight === 'number' &&
-                  p.imageWidth > 0 &&
-                  p.imageHeight > 0
-                    ? checkImagePrintReadiness(p.imageWidth, p.imageHeight)
-                    : null;
-
-                return (
-                  <button
-                    key={p.pageNumber}
-                    type="button"
-                    onClick={() => setActivePageIndex(idx)}
-                    className={`w-full p-2.5 rounded-2xl border text-start flex items-center gap-3 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/15 border-cyan-400/55 text-white shadow-[0_0_20px_rgba(0,217,255,0.16)]'
-                        : 'bg-slate-950/55 border-white/10 text-slate-300 hover:border-white/25 hover:text-white'
-                    }`}
-                  >
-                    <img
-                      src={p.imageUrl}
-                      alt={isAr ? `صفحة ${p.pageNumber}` : `Page ${p.pageNumber}`}
-                      className="w-11 h-11 rounded-xl object-cover shrink-0 border border-white/15"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1.5">
-                        <span className="text-xs font-bold text-cyan-300 font-numeric">
-                          {isAr ? `صفحة ${p.pageNumber}` : `Page ${p.pageNumber}`}
-                        </span>
-                        {pageResCheck && (
-                          <span
-                            className={`px-1.5 py-0.5 rounded-full border text-[9px] font-bold font-numeric shrink-0 ${getResolutionBadgeStyle(
-                              pageResCheck.status
-                            )}`}
-                          >
-                            {getCompactResolutionText(pageResCheck, isAr)}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-slate-300/90 truncate mt-0.5">{p.text}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Active Page Spread Preview + Manual Editor */}
-          {activePage && (
-            <div className="lg:col-span-9 space-y-6">
-              {/* Live KDP 8.5"×8.5" Double-Spread Preview */}
-              <div className="glass-card rounded-3xl p-5 sm:p-6 border-purple-400/25 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-400/35 text-cyan-200 text-xs font-bold">
-                      <Eye className="w-4 h-4 text-cyan-300 shrink-0" aria-hidden="true" />
-                      <span>
-                        {isAr ? (
-                          <>
-                            معاينة مزدوجة <span className="font-numeric">8.5"×8.5" KDP</span> • صفحة{' '}
-                            <span className="font-numeric">{activePage.pageNumber}</span> من{' '}
-                            <span className="font-numeric">{pages.length}</span>
-                          </>
-                        ) : (
-                          <>
-                            Live <span className="font-numeric">8.5"×8.5" KDP</span> Spread • Page{' '}
-                            <span className="font-numeric">{activePage.pageNumber}</span> of{' '}
-                            <span className="font-numeric">{pages.length}</span>
-                          </>
-                        )}
-                      </span>
-                    </div>
-
-                    {activeResolutionCheck && (
-                      <div
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold ${getResolutionBadgeStyle(
-                          activeResolutionCheck.status
-                        )}`}
-                      >
-                        {activeResolutionCheck.status === 'print_300dpi' ? (
-                          <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        ) : (
-                          <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        )}
-                        <span>
-                          {isAr ? activeResolutionCheck.labelAr : activeResolutionCheck.labelEn}
-                        </span>
-                        <span className="font-numeric opacity-90">
-                          ({activeResolutionCheck.width}×{activeResolutionCheck.height})
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
+                <div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={activePageIndex <= 0}
-                      onClick={() => setActivePageIndex((i) => Math.max(0, i - 1))}
-                      aria-label={isAr ? 'الصفحة السابقة' : 'Previous page'}
-                      className="h-9 px-3 rounded-full bg-slate-900/75 border-white/15 text-slate-200 hover:bg-slate-800 disabled:opacity-40"
-                    >
-                      <PrevSpreadIcon className="w-4 h-4" aria-hidden="true" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={activePageIndex >= pages.length - 1}
-                      onClick={() => setActivePageIndex((i) => Math.min(pages.length - 1, i + 1))}
-                      aria-label={isAr ? 'الصفحة التالية' : 'Next page'}
-                      className="h-9 px-3 rounded-full bg-slate-900/75 border-white/15 text-slate-200 hover:bg-slate-800 disabled:opacity-40"
-                    >
-                      <NextSpreadIcon className="w-4 h-4" aria-hidden="true" />
-                    </Button>
-                    {pages.length > 1 && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeletePage(activePageIndex)}
-                        className="h-9 px-3 rounded-full text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 gap-1.5"
-                      >
-                        <Trash2 className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        <span>{isAr ? 'حذف الصفحة' : 'Delete Page'}</span>
-                      </Button>
-                    )}
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 text-xs font-bold font-numeric">
+                      {isAr ? 'الخطوة 01' : 'Step 01'}
+                    </span>
+                    <h2 className="text-lg sm:text-xl font-extrabold text-white">
+                      {isAr ? 'البطل وبصمة الشخصية (ورقة الثبات)' : 'Hero & Character DNA Studio'}
+                    </h2>
                   </div>
-                </div>
-
-                {/* Open Book Double-Spread Container */}
-                <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch p-3 sm:p-4 rounded-3xl bg-slate-950/90 border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
-                  {/* Illustration Page (1:1 Square KDP 8.5"×8.5") */}
-                  <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shadow-inner">
-                    <img
-                      src={activePreviewImageUrl}
-                      alt={
-                        isAr
-                          ? `رسم صفحة ${activePage.pageNumber}`
-                          : `Illustration page ${activePage.pageNumber}`
-                      }
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-3 inset-x-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-                      <span className="px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-cyan-200 font-numeric">
-                        8.5&quot; × 8.5&quot; • 1:1
-                      </span>
-                      {activePage.imageVaultId && (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-950/80 backdrop-blur-md border border-emerald-400/35 text-[10px] font-bold text-emerald-200">
-                          {isAr ? 'محفوظة بدقتها الكاملة' : 'Full-Res Vault'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Story Text Page */}
-                  <div
-                    dir={storyLang === 'ar' ? 'rtl' : 'ltr'}
-                    className="rounded-2xl bg-gradient-to-br from-slate-900/95 via-slate-950 to-purple-950/35 border border-white/15 p-6 sm:p-8 flex flex-col justify-between min-h-[280px]"
-                  >
-                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/10">
-                      <span className="text-xs font-bold text-purple-300 truncate">
-                        {storyTitle}
-                      </span>
-                      <span className="text-[11px] font-semibold text-pink-300 shrink-0">
-                        {childName}
-                      </span>
-                    </div>
-
-                    <p className="text-base sm:text-xl leading-relaxed text-white font-editorial my-6">
-                      {activePage.text}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs text-slate-400">
-                      <span>{storyLang === 'ar' ? 'بابل فيرس' : 'Bubbleverse'}</span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 font-bold font-numeric">
-                        {activePage.pageNumber}
-                      </span>
-                    </div>
-                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {isAr
+                      ? 'اربط الطلب، حدد ملامح البطل والزي الرسمي، وولّد ورقة ثبات الشخصية (3 وضعيات) لقفل الملامح عبر كافة المشاهد.'
+                      : 'Connect customer order, set hero likeness & signature outfit, and lock the 3-pose turnaround sheet.'}
+                  </p>
                 </div>
               </div>
 
-              {/* Manual Page Editor, Stage 2 5-Block Prompt & Full-Res Artwork Upload */}
-              <div className="glass-card rounded-3xl p-5 sm:p-6 border-white/10 space-y-5">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="studio-page-text"
-                    className="text-sm font-bold text-white flex items-center justify-between"
+              <div className="flex items-center gap-2">
+                {checklist.characterSheetLocked ? (
+                  <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-400/40 text-xs font-bold gap-1.5 px-3 py-1">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                    <span>{isAr ? 'ورقة الشخصية مقفولة' : 'Character Sheet Locked'}</span>
+                  </Badge>
+                ) : (
+                  <Badge className="bg-amber-500/15 text-amber-200 border-amber-400/35 text-xs font-semibold px-3 py-1">
+                    {isAr ? 'يرجى رفع ورقة الشخصية لقفل الخطوة' : 'Upload sheet to lock step'}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Order Selector Strip */}
+            <div className="rounded-2xl bg-slate-950/60 border border-white/10 p-4 space-y-3">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                <div className="lg:col-span-5 space-y-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-200 flex items-center justify-between gap-2">
+                    <label htmlFor="studio-order-select-step1">
+                      {isAr ? 'تحميل من طلبات العملاء' : 'Load From Customer Order'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/admin/orders')}
+                      className="text-cyan-300 hover:text-cyan-200 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <BackOrderIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>{isAr ? 'كل الطلبات' : 'All Orders'}</span>
+                    </button>
+                  </div>
+                  <select
+                    id="studio-order-select-step1"
+                    value={selectedOrder?.id || ''}
+                    onChange={(e) => handleSelectOrder(e.target.value)}
+                    className="w-full h-11 rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-3.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    <span>
-                      {isAr ? (
+                    <option value="">
+                      {isAr ? '— وضع القصة المستقلة الحر —' : '— Free Standalone Story Mode —'}
+                    </option>
+                    {orders.map((o) => {
+                      const hasDraft = Boolean(getStudioDraft(o.id));
+                      return (
+                        <option key={o.id} value={o.id}>
+                          {o.reference} — {o.customerName} (
+                          {o.items[0]?.childName || (isAr ? 'البطل' : 'Hero')})
+                          {hasDraft ? (isAr ? ' [مسودة محفوظة]' : ' [Saved Draft]') : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div className="lg:col-span-7 flex flex-wrap items-center gap-2">
+                  <div className="flex-1 min-w-[200px]">
+                    <span className="text-[11px] text-slate-400 block mb-1">
+                      {isAr ? 'حالة الطلب الحالي في الاستوديو:' : 'Current Order Status:'}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      {selectedOrder ? (
                         <>
-                          نص القصة — صفحة{' '}
-                          <span className="font-numeric">{activePage.pageNumber}</span>
+                          <Badge className="bg-cyan-500/15 text-cyan-200 border-cyan-400/30">
+                            {selectedOrder.customerName}
+                          </Badge>
+                          <Badge className="bg-purple-500/15 text-purple-200 border-purple-400/30 font-numeric">
+                            {selectedOrder.reference}
+                          </Badge>
+                          <span className="text-slate-300 font-numeric">
+                            ({selectedOrder.phone || 'No phone'})
+                          </span>
                         </>
                       ) : (
-                        <>
-                          Story Text — Page{' '}
-                          <span className="font-numeric">{activePage.pageNumber}</span>
-                        </>
+                        <Badge className="bg-slate-800 text-slate-300 border-white/10">
+                          {isAr ? 'قصة مستقلة بدون طلب مخصص' : 'Standalone Story (No Order Linked)'}
+                        </Badge>
                       )}
-                    </span>
-                    <span className="text-xs font-normal text-slate-400">
-                      {isAr ? 'تعديل يدوي مباشر' : 'Direct manual edit'}
-                    </span>
-                  </label>
-                  <Textarea
-                    id="studio-page-text"
-                    dir={storyLang === 'ar' ? 'rtl' : 'ltr'}
-                    rows={3}
-                    value={activePage.text}
-                    onChange={(e) => updatePage(activePageIndex, { text: e.target.value })}
-                    className="rounded-2xl bg-slate-950/80 border-white/15 text-white text-sm leading-relaxed"
-                  />
-                </div>
-
-                {/* Stage 2 5-Block Scene Prompt Box */}
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <label
-                      htmlFor="studio-image-prompt"
-                      className="text-sm font-bold text-cyan-200 flex items-center gap-2"
-                    >
-                      <Sparkles className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
-                      <span>
-                        {isAr
-                          ? `أمر مشهد المرحلة 2 — ${getEngineDisplayName(promptEngine)}`
-                          : `Stage 2 Scene Prompt — ${getEngineDisplayName(promptEngine)}`}
-                      </span>
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          updatePage(activePageIndex, {
-                            imagePrompt: reformatScenePromptForEngine(
-                              activePage.imagePrompt,
-                              syncedDna,
-                              activePage.pageNumber,
-                              pages.length,
-                              promptEngine,
-                              activePage.text
-                            ),
-                          })
-                        }
-                        className="h-8 px-3 rounded-full bg-slate-900/75 border-white/15 text-slate-200 hover:bg-slate-800 text-xs font-semibold gap-1.5"
-                      >
-                        <RefreshCw className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        <span>{isAr ? 'تحديث القالب' : 'Reformat'}</span>
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() =>
-                          void handleCopyText(
-                            activePage.imagePrompt,
-                            `تم نسخ أمر الصفحة ${activePage.pageNumber} بنجاح ✓`,
-                            `Copied Page ${activePage.pageNumber} Stage 2 prompt ✓`
-                          )
-                        }
-                        className="bubble-btn-outline h-8 px-3.5 text-xs font-bold gap-1.5"
-                      >
-                        <Copy className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        <span>{isAr ? 'نسخ الأمر' : 'Copy Prompt'}</span>
-                      </Button>
                     </div>
                   </div>
-                  <Textarea
-                    id="studio-image-prompt"
-                    dir="ltr"
-                    rows={6}
-                    value={activePage.imagePrompt}
-                    onChange={(e) =>
-                      updatePage(activePageIndex, { imagePrompt: e.target.value })
-                    }
-                    className="rounded-2xl bg-slate-950/85 border-white/15 text-slate-200 text-xs font-mono leading-relaxed"
-                  />
                 </div>
+              </div>
+            </div>
 
-                {/* Page Artwork Upload (Full 300 DPI Vault) & Print Readiness Check */}
-                <div className="space-y-3 pt-2 border-t border-white/10">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <label
-                      htmlFor="studio-image-url"
-                      className="text-sm font-bold text-white flex items-center gap-2"
-                    >
-                      <ImageIcon className="w-5 h-5 text-pink-400 shrink-0" aria-hidden="true" />
-                      <span>
-                        {isAr
-                          ? 'رسمة الصفحة (حفظ بدقة 300 DPI كاملة دون تصغير)'
-                          : 'Page Artwork (Full 300 DPI Vault Storage — No Downscaling)'}
-                      </span>
-                    </label>
-                    {activeResolutionCheck && (
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold ${getResolutionBadgeStyle(
-                          activeResolutionCheck.status
-                        )}`}
-                      >
-                        {activeResolutionCheck.status === 'print_300dpi' ? (
-                          <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        ) : (
-                          <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        )}
-                        <span>
-                          {activeResolutionCheck.status === 'print_300dpi'
-                            ? isAr
-                              ? 'جاهز 300 DPI (2588×2625+)'
-                              : '300 DPI Ready (2588×2625+)'
-                            : isAr
-                            ? activeResolutionCheck.labelAr
-                            : activeResolutionCheck.labelEn}
-                        </span>
-                        <span className="font-numeric">
-                          • {activeResolutionCheck.width}×{activeResolutionCheck.height} px
-                        </span>
-                      </span>
+            {/* Main Step 1 Grid: Photos / Turnaround Sheet Slot (Left) + DNA Form & Live Prompt (Right) */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+              {/* Left Column: Reference Photo + Character Turnaround Sheet */}
+              <div className="xl:col-span-4 space-y-4">
+                {/* Child Reference Photo Panel */}
+                <div className="glass-card-inner rounded-2xl p-4 border-cyan-400/25 bg-slate-950/60 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-cyan-200">
+                      {isAr ? 'الصورة المرجعية للطفل' : 'Child Reference Photo'}
+                    </span>
+                    {childRefPhoto && (
+                      <Badge className="bg-emerald-500/15 text-emerald-200 border border-emerald-400/30 text-[10px]">
+                        {isAr ? 'مرفوعة من الطلب' : 'From Order'}
+                      </Badge>
                     )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2.5">
-                    <Input
-                      id="studio-image-url"
-                      dir="ltr"
-                      value={activePage.imageVaultId ? '' : activePage.imageUrl}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updatePage(activePageIndex, {
-                          imageUrl: val,
-                          imageVaultId: undefined,
-                          imageWidth: undefined,
-                          imageHeight: undefined,
-                        });
-                        setActiveVaultImageUrl(null);
-                      }}
-                      placeholder={
-                        activePage.imageVaultId
-                          ? isAr
-                            ? `محفوظ بدقته الكاملة في الخزنة (${activePage.imageVaultId}) — الصق رابطاً للاستبدال`
-                            : `Saved full-res in photoVault (${activePage.imageVaultId}) — paste URL to override`
-                          : '/bubble-books/space.webp'
-                      }
-                      className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white flex-1 font-mono"
-                    />
-                    <label className="bubble-btn-secondary h-11 px-5 text-xs font-bold gap-2 shrink-0 cursor-pointer flex items-center justify-center">
-                      <Upload className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span>{isAr ? 'رفع لوحة كاملة الدقة' : 'Upload Full-Res Art'}</span>
+                  {childRefPhoto ? (
+                    <div className="flex items-center gap-3.5">
+                      <img
+                        src={childRefPhoto}
+                        alt={childName}
+                        className="w-20 h-20 rounded-2xl object-cover border-2 border-cyan-400/60 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <p className="text-xs text-slate-200 font-semibold truncate">{childName}</p>
+                        <a
+                          href={childRefPhoto}
+                          download={`${sanitizeFileSlug(childName)}-reference.png`}
+                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/35 text-cyan-100 text-xs font-bold transition-colors"
+                        >
+                          <Download className="w-4 h-4 shrink-0" aria-hidden="true" />
+                          <span>{isAr ? 'تحميل الصورة' : 'Download Photo'}</span>
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-white/15 bg-slate-900/50 p-3.5 text-xs text-slate-400 leading-relaxed">
+                      {selectedOrder
+                        ? isAr
+                          ? 'لم يرفع ولي الأمر صورة في خزنة الطلب بعد — يمكنك طلب صورة نهارية واضحة عبر واتساب بضغطة زر.'
+                          : 'No reference photo stored in this order vault yet — request a clear daylight photo via WhatsApp below.'
+                        : isAr
+                        ? 'اختر طلباً من الأعلى لعرض صورة الطفل المرجعية هنا مع زر التحميل وطلب صورة أوضح عبر واتساب.'
+                        : 'Select a customer order above to view and download the child’s reference photo here.'}
+                    </div>
+                  )}
+
+                  {selectedOrder && whatsAppHelpers && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleOpenWhatsAppPhotoRequest}
+                      className="w-full h-10 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border-amber-400/35 text-amber-100 text-xs font-bold gap-2"
+                    >
+                      <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>
+                        {isAr
+                          ? 'طلب صورة أوضح عبر واتساب (ضبابية / نظارة)'
+                          : 'Request Clearer Photo on WhatsApp'}
+                      </span>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Character Sheet Upload & Preview Slot */}
+                <div className="glass-card-inner rounded-2xl p-4 border-purple-400/25 bg-slate-950/60 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-purple-200">
+                      {isAr ? 'ورقة ثبات الشخصية المولّدة (3 وضعيات)' : 'Character Turnaround Sheet (3 Poses)'}
+                    </span>
+                    {checklist.characterSheetLocked && (
+                      <Badge className="bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 text-[10px]">
+                        {isAr ? 'مقفولة ✓' : 'Locked ✓'}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {characterSheetPreview ? (
+                    <div className="space-y-2.5">
+                      <div className="relative aspect-square rounded-2xl overflow-hidden border border-emerald-400/40 bg-slate-900">
+                        <img
+                          src={characterSheetPreview}
+                          alt={
+                            isAr
+                              ? `ورقة ثبات الشخصية للبطل ${childName}`
+                              : `Character consistency sheet for ${childName}`
+                          }
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <a
+                          href={characterSheetPreview}
+                          download={`${sanitizeFileSlug(childName)}-character-sheet.png`}
+                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold transition-colors"
+                        >
+                          <Download className="w-4 h-4 shrink-0" aria-hidden="true" />
+                          <span>{isAr ? 'تحميل' : 'Download'}</span>
+                        </a>
+                        <label className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/35 text-purple-100 text-xs font-bold cursor-pointer transition-colors">
+                          <Upload className="w-4 h-4 shrink-0" aria-hidden="true" />
+                          <span>{isAr ? 'استبدال' : 'Replace'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => void handleCharacterSheetUpload(e)}
+                            className="hidden"
+                          />
+                        </label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => void handleRemoveCharacterSheet()}
+                          className="h-9 px-2.5 rounded-full text-rose-300 hover:text-rose-200 hover:bg-rose-500/15"
+                          aria-label={isAr ? 'حذف ورقة الشخصية' : 'Remove character sheet'}
+                        >
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-purple-400/35 hover:border-cyan-400/60 bg-slate-900/50 hover:bg-slate-900/80 p-5 text-center cursor-pointer transition-all">
+                      <Upload className="w-5 h-5 text-cyan-300" aria-hidden="true" />
+                      <span className="text-xs font-bold text-white">
+                        {isAr
+                          ? 'ارفع ورقة ثبات الشخصية المولّدة'
+                          : 'Upload Generated Character Sheet'}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {isAr
+                          ? 'تُحفظ في الخزنة بدقتها وتقفل ملامح البطل تلقائياً'
+                          : 'Saves full-res to PhotoVault & locks likeness'}
+                      </span>
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => void handlePageImageUpload(activePageIndex, e)}
+                        onChange={(e) => void handleCharacterSheetUpload(e)}
                         className="hidden"
                       />
                     </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Character DNA Inputs + Master Sheet Live Prompt */}
+              <div className="xl:col-span-8 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                  <div className="sm:col-span-4 space-y-1.5 min-w-0">
+                    <label htmlFor="studio-hero-name-step1" className="text-xs text-slate-300 font-medium">
+                      {isAr ? 'اسم البطل' : 'Hero Name'}
+                    </label>
+                    <Input
+                      id="studio-hero-name-step1"
+                      value={childName}
+                      onChange={(e) => setChildName(e.target.value)}
+                      className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
+                    />
                   </div>
 
-                  {/* Quick Curated Asset Picker */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-[11px] text-slate-400">
-                      {isAr ? 'أو اختر من مكتبة الرسومات:' : 'Quick studio art:'}
+                  <div className="sm:col-span-3 space-y-1.5 min-w-0">
+                    <label htmlFor="studio-hero-age" className="text-xs text-slate-300 font-medium">
+                      {isAr ? 'عمر البطل' : 'Hero Age'}
+                    </label>
+                    <Input
+                      id="studio-hero-age"
+                      value={characterDna.childAge}
+                      onChange={(e) => updateDnaField('childAge', e.target.value)}
+                      placeholder="5"
+                      className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white font-numeric"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-5 space-y-1.5 min-w-0">
+                    <span className="text-xs text-slate-300 font-medium block">
+                      {isAr ? 'جنس البطل' : 'Hero Gender'}
                     </span>
-                    {DEFAULT_STORY_FALLBACK_IMAGES.map((imgPath) => (
+                    <div className="grid grid-cols-2 gap-1.5 h-11 p-1 rounded-2xl bg-slate-950/80 border border-white/15">
                       <button
-                        key={imgPath}
                         type="button"
-                        onClick={() => {
-                          updatePage(activePageIndex, {
-                            imageUrl: imgPath,
-                            imageVaultId: undefined,
-                            imageWidth: undefined,
-                            imageHeight: undefined,
-                          });
-                          setActiveVaultImageUrl(null);
-                        }}
-                        className={`w-10 h-10 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
-                          !activePage.imageVaultId && activePage.imageUrl === imgPath
-                            ? 'border-cyan-400 scale-105 shadow-[0_0_12px_rgba(0,217,255,0.45)]'
-                            : 'border-white/15 opacity-75 hover:opacity-100'
+                        aria-pressed={characterDna.childGender === 'boy'}
+                        onClick={() => updateDnaField('childGender', 'boy')}
+                        className={`rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          characterDna.childGender === 'boy'
+                            ? 'bg-cyan-500/25 text-cyan-100 border border-cyan-400/45'
+                            : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        <img src={imgPath} alt="" className="w-full h-full object-cover" />
+                        {isAr ? 'ولد' : 'Boy'}
                       </button>
-                    ))}
+                      <button
+                        type="button"
+                        aria-pressed={characterDna.childGender === 'girl'}
+                        onClick={() => updateDnaField('childGender', 'girl')}
+                        className={`rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          characterDna.childGender === 'girl'
+                            ? 'bg-pink-500/25 text-pink-100 border border-pink-400/45'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {isAr ? 'بنت' : 'Girl'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-12 space-y-1.5 min-w-0">
+                    <label htmlFor="studio-dna-hair" className="text-xs text-slate-300 font-medium">
+                      {isAr ? 'الشعر وملامح الوجه (بالإنجليزية للأمر)' : 'Hair & Facial Features (in English for AI)'}
+                    </label>
+                    <Input
+                      id="studio-dna-hair"
+                      dir="ltr"
+                      value={characterDna.hairAndFeatures}
+                      onChange={(e) => updateDnaField('hairAndFeatures', e.target.value)}
+                      placeholder="curly dark hair, expressive warm eyes, natural joyful smile"
+                      className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-12 space-y-1.5 min-w-0">
+                    <label htmlFor="studio-dna-outfit" className="text-xs text-slate-300 font-medium">
+                      {isAr
+                        ? 'الزي الرسمي الثابت للبطل في هذا الكتاب'
+                        : 'Signature Outfit for This Book (Locked Across Scenes)'}
+                    </label>
+                    <Input
+                      id="studio-dna-outfit"
+                      dir="ltr"
+                      value={characterDna.signatureOutfit}
+                      onChange={(e) => updateDnaField('signatureOutfit', e.target.value)}
+                      placeholder="turquoise-and-navy junior astronaut jacket with star patches, blue sneakers"
+                      className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
+                    />
                   </div>
                 </div>
 
-                {/* Global Art Direction Style */}
-                <div className="space-y-2.5 pt-3 border-t border-white/10">
+                {/* Global Art Direction Presets */}
+                <div className="space-y-2 pt-2 border-t border-white/10">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <label
-                      htmlFor="studio-art-style"
+                      htmlFor="studio-art-style-step1"
                       className="text-xs font-semibold text-slate-300"
                     >
                       {isAr ? 'الأسلوب الفني العام للقصة' : 'Global Art Direction Style'}
@@ -2818,7 +2352,7 @@ export default function AdminStudio() {
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Input
-                      id="studio-art-style"
+                      id="studio-art-style-step1"
                       dir="ltr"
                       value={artStyle}
                       onChange={(e) => setArtStyle(e.target.value)}
@@ -2831,14 +2365,1218 @@ export default function AdminStudio() {
                       className="h-10 px-4 rounded-2xl bg-slate-900/80 border-white/15 text-xs font-semibold text-cyan-200 hover:border-cyan-400/45 gap-1.5 shrink-0"
                     >
                       <RefreshCw className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span>{isAr ? 'تطبيق على كل الأوامر' : 'Apply to All Prompts'}</span>
+                      <span>{isAr ? 'تطبيق على كل المشاهد' : 'Sync to All Scenes'}</span>
                     </Button>
                   </div>
                 </div>
+
+                {/* Live Auto-Generated Master Character Sheet Prompt */}
+                <div className="space-y-2.5 pt-2 border-t border-white/10">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label
+                      htmlFor="studio-master-sheet-prompt"
+                      className="text-xs sm:text-sm font-bold text-cyan-200 flex items-center gap-2"
+                    >
+                      <Sparkles className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
+                      <span>
+                        {isAr
+                          ? 'أمر ورقة ثبات الشخصية الرئيسي (مُحدّث تلقائياً)'
+                          : 'Master Character Sheet Prompt (Live Auto-Generated)'}
+                      </span>
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() =>
+                          void handleCopyText(
+                            masterCharacterSheetPrompt,
+                            'تم نسخ أمر ورقة ثبات الشخصية بنجاح ✓',
+                            'Master Character Sheet Prompt copied ✓'
+                          )
+                        }
+                        className="bubble-btn-outline h-9 px-3.5 text-xs font-bold gap-1.5"
+                      >
+                        <Copy className="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <span>{isAr ? 'نسخ أمر ورقة الشخصية' : 'Copy Sheet Prompt'}</span>
+                      </Button>
+                    </div>
+                  </div>
+                  <Textarea
+                    id="studio-master-sheet-prompt"
+                    dir="ltr"
+                    readOnly
+                    rows={4}
+                    value={masterCharacterSheetPrompt}
+                    className="rounded-2xl bg-slate-950/90 border-cyan-400/25 text-cyan-100 text-xs font-mono leading-relaxed select-all"
+                  />
+                </div>
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Step 1 Bottom Guided Navigation Bar */}
+            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+              <span className="text-xs text-slate-400">
+                {isAr
+                  ? 'بمجرد قفل ورقة الشخصية، انتقل للخطوة الثانية لصياغة سيناريو القصة.'
+                  : 'Once Character Sheet is locked, proceed to Step 2 to shape the story arc.'}
+              </span>
+              <Button
+                type="button"
+                onClick={() => setActiveStep(2)}
+                className="bubble-btn bubble-btn-primary h-11 px-6 text-xs font-bold gap-2"
+              >
+                <span>{isAr ? 'المتابعة إلى الخطوة 2: سيناريو القصة وفصولها' : 'Continue to Step 2: Story Script & Arc'}</span>
+                <NextStepIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: Story Script & Arc Studio */}
+        {(isOverviewMode || activeStep === 2) && (
+          <div className="glass-card rounded-3xl p-5 sm:p-6 border-purple-400/25 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/15 border border-purple-400/35 flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5 text-purple-300" aria-hidden="true" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 text-xs font-bold font-numeric">
+                      {isAr ? 'الخطوة 02' : 'Step 02'}
+                    </span>
+                    <h2 className="text-lg sm:text-xl font-extrabold text-white">
+                      {isAr ? 'سيناريو القصة وفصولها' : 'Story Script & Arc Studio'}
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {isAr
+                      ? 'حدد عنوان الكتاب، عدد الصفحات (حد KDP الأدنى 24 صفحة)، وولّد تدفق الأحداث تلقائياً أو عبر الذكاء الاصطناعي المتصل.'
+                      : 'Configure book title, page count (KDP min: 24), and generate beats with zero repetition.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Badge className="bg-purple-500/15 text-purple-200 border-purple-400/30 font-numeric text-xs px-3 py-1">
+                  {pages.length} {isAr ? 'مشهد' : 'Scenes'} • {storyLang.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Story Metadata Controls */}
+            <div className="rounded-2xl bg-slate-950/60 border border-white/10 p-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div className="sm:col-span-6 space-y-1.5 min-w-0">
+                  <label htmlFor="studio-story-title-step2" className="text-xs text-slate-300 font-medium">
+                    {isAr ? 'عنوان الكتاب' : 'Book Title'}
+                  </label>
+                  <Input
+                    id="studio-story-title-step2"
+                    value={storyTitle}
+                    onChange={(e) => setStoryTitle(e.target.value)}
+                    className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
+                  />
+                </div>
+
+                <div className="sm:col-span-3 space-y-1.5 min-w-0">
+                  <label htmlFor="studio-lang-select-step2" className="text-xs text-slate-300 font-medium">
+                    {isAr ? 'لغة القصة' : 'Story Language'}
+                  </label>
+                  <select
+                    id="studio-lang-select-step2"
+                    value={storyLang}
+                    onChange={(e) => setStoryLang(e.target.value as 'ar' | 'en')}
+                    className="h-11 w-full rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
+                  >
+                    <option value="ar">{isAr ? 'عربي (RTL)' : 'Arabic (RTL)'}</option>
+                    <option value="en">{isAr ? 'إنجليزي (LTR)' : 'English (LTR)'}</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-3 space-y-1.5 min-w-0">
+                  <label htmlFor="studio-page-count-step2" className="text-xs text-slate-300 font-medium">
+                    {isAr ? 'عدد الصفحات (حد KDP: 24)' : 'Page Count (KDP Min: 24)'}
+                  </label>
+                  <select
+                    id="studio-page-count-step2"
+                    value={pageCount}
+                    onChange={(e) => setPageCount(Number(e.target.value))}
+                    className="h-11 w-full rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 font-numeric cursor-pointer"
+                  >
+                    <option value={10}>{isAr ? '10 صفحات' : '10 pages'}</option>
+                    <option value={15}>{isAr ? '15 صفحة' : '15 pages'}</option>
+                    <option value={20}>{isAr ? '20 صفحة' : '20 pages'}</option>
+                    <option value={24}>
+                      {isAr ? '24 صفحة (حد KDP الأدنى)' : '24 pages (KDP Min)'}
+                    </option>
+                    {isNonStandardPageCount && (
+                      <option value={pageCount}>
+                        {isAr ? `${pageCount} صفحة` : `${pageCount} pages`}
+                      </option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {/* Generation Buttons Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
+                <span className="text-xs text-slate-400">
+                  {isAr
+                    ? 'إعادة التوليد تحافظ على أي لوحات رفعتها مسبقاً في الصفحات المقابلة.'
+                    : 'Regenerating preserves any artwork you already uploaded to matching slots.'}
+                </span>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <Button
+                    type="button"
+                    onClick={handleAutoGenerate}
+                    className="bubble-btn-secondary h-10 px-4 text-xs font-bold gap-2"
+                  >
+                    <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>
+                      {isAr ? (
+                        <>
+                          توليد فصول القصة <span className="font-numeric">({pageCount})</span>
+                        </>
+                      ) : (
+                        <>
+                          Auto-Draft Beats <span className="font-numeric">({pageCount}p)</span>
+                        </>
+                      )}
+                    </span>
+                  </Button>
+
+                  {isAiTextCapable ? (
+                    <Button
+                      type="button"
+                      disabled={isEnhancingAi}
+                      onClick={() => void handleEnhanceWithAi()}
+                      className="h-10 px-4 rounded-full bg-gradient-to-r from-purple-500/25 to-pink-500/25 hover:from-purple-500/35 hover:to-pink-500/35 border border-purple-400/45 text-purple-100 text-xs font-bold gap-2"
+                    >
+                      {isEnhancingAi ? (
+                        <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden="true" />
+                      ) : (
+                        <Cpu className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      )}
+                      <span>
+                        {isEnhancingAi
+                          ? isAr
+                            ? 'جاري التحسين بالذكاء الاصطناعي...'
+                            : 'Enhancing with AI...'
+                          : isAr
+                          ? 'تحسين السيناريو عبر AI المتصل'
+                          : 'Enhance Script with Connected AI'}
+                      </span>
+                    </Button>
+                  ) : (
+                    <Link
+                      to="/admin/integrations"
+                      className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/35 text-amber-200 text-xs font-semibold transition-colors"
+                    >
+                      <PlugZap className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>
+                        {isAr
+                          ? 'تحسين السيناريو عبر AI (اربط Gemini / OpenAI)'
+                          : 'Connect Gemini / OpenAI for AI Scriptwriting'}
+                      </span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Script Scenes Beats Review List */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>{isAr ? 'نصوص فصول القصة ومراجعتها' : 'Story Scenes & Script Review'}</span>
+                  <Badge className="bg-slate-800 text-cyan-200 border-white/10 font-numeric text-xs">
+                    {pages.length} {isAr ? 'مشهد' : 'scenes'}
+                  </Badge>
+                </h3>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAddPage}
+                  className="h-9 px-3 rounded-full bg-white/10 hover:bg-cyan-500/25 border border-white/15 text-white text-xs font-semibold gap-1.5"
+                >
+                  <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{isAr ? 'إضافة مشهد جديد' : 'Add Scene'}</span>
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {pages.map((p, idx) => (
+                  <div
+                    key={p.pageNumber}
+                    className="rounded-2xl p-3.5 bg-slate-950/70 border border-white/10 hover:border-purple-400/35 transition-colors space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 border border-purple-400/30 text-purple-200 font-bold font-numeric text-xs">
+                        {isAr ? `مشهد ${p.pageNumber}` : `Scene ${p.pageNumber}`}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActivePageIndex(idx);
+                            setActiveStep(3);
+                          }}
+                          className="text-[11px] text-cyan-300 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>{isAr ? 'الرسمة والأمر' : 'Artwork & Prompt'}</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                        {pages.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePage(idx)}
+                            aria-label={isAr ? `حذف صفحة ${p.pageNumber}` : `Delete page ${p.pageNumber}`}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <Textarea
+                      rows={2}
+                      dir={storyLang === 'ar' ? 'rtl' : 'ltr'}
+                      value={p.text}
+                      onChange={(e) => updatePage(idx, { text: e.target.value })}
+                      className="rounded-xl bg-slate-900/80 border-white/10 text-xs text-white leading-relaxed resize-none"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Step 2 Bottom Guided Navigation Bar */}
+            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveStep(1)}
+                className="bubble-btn-outline h-11 px-5 text-xs font-bold gap-2"
+              >
+                <PrevStepIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{isAr ? 'الرجوع إلى الخطوة 1: البطل وبصمة الشخصية' : 'Back to Step 1: Hero & DNA'}</span>
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => setActiveStep(3)}
+                className="bubble-btn bubble-btn-primary h-11 px-6 text-xs font-bold gap-2"
+              >
+                <span>{isAr ? 'المتابعة إلى الخطوة 3: الرسومات وبرومبتات 300 DPI' : 'Continue to Step 3: Scene Artwork & Prompts'}</span>
+                <NextStepIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: Scene Artwork & 300 DPI Prompts Studio */}
+        {(isOverviewMode || activeStep === 3) && (
+          <div className="space-y-6">
+            {/* Prompt Engine Switcher Bar */}
+            <div className="glass-card rounded-3xl p-5 border-purple-400/25 space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 text-xs font-bold font-numeric">
+                      {isAr ? 'الخطوة 03' : 'Step 03'}
+                    </span>
+                    <h2 className="text-base sm:text-lg font-extrabold text-white">
+                      {isAr
+                        ? 'الرسومات وبرومبتات KDP 8.5"×8.5" (محرك الأوامر الهجين)'
+                        : 'Scene Artwork & KDP 8.5"×8.5" Prompts (Hybrid Prompt Engine)'}
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    {isAr
+                      ? 'التبديل بين المحركات يعيد صياغة أوامر المشاهد فوراً بصيغة KDP الخماسية الآمنة لطباعة 300 DPI.'
+                      : 'Switching engines reformats all prompts for 8.5"×8.5" full-bleed 300 DPI print safety.'}
+                  </p>
+                </div>
+
+                {/* Segmented 3-Engine Switcher */}
+                <div
+                  role="group"
+                  aria-label={isAr ? 'اختيار محرك توليد الصور' : 'Select illustration prompt engine'}
+                  className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 rounded-2xl bg-slate-950/85 border border-white/10"
+                >
+                  {PROMPT_ENGINE_OPTIONS.map((opt) => {
+                    const active = promptEngine === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => handleSwitchPromptEngine(opt.id)}
+                        className={`px-3.5 py-2 rounded-xl text-start transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                          active
+                            ? 'bg-gradient-to-r from-cyan-500/25 via-purple-500/25 to-pink-500/20 border border-cyan-400/55 text-white shadow-[0_0_18px_rgba(0,217,255,0.2)]'
+                            : 'border border-transparent text-slate-300 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <span className="block text-xs font-extrabold">{opt.labelEn}</span>
+                        <span className="block text-[10px] text-cyan-200/85 mt-0.5">
+                          {isAr ? opt.tagAr : opt.tagEn}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Optional Midjourney --cref URL Input */}
+              {promptEngine === 'midjourney' && (
+                <div className="rounded-2xl bg-purple-950/30 border border-purple-400/30 p-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <label
+                    htmlFor="studio-mj-cref"
+                    className="text-xs font-bold text-purple-200 shrink-0"
+                  >
+                    {isAr ? 'رابط ورقة الشخصية لـ Midjourney (--cref):' : 'Midjourney --cref Sheet URL:'}
+                  </label>
+                  <Input
+                    id="studio-mj-cref"
+                    dir="ltr"
+                    value={characterDna.midjourneyCrefUrl || ''}
+                    onChange={(e) => updateDnaField('midjourneyCrefUrl', e.target.value)}
+                    placeholder="https://cdn.discordapp.com/attachments/.../character-sheet.png"
+                    className="h-10 rounded-xl bg-slate-950/85 border-purple-400/30 text-xs text-white font-mono flex-1"
+                  />
+                  <span className="text-[11px] text-purple-200/80 font-numeric shrink-0">
+                    --cw 85 --ar 1:1
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Main Studio Workspace: Pages Rail (Bulk Upload + 300 DPI) + Spread Preview & Editor */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Story Pages Rail */}
+              <div className="lg:col-span-3 glass-card rounded-3xl p-4 border-white/10 space-y-3 lg:sticky lg:top-6">
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <span className="text-sm font-bold text-white flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
+                    <span>
+                      {isAr ? 'الصفحات' : 'Pages'}{' '}
+                      <span className="font-numeric text-cyan-300">({pages.length})</span>
+                    </span>
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddPage}
+                    className="h-9 px-3 rounded-full bg-white/10 hover:bg-cyan-500/25 border border-white/15 text-white text-xs font-semibold gap-1.5"
+                  >
+                    <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>{isAr ? 'إضافة' : 'Add'}</span>
+                  </Button>
+                </div>
+
+                {/* Bulk Upload Scenes (Natural Numeric Sort + Full 300 DPI Vault) */}
+                <div className="space-y-1.5 pb-2 border-b border-white/10">
+                  <label className="bubble-btn-secondary w-full h-10 px-3 text-xs font-bold gap-2 cursor-pointer flex items-center justify-center">
+                    {isBulkUploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden="true" />
+                    ) : (
+                      <Images className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    )}
+                    <span>
+                      {isBulkUploading
+                        ? isAr
+                          ? 'جاري حفظ اللوحات...'
+                          : 'Saving full-res scenes...'
+                        : isAr
+                        ? 'رفع جماعي للوحات (300 DPI)'
+                        : 'Bulk Upload Scenes (300 DPI)'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled={isBulkUploading}
+                      onChange={(e) => void handleBulkScenesUpload(e)}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-[10px] text-slate-400 leading-snug text-center font-numeric">
+                    {isAr
+                      ? 'ترتيب تلقائي (01-cover.png, 02-scene.png…) بدون تصغير الدقة'
+                      : 'Natural sort (01-cover.png, 02-scene.png…) • No downscaling'}
+                  </p>
+                </div>
+
+                <div className="space-y-2 max-h-[600px] overflow-y-auto pe-1">
+                  {pages.map((p, idx) => {
+                    const isSelected = idx === activePageIndex;
+                    const pageResCheck =
+                      typeof p.imageWidth === 'number' &&
+                      typeof p.imageHeight === 'number' &&
+                      p.imageWidth > 0 &&
+                      p.imageHeight > 0
+                        ? checkImagePrintReadiness(p.imageWidth, p.imageHeight)
+                        : null;
+
+                    return (
+                      <button
+                        key={p.pageNumber}
+                        type="button"
+                        onClick={() => setActivePageIndex(idx)}
+                        className={`w-full p-2.5 rounded-2xl border text-start flex items-center gap-3 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/15 border-cyan-400/55 text-white shadow-[0_0_20px_rgba(0,217,255,0.16)]'
+                            : 'bg-slate-950/55 border-white/10 text-slate-300 hover:border-white/25 hover:text-white'
+                        }`}
+                      >
+                        <img
+                          src={p.imageUrl}
+                          alt={isAr ? `صفحة ${p.pageNumber}` : `Page ${p.pageNumber}`}
+                          className="w-11 h-11 rounded-xl object-cover shrink-0 border border-white/15"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="text-xs font-bold text-cyan-300 font-numeric">
+                              {isAr ? `صفحة ${p.pageNumber}` : `Page ${p.pageNumber}`}
+                            </span>
+                            {pageResCheck && (
+                              <span
+                                className={`px-1.5 py-0.5 rounded-full border text-[9px] font-bold font-numeric shrink-0 ${getResolutionBadgeStyle(
+                                  pageResCheck.status
+                                )}`}
+                              >
+                                {getCompactResolutionText(pageResCheck, isAr)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-300/90 truncate mt-0.5">{p.text}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Active Page Spread Preview + Manual Editor */}
+              {activePage && (
+                <div className="lg:col-span-9 space-y-6">
+                  {/* Live KDP 8.5"×8.5" Double-Spread Preview */}
+                  <div className="glass-card rounded-3xl p-5 sm:p-6 border-purple-400/25 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-400/35 text-cyan-200 text-xs font-bold">
+                          <Eye className="w-4 h-4 text-cyan-300 shrink-0" aria-hidden="true" />
+                          <span>
+                            {isAr ? (
+                              <>
+                                معاينة مزدوجة <span className="font-numeric">8.5"×8.5" KDP</span> • صفحة{' '}
+                                <span className="font-numeric">{activePage.pageNumber}</span> من{' '}
+                                <span className="font-numeric">{pages.length}</span>
+                              </>
+                            ) : (
+                              <>
+                                Live <span className="font-numeric">8.5"×8.5" KDP</span> Spread • Page{' '}
+                                <span className="font-numeric">{activePage.pageNumber}</span> of{' '}
+                                <span className="font-numeric">{pages.length}</span>
+                              </>
+                            )}
+                          </span>
+                        </div>
+
+                        {activeResolutionCheck && (
+                          <div
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold ${getResolutionBadgeStyle(
+                              activeResolutionCheck.status
+                            )}`}
+                          >
+                            {activeResolutionCheck.status === 'print_300dpi' ? (
+                              <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            ) : (
+                              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            )}
+                            <span>
+                              {isAr ? activeResolutionCheck.labelAr : activeResolutionCheck.labelEn}
+                            </span>
+                            <span className="font-numeric opacity-90">
+                              ({activeResolutionCheck.width}×{activeResolutionCheck.height})
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={activePageIndex <= 0}
+                          onClick={() => setActivePageIndex((i) => Math.max(0, i - 1))}
+                          aria-label={isAr ? 'الصفحة السابقة' : 'Previous page'}
+                          className="h-9 px-3 rounded-full bg-slate-900/75 border-white/15 text-slate-200 hover:bg-slate-800 disabled:opacity-40"
+                        >
+                          <PrevSpreadIcon className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={activePageIndex >= pages.length - 1}
+                          onClick={() => setActivePageIndex((i) => Math.min(pages.length - 1, i + 1))}
+                          aria-label={isAr ? 'الصفحة التالية' : 'Next page'}
+                          className="h-9 px-3 rounded-full bg-slate-900/75 border-white/15 text-slate-200 hover:bg-slate-800 disabled:opacity-40"
+                        >
+                          <NextSpreadIcon className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                        {pages.length > 1 && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeletePage(activePageIndex)}
+                            className="h-9 px-3 rounded-full text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 gap-1.5"
+                          >
+                            <Trash2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span>{isAr ? 'حذف الصفحة' : 'Delete Page'}</span>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Open Book Double-Spread Container */}
+                    <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch p-3 sm:p-4 rounded-3xl bg-slate-950/90 border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
+                      {/* Illustration Page (1:1 Square KDP 8.5"×8.5") */}
+                      <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shadow-inner">
+                        <img
+                          src={activePreviewImageUrl}
+                          alt={
+                            isAr
+                              ? `رسم صفحة ${activePage.pageNumber}`
+                              : `Illustration page ${activePage.pageNumber}`
+                          }
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-3 inset-x-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                          <span className="px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-cyan-200 font-numeric">
+                            8.5&quot; × 8.5&quot; • 1:1
+                          </span>
+                          {activePage.imageVaultId && (
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-950/80 backdrop-blur-md border border-emerald-400/35 text-[10px] font-bold text-emerald-200">
+                              {isAr ? 'محفوظة بدقتها الكاملة' : 'Full-Res Vault'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Story Text Page */}
+                      <div
+                        dir={storyLang === 'ar' ? 'rtl' : 'ltr'}
+                        className="rounded-2xl bg-gradient-to-br from-slate-900/95 via-slate-950 to-purple-950/35 border border-white/15 p-6 sm:p-8 flex flex-col justify-between min-h-[280px]"
+                      >
+                        <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/10">
+                          <span className="text-xs font-bold text-purple-300 truncate">
+                            {storyTitle}
+                          </span>
+                          <span className="text-[11px] font-semibold text-pink-300 shrink-0">
+                            {childName}
+                          </span>
+                        </div>
+
+                        <p className="text-base sm:text-xl leading-relaxed text-white font-editorial my-6">
+                          {activePage.text}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs text-slate-400">
+                          <span>{storyLang === 'ar' ? 'بابل فيرس' : 'Bubbleverse'}</span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 font-bold font-numeric">
+                            {activePage.pageNumber}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Manual Page Editor, Stage 2 5-Block Prompt & Full-Res Artwork Upload */}
+                  <div className="glass-card rounded-3xl p-5 sm:p-6 border-white/10 space-y-5">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="studio-page-text"
+                        className="text-sm font-bold text-white flex items-center justify-between"
+                      >
+                        <span>
+                          {isAr ? (
+                            <>
+                              نص القصة — صفحة{' '}
+                              <span className="font-numeric">{activePage.pageNumber}</span>
+                            </>
+                          ) : (
+                            <>
+                              Story Text — Page{' '}
+                              <span className="font-numeric">{activePage.pageNumber}</span>
+                            </>
+                          )}
+                        </span>
+                        <span className="text-xs font-normal text-slate-400">
+                          {isAr ? 'تعديل يدوي مباشر' : 'Direct manual edit'}
+                        </span>
+                      </label>
+                      <Textarea
+                        id="studio-page-text"
+                        dir={storyLang === 'ar' ? 'rtl' : 'ltr'}
+                        rows={3}
+                        value={activePage.text}
+                        onChange={(e) => updatePage(activePageIndex, { text: e.target.value })}
+                        className="rounded-2xl bg-slate-950/80 border-white/15 text-white text-sm leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Stage 2 5-Block Scene Prompt Box */}
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label
+                          htmlFor="studio-image-prompt"
+                          className="text-sm font-bold text-cyan-200 flex items-center gap-2"
+                        >
+                          <Sparkles className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
+                          <span>
+                            {isAr
+                              ? `أمر مشهد المرحلة 2 — ${getEngineDisplayName(promptEngine)}`
+                              : `Stage 2 Scene Prompt — ${getEngineDisplayName(promptEngine)}`}
+                          </span>
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              updatePage(activePageIndex, {
+                                imagePrompt: reformatScenePromptForEngine(
+                                  activePage.imagePrompt,
+                                  syncedDna,
+                                  activePage.pageNumber,
+                                  pages.length,
+                                  promptEngine,
+                                  activePage.text
+                                ),
+                              })
+                            }
+                            className="h-8 px-3 rounded-full bg-slate-900/75 border-white/15 text-slate-200 hover:bg-slate-800 text-xs font-semibold gap-1.5"
+                          >
+                            <RefreshCw className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span>{isAr ? 'تحديث القالب' : 'Reformat'}</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() =>
+                              void handleCopyText(
+                                activePage.imagePrompt,
+                                `تم نسخ أمر الصفحة ${activePage.pageNumber} بنجاح ✓`,
+                                `Copied Page ${activePage.pageNumber} Stage 2 prompt ✓`
+                              )
+                            }
+                            className="bubble-btn-outline h-8 px-3.5 text-xs font-bold gap-1.5"
+                          >
+                            <Copy className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span>{isAr ? 'نسخ الأمر' : 'Copy Prompt'}</span>
+                          </Button>
+                        </div>
+                      </div>
+                      <Textarea
+                        id="studio-image-prompt"
+                        dir="ltr"
+                        rows={6}
+                        value={activePage.imagePrompt}
+                        onChange={(e) =>
+                          updatePage(activePageIndex, { imagePrompt: e.target.value })
+                        }
+                        className="rounded-2xl bg-slate-950/85 border-white/15 text-slate-200 text-xs font-mono leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Page Artwork Upload (Full 300 DPI Vault) & Print Readiness Check */}
+                    <div className="space-y-3 pt-2 border-t border-white/10">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label
+                          htmlFor="studio-image-url"
+                          className="text-sm font-bold text-white flex items-center gap-2"
+                        >
+                          <ImageIcon className="w-5 h-5 text-pink-400 shrink-0" aria-hidden="true" />
+                          <span>
+                            {isAr
+                              ? 'رسمة الصفحة (حفظ بدقة 300 DPI كاملة دون تصغير)'
+                              : 'Page Artwork (Full 300 DPI Vault Storage — No Downscaling)'}
+                          </span>
+                        </label>
+                        {activeResolutionCheck && (
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold ${getResolutionBadgeStyle(
+                              activeResolutionCheck.status
+                            )}`}
+                          >
+                            {activeResolutionCheck.status === 'print_300dpi' ? (
+                              <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            ) : (
+                              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            )}
+                            <span>
+                              {activeResolutionCheck.status === 'print_300dpi'
+                                ? isAr
+                                  ? 'جاهز 300 DPI (2588×2625+)'
+                                  : '300 DPI Ready (2588×2625+)'
+                                : isAr
+                                ? activeResolutionCheck.labelAr
+                                : activeResolutionCheck.labelEn}
+                            </span>
+                            <span className="font-numeric">
+                              • {activeResolutionCheck.width}×{activeResolutionCheck.height} px
+                            </span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2.5">
+                        <Input
+                          id="studio-image-url"
+                          dir="ltr"
+                          value={activePage.imageVaultId ? '' : activePage.imageUrl}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updatePage(activePageIndex, {
+                              imageUrl: val,
+                              imageVaultId: undefined,
+                              imageWidth: undefined,
+                              imageHeight: undefined,
+                            });
+                            setActiveVaultImageUrl(null);
+                          }}
+                          placeholder={
+                            activePage.imageVaultId
+                              ? isAr
+                                ? `محفوظ بدقته الكاملة في الخزنة (${activePage.imageVaultId}) — الصق رابطاً للاستبدال`
+                                : `Saved full-res in photoVault (${activePage.imageVaultId}) — paste URL to override`
+                              : '/bubble-books/space.webp'
+                          }
+                          className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white flex-1 font-mono"
+                        />
+                        <label className="bubble-btn-secondary h-11 px-5 text-xs font-bold gap-2 shrink-0 cursor-pointer flex items-center justify-center">
+                          <Upload className="w-4 h-4 shrink-0" aria-hidden="true" />
+                          <span>{isAr ? 'رفع لوحة كاملة الدقة' : 'Upload Full-Res Art'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => void handlePageImageUpload(activePageIndex, e)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+
+                      {/* Quick Curated Asset Picker */}
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <span className="text-[11px] text-slate-400">
+                          {isAr ? 'أو اختر من مكتبة الرسومات:' : 'Quick studio art:'}
+                        </span>
+                        {DEFAULT_STORY_FALLBACK_IMAGES.map((imgPath) => (
+                          <button
+                            key={imgPath}
+                            type="button"
+                            onClick={() => {
+                              updatePage(activePageIndex, {
+                                imageUrl: imgPath,
+                                imageVaultId: undefined,
+                                imageWidth: undefined,
+                                imageHeight: undefined,
+                              });
+                              setActiveVaultImageUrl(null);
+                            }}
+                            className={`w-10 h-10 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                              !activePage.imageVaultId && activePage.imageUrl === imgPath
+                                ? 'border-cyan-400 scale-105 shadow-[0_0_12px_rgba(0,217,255,0.45)]'
+                                : 'border-white/15 opacity-75 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={imgPath} alt="" className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Step 3 Bottom Guided Navigation Bar */}
+            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveStep(2)}
+                className="bubble-btn-outline h-11 px-5 text-xs font-bold gap-2"
+              >
+                <PrevStepIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{isAr ? 'الرجوع إلى الخطوة 2: سيناريو القصة وفصولها' : 'Back to Step 2: Story Script & Arc'}</span>
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 hidden md:inline">
+                  {uploadedArtCount === pages.length
+                    ? isAr ? 'جميع اللوحات مرفوعة بنجاح!' : 'All illustrations uploaded!'
+                    : isAr ? `متبقي ${pages.length - uploadedArtCount} لوحات` : `${pages.length - uploadedArtCount} scenes remaining`}
+                </span>
+                <Button
+                  type="button"
+                  onClick={() => setActiveStep(4)}
+                  className="bubble-btn bubble-btn-primary h-11 px-6 text-xs font-bold gap-2"
+                >
+                  <span>{isAr ? 'المتابعة إلى الخطوة 4: مراجعة الجودة وتصدير KDP' : 'Continue to Step 4: Quality Review & Export'}</span>
+                  <NextStepIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: Quality Review & Export to KDP */}
+        {(isOverviewMode || activeStep === 4) && (
+          <div className="glass-card rounded-3xl p-5 sm:p-6 border-emerald-400/25 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-400/35 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5 text-emerald-300" aria-hidden="true" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 text-xs font-bold font-numeric">
+                      {isAr ? 'الخطوة 04' : 'Step 04'}
+                    </span>
+                    <h2 className="text-lg sm:text-xl font-extrabold text-white">
+                      {isAr ? 'مراجعة الجودة الشاملة والتصدير لمطبعة KDP' : 'Quality Review & Export to KDP'}
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {isAr
+                      ? 'تحقق من المعايير الستة، أرسل مسودة الاعتماد لولي الأمر عبر واتساب، وانقل الكتاب لصانع PDF لمقاس 8.5"×8.5".'
+                      : 'Audit 6-point checklist, send WhatsApp proof to parents, and hand off to KDP 8.5"×8.5" PDF builder.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Badge className="bg-emerald-500/15 text-emerald-200 border-emerald-400/35 font-numeric text-xs px-3 py-1">
+                  {checklistProgress.completed} / {checklistProgress.total} {isAr ? 'معايير مكتملة' : 'Checks Complete'}
+                </Badge>
+              </div>
+            </div>
+
+            {/* 6 Interactive Checklist Steps */}
+            <div className="rounded-2xl bg-slate-950/70 border border-white/10 p-5 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck className="w-5 h-5 text-cyan-300 shrink-0" aria-hidden="true" />
+                  <h3 className="text-sm font-bold text-white">
+                    {isAr ? 'قائمة التحقق من جودة الإنتاج (6 خطوات تفاعلية)' : 'Production Quality Checklist (6 Interactive Checks)'}
+                  </h3>
+                </div>
+                <span className="text-xs text-slate-400">
+                  {isAr
+                    ? 'اضغط على أي معيار لتعديل حالته — يُحفظ فوراً في مسودة الطلب'
+                    : 'Click any check to toggle completion — auto-saved in this draft'}
+                </span>
+              </div>
+
+              <div className="h-2 w-full rounded-full bg-slate-900/90 overflow-hidden border border-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-purple-400 to-emerald-400 transition-all duration-300"
+                  style={{
+                    width: `${Math.round((checklistProgress.completed / checklistProgress.total) * 100)}%`,
+                  }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5">
+                {pipelineSteps.map((step) => {
+                  const checked = checklist[step.key];
+                  return (
+                    <button
+                      key={step.key}
+                      type="button"
+                      aria-pressed={checked}
+                      onClick={() => handleToggleChecklistStep(step.key)}
+                      className={`min-h-[56px] px-3 py-2.5 rounded-2xl border text-start flex items-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        checked
+                          ? 'bg-emerald-500/15 border-emerald-400/45 text-emerald-100 shadow-[0_0_16px_rgba(16,185,129,0.16)]'
+                          : 'bg-slate-950/60 border-white/10 text-slate-300 hover:border-cyan-400/35 hover:text-white'
+                      }`}
+                    >
+                      {checked ? (
+                        <CheckCircle2
+                          className="w-4 h-4 text-emerald-400 shrink-0"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <Circle className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-bold leading-snug">
+                          <span className="font-numeric">{step.num}.</span>{' '}
+                          {isAr ? step.labelAr : step.labelEn}
+                        </span>
+                        {step.meta && (
+                          <span className="block text-[11px] font-numeric text-cyan-300 mt-0.5">
+                            ({step.meta})
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 300 DPI Print Readiness Pre-Flight Inspection */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-2xl p-4 bg-emerald-950/20 border border-emerald-400/30 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-200">
+                    {isAr ? 'لوحات جاهزة للطباعة 300 DPI' : '300 DPI Ready Illustrations'}
+                  </span>
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                </div>
+                <div className="text-2xl font-extrabold text-white font-numeric">
+                  {ready300DpiCount} / {pages.length}
+                </div>
+                <p className="text-[11px] text-emerald-200/80">
+                  {isAr ? 'دقة 2588×2625 بكسل أو أعلى بالمقاس الكامل' : '2588×2625 px or higher at 100% scale'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl p-4 bg-cyan-950/20 border border-cyan-400/30 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-cyan-200">
+                    {isAr ? 'عدد صفحات الكتاب الكلي' : 'Total Storybook Pages'}
+                  </span>
+                  <BookOpen className="w-4 h-4 text-cyan-400" aria-hidden="true" />
+                </div>
+                <div className="text-2xl font-extrabold text-white font-numeric">
+                  {pages.length} {isAr ? 'صفحة' : 'Pages'}
+                </div>
+                <p className="text-[11px] text-cyan-200/80">
+                  {pages.length >= 24
+                    ? isAr ? 'مطابق لحد أمازون KDP الأدنى (24 صفحة)' : 'Complies with Amazon KDP 24-page min'
+                    : isAr ? 'أمازون KDP يتطلب 24 صفحة على الأقل للتجليد' : 'Amazon KDP requires at least 24 pages for spine'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl p-4 bg-purple-950/20 border border-purple-400/30 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-purple-200">
+                    {isAr ? 'محرك الأوامر المستخدم' : 'Active Prompt Engine'}
+                  </span>
+                  <Cpu className="w-4 h-4 text-purple-400" aria-hidden="true" />
+                </div>
+                <div className="text-lg font-extrabold text-white">
+                  {getEngineDisplayName(promptEngine)}
+                </div>
+                <p className="text-[11px] text-purple-200/80">
+                  {isAr ? 'صيغة المرحلة 2 مع عزل الشخصية ومطابقة 1:1' : 'Stage 2 formula with likeness lock & 1:1 square'}
+                </p>
+              </div>
+            </div>
+
+            {/* WhatsApp Approval & Export Strip */}
+            <div className="rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-purple-950/40 border border-white/10 p-5 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-emerald-400" aria-hidden="true" />
+                    <span>{isAr ? 'اعتماد المسودة مع ولي الأمر عبر واتساب' : 'Parent Draft Approval via WhatsApp'}</span>
+                  </h3>
+                  <p className="text-xs text-slate-300">
+                    {selectedOrder
+                      ? isAr
+                        ? `طلب ${selectedOrder.reference} • العميل: ${selectedOrder.customerName} (${selectedOrder.phone || 'بدون رقم'})`
+                        : `Order ${selectedOrder.reference} • Customer: ${selectedOrder.customerName} (${selectedOrder.phone || 'No phone'})`
+                      : isAr
+                      ? 'في وضع القصة المستقلة، يمكنك معاينة الطباعة أو التصدير مباشرة لصانع KDP.'
+                      : 'In standalone mode, you can quick proof or export directly to the KDP Builder.'}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {selectedOrder && whatsAppHelpers && (
+                    <Button
+                      type="button"
+                      onClick={handleSendWhatsAppDraftApproval}
+                      className="bubble-btn-emerald h-11 px-5 text-xs font-bold gap-2"
+                    >
+                      <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>{isAr ? 'إرسال المسودة للاعتماد عبر واتساب' : 'Send Draft on WhatsApp'}</span>
+                    </Button>
+                  )}
+
+                  {selectedOrder && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleMarkDraftReady}
+                      className="h-11 px-4 rounded-full bg-emerald-500/15 border-emerald-400/35 text-emerald-100 hover:bg-emerald-500/25 text-xs font-bold gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>{isAr ? 'تأكيد جاهزية المسودة' : 'Mark Draft Ready'}</span>
+                    </Button>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void handleExportQuickProof()}
+                    className="h-11 px-4 rounded-full bg-slate-900/80 border-white/15 text-slate-200 hover:bg-slate-800 text-xs font-semibold gap-1.5"
+                  >
+                    <Printer className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>{isAr ? 'معاينة طباعة سريعة' : 'Quick Proof Print'}</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Primary Launch Action to KDP PDF Builder */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span className="text-xs font-bold text-cyan-200 block">
+                    {isAr ? 'التصدير الاحترافي لملفات الطباعة والتجليد KDP 8.5"×8.5"' : 'Press-Ready Amazon KDP 8.5"×8.5" Export'}
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    {isAr
+                      ? 'ينقل جميع النصوص واللوحات بدقة 300 DPI كاملة لصانع الغلاف والصفحات الداخلية مع هوامش القص.'
+                      : 'Hands off all text & full 300 DPI vault artwork to the Hardcover PDF Builder with bleed & margins.'}
+                  </span>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleOpenKdpPdfBuilder}
+                  className="bubble-btn bubble-btn-primary h-12 px-7 text-sm font-extrabold gap-2.5 shadow-[0_0_25px_rgba(0,217,255,0.35)] shrink-0"
+                >
+                  <BookCopy className="w-5 h-5 shrink-0" aria-hidden="true" />
+                  <span>
+                    {isAr ? (
+                      <>
+                        فتح في صانع <span className="font-numeric">KDP 8.5"×8.5" PDF</span>
+                      </>
+                    ) : (
+                      <>
+                        Launch in <span className="font-numeric">KDP 8.5"×8.5"</span> PDF Builder
+                      </>
+                    )}
+                  </span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Saved Drafts Quick Resume Strip */}
+            <div className="glass-card-inner rounded-2xl p-4 border-white/10 bg-slate-950/60 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-white">
+                  <FolderClock className="w-4 h-4 text-cyan-300 shrink-0" aria-hidden="true" />
+                  <span>
+                    {isAr ? 'المسودات المحفوظة للاستئناف السريع' : 'Saved Drafts — Quick Resume'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 font-numeric">
+                    {savedDrafts.length}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-400">
+                  {isAr
+                    ? 'يتم استرجاع آخر تقدم وورقة الشخصية تلقائياً عند فتح الطلب'
+                    : 'Reopening any order restores prompts, character sheet & checklist automatically'}
+                </span>
+              </div>
+
+              {savedDrafts.length === 0 ? (
+                <p className="text-xs text-slate-400 rounded-xl bg-slate-950/45 border border-white/5 px-3 py-2">
+                  {isAr
+                    ? 'لا توجد مسودات محفوظة بعد — ابدأ بتعديل أي صفحة أو خطوة لتظهر هنا تلقائياً.'
+                    : 'No saved drafts yet — edit any page or checklist step and it will appear here automatically.'}
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {savedDrafts.map((draft) => {
+                    const isCurrent = draft.key === activeDraftKey;
+                    const badgeLabel =
+                      draft.orderReference ||
+                      (draft.key === 'standalone'
+                        ? isAr
+                          ? 'مستقلة'
+                          : 'Standalone'
+                        : draft.key);
+                    const draftSteps = countChecklistCompleted(draft.checklist);
+
+                    return (
+                      <div
+                        key={draft.key}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs transition-all ${
+                          isCurrent
+                            ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border-cyan-400/50 text-white shadow-[0_0_16px_rgba(0,217,255,0.18)]'
+                            : 'bg-slate-950/60 border-white/10 text-slate-300 hover:border-white/25'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleResumeDraftFromList(draft)}
+                          className="flex items-center gap-2 text-start cursor-pointer focus-visible:outline-none"
+                        >
+                          <span className="px-2 py-0.5 rounded-full bg-white/10 text-cyan-200 font-semibold font-numeric text-[10px]">
+                            {badgeLabel}
+                          </span>
+                          <span className="font-semibold text-white max-w-[140px] truncate">
+                            {draft.childName} — {draft.storyTitle}
+                          </span>
+                          <span className="text-[11px] text-slate-400 font-numeric">
+                            ({draft.pages.length} {isAr ? 'ص' : 'p'} • {draftSteps.completed}/
+                            {draftSteps.total})
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSavedDraft(draft.key)}
+                          aria-label={isAr ? 'حذف المسودة' : 'Delete draft'}
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Step 4 Bottom Guided Navigation Bar */}
+            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveStep(3)}
+                className="bubble-btn-outline h-11 px-5 text-xs font-bold gap-2"
+              >
+                <PrevStepIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{isAr ? 'الرجوع إلى الخطوة 3: الرسومات والأوامر' : 'Back to Step 3: Artwork & Prompts'}</span>
+              </Button>
+
+              <Button
+                type="button"
+                onClick={handleOpenKdpPdfBuilder}
+                className="bubble-btn bubble-btn-primary h-11 px-6 text-xs font-bold gap-2"
+              >
+                <BookCopy className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{isAr ? 'الانتقال إلى صانع KDP 8.5"×8.5"' : 'Open in KDP PDF Builder'}</span>
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
