@@ -14,6 +14,9 @@ export interface CharacterDna {
   signatureOutfit: string;
   artStyle: string;
   midjourneyCrefUrl?: string;
+  storyTheme?: string;
+  signatureProp?: string;
+  pose2Description?: string;
 }
 
 export interface StudioProductionChecklist {
@@ -165,15 +168,332 @@ export function countChecklistCompleted(
   return { completed, total: keys.length };
 }
 
+export type StoryThemeKey =
+  | 'dinosaurs'
+  | 'space'
+  | 'ocean'
+  | 'fantasy'
+  | 'superhero'
+  | 'animals'
+  | 'bedtime'
+  | 'graduation'
+  | 'custom'
+  | 'bubble';
+
+export interface ThemePreset {
+  id: StoryThemeKey;
+  labelAr: string;
+  labelEn: string;
+  keywords: string[];
+  boyOutfit: string;
+  girlOutfit: string;
+  signatureProp: string;
+  pose2Description: string;
+}
+
+export const THEME_PRESETS: ReadonlyArray<ThemePreset> = [
+  {
+    id: 'dinosaurs',
+    labelAr: 'الديناصورات وعالم ما قبل التاريخ',
+    labelEn: 'Dinosaurs & Prehistoric World',
+    keywords: [
+      'dino',
+      'dinosaur',
+      'dinosaurs',
+      'jurassic',
+      'fossil',
+      'fossils',
+      't-rex',
+      'raptor',
+      'paleontologist',
+      'ديناصور',
+      'ديناصورات',
+      'متحجرات',
+      'جوراسي',
+    ],
+    boyOutfit:
+      'safari paleontologist adventurer khaki vest with pockets, olive cargo shorts, brown boots, and dino scout badges',
+    girlOutfit:
+      'safari paleontologist adventurer khaki vest with pockets, explorer shorts, rugged boots, and dino scout badges',
+    signatureProp: 'an explorer magnifying glass inspecting a friendly baby dinosaur footprint',
+    pose2Description:
+      '(2) 3/4 view holding an explorer magnifying glass with a friendly mini dinosaur peek',
+  },
+  {
+    id: 'space',
+    labelAr: 'الفضاء ورواد الفضاء',
+    labelEn: 'Space & Cosmic Exploration',
+    keywords: [
+      'space',
+      'astronaut',
+      'galaxy',
+      'stars',
+      'star',
+      'cosmic',
+      'rocket',
+      'mars',
+      'planet',
+      'planets',
+      'فضاء',
+      'رائد فضاء',
+      'مجرة',
+      'نجوم',
+      'كواكب',
+      'صاروخ',
+    ],
+    boyOutfit:
+      'junior astronaut jumpsuit with planetary mission patches, cosmic navy trims, and silver moon boots',
+    girlOutfit:
+      'junior astronaut jumpsuit with planetary star patches, lavender and navy trims, and silver moon boots',
+    signatureProp: 'a glowing miniature celestial star or brass telescope',
+    pose2Description: '(2) 3/4 view holding a glowing miniature celestial star',
+  },
+  {
+    id: 'ocean',
+    labelAr: 'أعماق البحار والمحيطات',
+    labelEn: 'Ocean & Deep Sea Wonder',
+    keywords: [
+      'ocean',
+      'sea',
+      'underwater',
+      'whale',
+      'dolphin',
+      'coral',
+      'marine',
+      'submarine',
+      'mermaid',
+      'بحار',
+      'محيط',
+      'سمك',
+      'حوت',
+      'دلفين',
+      'غواصة',
+      'شعب مرجانية',
+    ],
+    boyOutfit:
+      'marine explorer sea-teal windbreaker jacket with nautical navy shorts and water shoes',
+    girlOutfit:
+      'marine explorer aquamarine windbreaker jacket with nautical navy shorts and water shoes',
+    signatureProp: 'a glowing iridescent ocean pearl or sea shell',
+    pose2Description: '(2) 3/4 view holding a glowing iridescent sea pearl',
+  },
+  {
+    id: 'fantasy',
+    labelAr: 'السحر والخيال والغابة المسحورة',
+    labelEn: 'Fantasy, Magic & Fairy Tales',
+    keywords: [
+      'fantasy',
+      'magic',
+      'wizard',
+      'fairy',
+      'enchanted',
+      'castle',
+      'dragon',
+      'spell',
+      'wand',
+      'سحر',
+      'خيال',
+      'قلعة',
+      'تنين',
+      'جنية',
+      'غابة سحرية',
+      'عصا سحرية',
+    ],
+    boyOutfit:
+      'young apprentice magical adventurer tunic with gold-trimmed starry midnight-blue cape and fantasy boots',
+    girlOutfit:
+      'young apprentice magical adventurer tunic with gold-trimmed starry amethyst cape and fantasy boots',
+    signatureProp: 'a gently glowing wooden wizard wand with sparkling stardust',
+    pose2Description: '(2) 3/4 view holding an enchanted glowing crystal lantern',
+  },
+  {
+    id: 'superhero',
+    labelAr: 'الأبطال الخارقين',
+    labelEn: 'Superhero & Mighty Heroes',
+    keywords: [
+      'superhero',
+      'hero',
+      'cape',
+      'powers',
+      'avenger',
+      'champion',
+      'بطل خارق',
+      'خارق',
+      'قوة',
+      'درع',
+    ],
+    boyOutfit:
+      'vibrant primary-color superhero adventure suit with metallic gold chest emblem, flowing red cape, and heroic boots',
+    girlOutfit:
+      'vibrant primary-color superhero adventure suit with metallic gold star crest, flowing cape, and heroic boots',
+    signatureProp: 'a glowing golden champion emblem',
+    pose2Description: '(2) 3/4 view in an heroic pose holding a glowing golden champion emblem',
+  },
+  {
+    id: 'animals',
+    labelAr: 'الحيوانات والغابة والسفاري',
+    labelEn: 'Safari, Jungle & Animal Friends',
+    keywords: [
+      'animal',
+      'animals',
+      'safari',
+      'jungle',
+      'lion',
+      'forest',
+      'wildlife',
+      'zoo',
+      'pet',
+      'puppy',
+      'kitten',
+      'حيوان',
+      'حيوانات',
+      'سفاري',
+      'غابة',
+      'أسد',
+    ],
+    boyOutfit:
+      'jungle wildlife scout button-up khaki shirt with animal guide patches, safari cap, and trail boots',
+    girlOutfit:
+      'jungle wildlife scout button-up khaki shirt with wildlife guide patches, safari cap, and trail boots',
+    signatureProp: 'vintage brass safari binoculars with leather strap',
+    pose2Description: '(2) 3/4 view holding brass safari binoculars looking warmly at the viewer',
+  },
+  {
+    id: 'bedtime',
+    labelAr: 'أحلام النوم ووقت النوم الهادئ',
+    labelEn: 'Bedtime & Sweet Dreams',
+    keywords: [
+      'bedtime',
+      'dream',
+      'dreams',
+      'sleep',
+      'night',
+      'moon',
+      'lullaby',
+      'cozy',
+      'نوم',
+      'أحلام',
+      'سرير',
+      'قمر',
+      'تهويدة',
+    ],
+    boyOutfit: 'soft pastel cloud-and-star patterned cozy pajama set with fluffy slippers',
+    girlOutfit: 'soft pastel cloud-and-star patterned cozy pajama set with fluffy slippers',
+    signatureProp: 'a warm glowing crescent moon nightlight',
+    pose2Description:
+      '(2) 3/4 view hugging a soft plush pillow and holding a gently glowing warm moon nightlight',
+  },
+  {
+    id: 'graduation',
+    labelAr: 'المستقبل والمهن والنجاح',
+    labelEn: 'Future Career & Little Achiever',
+    keywords: [
+      'graduation',
+      'graduate',
+      'school',
+      'career',
+      'doctor',
+      'pilot',
+      'scientist',
+      'engineer',
+      'تخرج',
+      'مدرسة',
+      'طبيب',
+      'طيار',
+      'مهندس',
+      'عالم',
+    ],
+    boyOutfit: 'junior scholar achievement blazer with neat golden crest and smart sneakers',
+    girlOutfit: 'junior scholar achievement blazer with neat golden crest and smart sneakers',
+    signatureProp: 'a rolled golden diploma ribbon or miniature golden globe',
+    pose2Description:
+      '(2) 3/4 view proudly holding an illuminated miniature golden achievement globe',
+  },
+  {
+    id: 'custom',
+    labelAr: 'حبكة مخصصة / مغامرة خاصة',
+    labelEn: 'Custom Plot / Unique Adventure',
+    keywords: ['custom', 'plot', 'unique', 'خاص', 'مخصص', 'حبكة'],
+    boyOutfit:
+      'personalized junior explorer adventure jacket tailored to story plot and smart sneakers',
+    girlOutfit:
+      'personalized junior explorer adventure jacket tailored to story plot and smart sneakers',
+    signatureProp: 'a luminous custom adventure keepsake',
+    pose2Description: '(2) 3/4 view holding a luminous adventure keepsake with warm sparkles',
+  },
+  {
+    id: 'bubble',
+    labelAr: 'عالم الفقاعات السحري الكلاسيكي',
+    labelEn: 'Classic Bubbleverse Realm',
+    keywords: ['bubble', 'bubbles', 'فقاعة', 'فقاعات'],
+    boyOutfit:
+      'turquoise-and-navy junior explorer jacket with star patches and blue sneakers',
+    girlOutfit:
+      'rose-pink-and-navy junior explorer jacket with star patches and cute sneakers',
+    signatureProp: 'a glowing bubble',
+    pose2Description: '(2) 3/4 view holding a glowing bubble',
+  },
+];
+
+export function detectStoryTheme(textHints: string): StoryThemeKey {
+  const normalized = (textHints || '').toLowerCase();
+  if (!normalized.trim()) return 'bubble';
+
+  for (const preset of THEME_PRESETS) {
+    if (preset.id === 'bubble' || preset.id === 'custom') continue;
+    for (const kw of preset.keywords) {
+      if (normalized.includes(kw.toLowerCase())) {
+        return preset.id;
+      }
+    }
+  }
+
+  if (normalized.includes('custom') || normalized.includes('مخصص')) {
+    return 'custom';
+  }
+
+  return 'bubble';
+}
+
+export function resolveThemeDna(
+  themeInput?: StoryThemeKey | string,
+  gender: 'boy' | 'girl' = 'boy'
+): {
+  storyTheme: StoryThemeKey | string;
+  signatureOutfit: string;
+  signatureProp: string;
+  pose2Description: string;
+} {
+  const matched =
+    THEME_PRESETS.find((p) => p.id === themeInput) ||
+    THEME_PRESETS.find((p) => p.keywords.some((kw) => (themeInput || '').toLowerCase().includes(kw))) ||
+    THEME_PRESETS.find((p) => p.id === 'bubble')!;
+
+  const signatureOutfit = gender === 'girl' ? matched.girlOutfit : matched.boyOutfit;
+  return {
+    storyTheme: matched.id,
+    signatureOutfit,
+    signatureProp: matched.signatureProp,
+    pose2Description: matched.pose2Description,
+  };
+}
+
 export function createDefaultCharacterDna(overrides?: Partial<CharacterDna>): CharacterDna {
+  const gender = overrides?.childGender === 'girl' ? 'girl' : 'boy';
+  const initialTheme = overrides?.storyTheme || 'bubble';
+  const resolved = resolveThemeDna(initialTheme, gender);
+
   return {
     childName: 'آدم',
     childAge: '5',
     childGender: 'boy',
     hairAndFeatures: 'curly dark hair, expressive warm eyes, natural joyful smile',
-    signatureOutfit: 'turquoise-and-navy junior explorer jacket with star patches and blue sneakers',
+    signatureOutfit: overrides?.signatureOutfit || resolved.signatureOutfit,
     artStyle: '3D Pixar Storybook, rich pastel lighting, expressive character features',
     midjourneyCrefUrl: '',
+    storyTheme: initialTheme,
+    signatureProp: overrides?.signatureProp || resolved.signatureProp,
+    pose2Description: overrides?.pose2Description || resolved.pose2Description,
     ...(overrides ?? {}),
   };
 }
@@ -196,20 +516,43 @@ function normalizeCharacterDna(dna: CharacterDna): {
   signatureOutfit: string;
   artStyle: string;
   midjourneyCrefUrl: string;
+  storyTheme: string;
+  signatureProp: string;
+  pose2Description: string;
 } {
+  const genderWord: 'boy' | 'girl' = dna.childGender === 'girl' ? 'girl' : 'boy';
+  const themeKey = dna.storyTheme || 'bubble';
+  const resolved = resolveThemeDna(themeKey, genderWord);
+
+  const signatureOutfit =
+    dna.signatureOutfit?.trim() || resolved.signatureOutfit;
+
+  const signatureProp =
+    dna.signatureProp?.trim() || resolved.signatureProp;
+
+  let pose2Description = dna.pose2Description?.trim();
+  if (!pose2Description) {
+    if (dna.signatureProp?.trim()) {
+      pose2Description = `(2) 3/4 view holding ${dna.signatureProp.trim()}`;
+    } else {
+      pose2Description = resolved.pose2Description;
+    }
+  }
+
   return {
     childName: dna.childName.trim() || 'Hero',
     ageDescriptor: normalizeAgeDescriptor(dna.childAge),
-    genderWord: dna.childGender === 'girl' ? 'girl' : 'boy',
+    genderWord,
     hairAndFeatures:
       dna.hairAndFeatures.trim() || 'natural hair, warm eyes, and cheerful smile',
-    signatureOutfit:
-      dna.signatureOutfit.trim() ||
-      'turquoise-and-navy storybook adventure jacket with star patches and sneakers',
+    signatureOutfit,
     artStyle:
       dna.artStyle.trim() ||
       "3D Pixar-style children's storybook, soft warm cinematic lighting",
     midjourneyCrefUrl: dna.midjourneyCrefUrl?.trim() || '',
+    storyTheme: themeKey,
+    signatureProp,
+    pose2Description,
   };
 }
 
@@ -226,7 +569,7 @@ export function buildMasterCharacterSheetPrompt(
     `Create a clean ${norm.artStyle} children's storybook character turnaround sheet of the child in the uploaded reference photos (${norm.ageDescriptor} ${norm.genderWord} ${norm.childName}). ` +
     `Keep exact facial structure, eye shape, skin tone, smile, and ${norm.hairAndFeatures} faithfully consistent. ` +
     `Show 3 poses side-by-side on a soft neutral cream studio background: ` +
-    `(1) front facing smiling, (2) 3/4 view holding a glowing bubble, (3) happy excited expression. ` +
+    `(1) front facing smiling, ${norm.pose2Description}, (3) happy excited expression. ` +
     `Wearing ${norm.signatureOutfit}. ` +
     `Soft warm cinematic lighting, crisp details, 1:1 square aspect ratio, no text, no watermark.`;
 

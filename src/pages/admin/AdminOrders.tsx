@@ -33,6 +33,7 @@ import {
   Package,
   Tag,
   Truck,
+  Upload,
 } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -53,7 +54,9 @@ import {
   getCatalogStories,
   getStoreConfig,
   getStudioDraft,
+  saveStudioDraft,
   updateOrderStatus,
+  attachPhotoToOrder,
   createManualOrder,
   deleteOrder,
   triggerOrderWebhook,
@@ -64,10 +67,11 @@ import {
   type OrderItemRecord,
   type StudioDraftRecord,
 } from '@/lib/localStore';
-import { getPhotoFromVault } from '@/lib/photoVault';
+import { getPhotoFromVault, savePhotoToVault } from '@/lib/photoVault';
 import {
   buildWhatsAppHelperMessages,
   countChecklistCompleted,
+  createDefaultProductionChecklist,
   DEFAULT_STORY_FALLBACK_IMAGES,
 } from '@/features/studio/stage2PromptEngine';
 import {
@@ -628,6 +632,62 @@ export default function AdminOrders() {
     a.download = `${childName.replace(/\s+/g, '_')}_photo.png`;
     a.click();
     toast.success(isAr ? 'تم تنزيل صورة الطفل' : 'Child photo downloaded');
+  };
+
+  const handleAdminOrderPhotoUpload = async (
+    orderId: string,
+    itemIndex: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    try {
+      const reader = new FileReader();
+      reader.onerror = () => {
+        toast.error(isAr ? 'فشل قراءة ملف الصورة' : 'Failed to read image file');
+      };
+      reader.onload = async () => {
+        const fullDataUrl = typeof reader.result === 'string' ? reader.result : '';
+        if (!fullDataUrl) {
+          toast.error(isAr ? 'ملف الصورة فارغ' : 'Empty image file');
+          return;
+        }
+
+        const vaultId = `order_${orderId}_item_${itemIndex}_${Date.now()}`;
+        await savePhotoToVault(vaultId, fullDataUrl);
+
+        const updated = attachPhotoToOrder(orderId, vaultId, itemIndex);
+        if (updated) {
+          setSelectedOrder(updated);
+          setOrders(getOrders());
+          setPhotoMap((prev) => ({ ...prev, [vaultId]: fullDataUrl }));
+
+          // If a studio draft exists for this order, also mark photoApproved: true in its checklist
+          const draft = getStudioDraft(orderId);
+          if (draft) {
+            saveStudioDraft({
+              ...draft,
+              checklist: {
+                ...createDefaultProductionChecklist(draft.checklist),
+                photoApproved: true,
+              },
+            });
+          }
+
+          toast.success(
+            isAr
+              ? 'تم حفظ صورة الطفل في خزنة الطلب بنجاح ✓'
+              : 'Child reference photo saved to order vault ✓'
+          );
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Error uploading order child photo', err);
+      toast.error(isAr ? 'حدث خطأ أثناء حفظ الصورة' : 'Error saving image to vault');
+    }
   };
 
   const handleCopyRef = (ref: string) => {
@@ -2998,22 +3058,48 @@ export default function AdminOrders() {
                                   alt={item.childName}
                                   className="w-28 h-28 rounded-2xl object-cover border-2 border-cyan-400/50"
                                 />
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleDownloadPhoto(item.photoVaultId!, item.childName)
-                                  }
-                                  className="w-full h-9 rounded-xl text-xs bg-cyan-600 hover:bg-cyan-500 text-white gap-1.5"
-                                >
-                                  <Download className="w-4 h-4" />
-                                  <span>{isAr ? 'تنزيل' : 'Download'}</span>
-                                </Button>
+                                <div className="space-y-1.5">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleDownloadPhoto(item.photoVaultId!, item.childName)
+                                    }
+                                    className="w-full h-8 rounded-xl text-xs bg-cyan-600 hover:bg-cyan-500 text-white gap-1.5"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                    <span>{isAr ? 'تنزيل' : 'Download'}</span>
+                                  </Button>
+                                  <label className="w-full h-8 rounded-xl text-[11px] bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/35 text-purple-200 flex items-center justify-center gap-1.5 cursor-pointer transition-colors font-medium">
+                                    <Upload className="w-3.5 h-3.5" />
+                                    <span>{isAr ? 'استبدال' : 'Replace'}</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => void handleAdminOrderPhotoUpload(selectedOrder.id, idx, e)}
+                                      className="hidden"
+                                    />
+                                  </label>
+                                </div>
                               </>
                             ) : (
-                              <div className="w-28 h-28 rounded-2xl bg-slate-950/80 border border-dashed border-white/15 flex flex-col items-center justify-center text-center p-2 text-slate-400 text-[11px] gap-1">
-                                <ImageIcon className="w-5 h-5" />
-                                <span>{isAr ? 'لا توجد صورة' : 'No photo uploaded'}</span>
+                              <div className="w-28 min-h-[112px] rounded-2xl bg-slate-950/80 border border-dashed border-cyan-400/30 flex flex-col items-center justify-center text-center p-2 text-slate-300 text-[11px] gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300">
+                                  <ImageIcon className="w-4 h-4" />
+                                </div>
+                                <span className="text-[10px] text-slate-400 leading-tight">
+                                  {isAr ? 'لا توجد صورة' : 'No photo yet'}
+                                </span>
+                                <label className="w-full h-7 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-100 flex items-center justify-center gap-1 cursor-pointer transition-colors text-[10px] font-bold">
+                                  <Upload className="w-3 h-3" />
+                                  <span>{isAr ? 'رفع (واتساب)' : 'Upload'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => void handleAdminOrderPhotoUpload(selectedOrder.id, idx, e)}
+                                    className="hidden"
+                                  />
+                                </label>
                               </div>
                             )}
                           </div>

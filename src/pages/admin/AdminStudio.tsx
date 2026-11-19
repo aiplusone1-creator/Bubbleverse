@@ -57,10 +57,15 @@ import {
   listStudioDrafts,
   saveStudioDraft,
   updateOrderStatus,
+  attachPhotoToOrder,
+  THEME_PRESETS,
+  detectStoryTheme,
+  resolveThemeDna,
   type AiProviderKey,
   type CharacterDna,
   type OrderRecord,
   type PromptEngineMode,
+  type StoryThemeKey,
   type StudioDraftPage,
   type StudioDraftRecord,
   type StudioProductionChecklist,
@@ -511,11 +516,32 @@ export default function AdminStudio() {
         const count = primaryItem.pagesCount || 15;
         const title = lang === 'ar' ? primaryItem.titleAr : primaryItem.titleEn;
         const engine = promptEngineRef.current;
+
+        const contextHints = [
+          primaryItem.titleEn,
+          primaryItem.titleAr,
+          primaryItem.storyId,
+          primaryItem.giftMessage,
+          primaryItem.occasion,
+          order.orderNotes,
+        ]
+          .filter(Boolean)
+          .join(' ');
+        const detectedTheme = detectStoryTheme(contextHints);
+        const resolvedThemeDna = resolveThemeDna(
+          detectedTheme,
+          primaryItem.childGender === 'girl' ? 'girl' : 'boy'
+        );
+
         const nextDna = createDefaultCharacterDna({
           childName: hero,
           childAge: primaryItem.childAge || '5',
           childGender: primaryItem.childGender === 'girl' ? 'girl' : 'boy',
           artStyle: artStyleRef.current,
+          storyTheme: detectedTheme,
+          signatureOutfit: resolvedThemeDna.signatureOutfit,
+          signatureProp: resolvedThemeDna.signatureProp,
+          pose2Description: resolvedThemeDna.pose2Description,
         });
         const generatedPages: StudioDraftPage[] = buildFullStoryArc(
           nextDna,
@@ -537,7 +563,7 @@ export default function AdminStudio() {
         setCharacterDna(nextDna);
         setCharacterSheetVaultId('');
         setCharacterSheetPreview(null);
-        setChecklist(createDefaultProductionChecklist());
+        setChecklist(createDefaultProductionChecklist({ photoApproved: Boolean(primaryItem?.photoVaultId) }));
         setPages(generatedPages);
         setActivePageIndex(0);
         setLastSavedAt(null);
@@ -833,6 +859,73 @@ export default function AdminStudio() {
     setCharacterSheetPreview(null);
     setChecklist((prev) => ({ ...prev, characterSheetLocked: false }));
     toast.info(isAr ? 'تمت إزالة ورقة ثبات الشخصية' : 'Character Sheet removed');
+  };
+
+  const handleChildReferencePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    try {
+      const processed = await processUploadedIllustration(file);
+      const vaultId = `ref_photo_${selectedOrder ? selectedOrder.id : activeDraftKey}_${Date.now()}`;
+      await savePhotoToVault(vaultId, processed.fullDataUrl);
+
+      if (selectedOrder) {
+        const updated = attachPhotoToOrder(selectedOrder.id, vaultId, 0);
+        if (updated) {
+          setSelectedOrder(updated);
+          setOrders(getOrders());
+        }
+      }
+
+      setChildRefPhoto(processed.fullDataUrl);
+      setChecklist((prev) => ({ ...prev, photoApproved: true }));
+
+      toast.success(
+        isAr
+          ? 'تم حفظ صورة الطفل المرجعية بدقتها الكاملة وقفل المعيار الأول ✓'
+          : 'Child reference photo saved at full resolution & Check 1 passed ✓'
+      );
+    } catch {
+      toast.error(
+        isAr ? 'تعذر حفظ صورة الطفل المرجعية' : 'Could not save child reference photo'
+      );
+    }
+  };
+
+  const handleRemoveChildReferencePhoto = async () => {
+    if (selectedOrder) {
+      const primaryItem = selectedOrder.items[0];
+      if (primaryItem?.photoVaultId) {
+        await deletePhotoFromVault(primaryItem.photoVaultId);
+        const updated = attachPhotoToOrder(selectedOrder.id, '', 0);
+        if (updated) {
+          setSelectedOrder(updated);
+          setOrders(getOrders());
+        }
+      }
+    }
+    setChildRefPhoto(null);
+    setChecklist((prev) => ({ ...prev, photoApproved: false }));
+    toast.info(isAr ? 'تمت إزالة الصورة المرجعية' : 'Reference photo removed');
+  };
+
+  const handleAdaptDnaToTheme = (newTheme: StoryThemeKey | string) => {
+    const gender = characterDna.childGender || 'boy';
+    const resolved = resolveThemeDna(newTheme, gender);
+    setCharacterDna((prev) => ({
+      ...prev,
+      storyTheme: newTheme,
+      signatureOutfit: resolved.signatureOutfit,
+      signatureProp: resolved.signatureProp,
+      pose2Description: resolved.pose2Description,
+    }));
+    toast.success(
+      isAr
+        ? `تم تهيئة الزي الرسمي والغرض المميز لثيم: ${newTheme}`
+        : `Configured signature outfit & prop for: ${newTheme}`
+    );
   };
 
   const handleSelectOrder = (id: string) => {
@@ -2113,25 +2206,68 @@ export default function AdminStudio() {
                       />
                       <div className="min-w-0 flex-1 space-y-2">
                         <p className="text-xs text-slate-200 font-semibold truncate">{childName}</p>
-                        <a
-                          href={childRefPhoto}
-                          download={`${sanitizeFileSlug(childName)}-reference.png`}
-                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/35 text-cyan-100 text-xs font-bold transition-colors"
-                        >
-                          <Download className="w-4 h-4 shrink-0" aria-hidden="true" />
-                          <span>{isAr ? 'تحميل الصورة' : 'Download Photo'}</span>
-                        </a>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <a
+                            href={childRefPhoto}
+                            download={`${sanitizeFileSlug(childName)}-reference.png`}
+                            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/35 text-cyan-100 text-[11px] font-bold transition-colors"
+                          >
+                            <Download className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                            <span>{isAr ? 'تحميل' : 'Download'}</span>
+                          </a>
+                          <label className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/35 text-purple-100 text-[11px] font-bold cursor-pointer transition-colors">
+                            <Upload className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                            <span>{isAr ? 'استبدال' : 'Replace'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => void handleChildReferencePhotoUpload(e)}
+                              className="hidden"
+                            />
+                          </label>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => void handleRemoveChildReferencePhoto()}
+                            className="h-8 px-2 rounded-full text-rose-300 hover:text-rose-200 hover:bg-rose-500/15"
+                            aria-label={isAr ? 'حذف الصورة' : 'Remove photo'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-dashed border-white/15 bg-slate-900/50 p-3.5 text-xs text-slate-400 leading-relaxed">
-                      {selectedOrder
-                        ? isAr
-                          ? 'لم يرفع ولي الأمر صورة في خزنة الطلب بعد — يمكنك طلب صورة نهارية واضحة عبر واتساب بضغطة زر.'
-                          : 'No reference photo stored in this order vault yet — request a clear daylight photo via WhatsApp below.'
-                        : isAr
-                        ? 'اختر طلباً من الأعلى لعرض صورة الطفل المرجعية هنا مع زر التحميل وطلب صورة أوضح عبر واتساب.'
-                        : 'Select a customer order above to view and download the child’s reference photo here.'}
+                    <div className="space-y-2.5">
+                      <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-cyan-400/35 hover:border-cyan-400/60 bg-slate-900/50 hover:bg-slate-900/80 p-4 text-center cursor-pointer transition-all">
+                        <Upload className="w-5 h-5 text-cyan-300" aria-hidden="true" />
+                        <span className="text-xs font-bold text-white">
+                          {isAr
+                            ? 'رفع صورة الطفل المرجعية (واتساب / ملف)'
+                            : 'Upload Child Reference Photo (WhatsApp / Local)'}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {isAr
+                            ? 'تُحفظ بدقتها الكاملة في الخزنة وتعتمد المعيار 1 تلقائياً'
+                            : 'Saves full-res to PhotoVault & passes Check 1'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => void handleChildReferencePhotoUpload(e)}
+                          className="hidden"
+                        />
+                      </label>
+                      <p className="text-[10px] text-slate-400 leading-relaxed text-center">
+                        {selectedOrder
+                          ? isAr
+                            ? 'لم يرفع ولي الأمر صورة عند الدفع — ارفع الصورة المستلمة عبر واتساب هنا.'
+                            : 'Parent did not upload at checkout — upload the WhatsApp photo here.'
+                          : isAr
+                          ? 'ارفع صورة الطفل لاستخراج ملامحه بدقة.'
+                          : 'Upload child photo to lock likeness.'}
+                      </p>
                     </div>
                   )}
 
@@ -2307,10 +2443,41 @@ export default function AdminStudio() {
                     />
                   </div>
 
+                  {/* Story Theme & Persona Presets */}
+                  <div className="sm:col-span-12 space-y-2 pt-2 border-t border-white/10 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <label htmlFor="studio-theme-select" className="text-xs font-semibold text-slate-300">
+                        {isAr ? 'ثيم القصة وتنسيق الشخصية التلقائي' : 'Story Theme & Auto-Adapt Persona'}
+                      </label>
+                      <span className="text-[11px] text-cyan-300/80">
+                        {isAr ? 'يحدد تلقائياً الزي والغرض والوضعية (2)' : 'Auto-adapts outfit, prop & pose (2)'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5" id="studio-theme-select">
+                      {THEME_PRESETS.map((preset) => {
+                        const isCurrent = (characterDna.storyTheme || 'bubble') === preset.id;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => handleAdaptDnaToTheme(preset.id)}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer ${
+                              isCurrent
+                                ? 'bg-cyan-500/25 border-cyan-400 text-cyan-100 shadow-sm shadow-cyan-500/20'
+                                : 'bg-slate-900/70 border-white/10 text-slate-300 hover:border-white/30 hover:text-white'
+                            }`}
+                          >
+                            {isAr ? preset.labelAr : preset.labelEn}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="sm:col-span-12 space-y-1.5 min-w-0">
                     <label htmlFor="studio-dna-outfit" className="text-xs text-slate-300 font-medium">
                       {isAr
-                        ? 'الزي الرسمي الثابت للبطل في هذا الكتاب'
+                        ? 'الزي الرسمي الثابت للبطل في هذا الكتاب (Signature Outfit)'
                         : 'Signature Outfit for This Book (Locked Across Scenes)'}
                     </label>
                     <Input
@@ -2318,7 +2485,35 @@ export default function AdminStudio() {
                       dir="ltr"
                       value={characterDna.signatureOutfit}
                       onChange={(e) => updateDnaField('signatureOutfit', e.target.value)}
-                      placeholder="turquoise-and-navy junior astronaut jacket with star patches, blue sneakers"
+                      placeholder="e.g. olive-green safari vest with khaki cargo shorts and explorer boots"
+                      className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-6 space-y-1.5 min-w-0">
+                    <label htmlFor="studio-dna-prop" className="text-xs text-slate-300 font-medium">
+                      {isAr ? 'الغرض/الأداة المميزة للبطل (Signature Prop)' : 'Signature Prop / Item'}
+                    </label>
+                    <Input
+                      id="studio-dna-prop"
+                      dir="ltr"
+                      value={characterDna.signatureProp ?? ''}
+                      onChange={(e) => updateDnaField('signatureProp', e.target.value)}
+                      placeholder="e.g. magnifying glass & fossil notebook"
+                      className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-6 space-y-1.5 min-w-0">
+                    <label htmlFor="studio-dna-pose2" className="text-xs text-slate-300 font-medium">
+                      {isAr ? 'الوضعية الثانية في ورقة الشخصية (Pose 2)' : 'Pose (2) in Master Character Sheet'}
+                    </label>
+                    <Input
+                      id="studio-dna-pose2"
+                      dir="ltr"
+                      value={characterDna.pose2Description ?? ''}
+                      onChange={(e) => updateDnaField('pose2Description', e.target.value)}
+                      placeholder="(2) 3/4 view holding a magnifying glass excitedly"
                       className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
                     />
                   </div>

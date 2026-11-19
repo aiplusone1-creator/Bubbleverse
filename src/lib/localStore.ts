@@ -21,16 +21,24 @@ import {
   saveShowcaseConfig,
   type HomepageShowcaseConfig,
 } from '@/features/showcase/showcaseConfig';
-import type {
-  CharacterDna,
-  PromptEngineMode,
-  StudioProductionChecklist,
+import {
+  THEME_PRESETS,
+  detectStoryTheme,
+  resolveThemeDna,
+  type CharacterDna,
+  type PromptEngineMode,
+  type StoryThemeKey,
+  type StudioProductionChecklist,
+  type ThemePreset,
 } from '@/features/studio/stage2PromptEngine';
 
+export { THEME_PRESETS, detectStoryTheme, resolveThemeDna };
 export type {
   CharacterDna,
   PromptEngineMode,
+  StoryThemeKey,
   StudioProductionChecklist,
+  ThemePreset,
   MerchProduct,
   GwpConfigRecord,
 };
@@ -1004,6 +1012,41 @@ export function updateOrderStatus(
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
   } catch (err) {
     console.error('Failed to update order in localStorage', err);
+  }
+
+  return updated;
+}
+
+export function attachPhotoToOrder(
+  orderIdOrRef: string,
+  photoVaultId: string,
+  itemIndex = 0
+): OrderRecord | null {
+  const orders = getOrders();
+  const index = orders.findIndex((o) => o.id === orderIdOrRef || o.reference === orderIdOrRef);
+  if (index === -1) return null;
+
+  const order = orders[index];
+  const items = [...order.items];
+  const targetIndex = itemIndex >= 0 && itemIndex < items.length ? itemIndex : 0;
+  if (items[targetIndex]) {
+    items[targetIndex] = {
+      ...items[targetIndex],
+      photoVaultId,
+    };
+  }
+
+  const updated: OrderRecord = {
+    ...order,
+    items,
+    updatedAt: Date.now(),
+  };
+
+  orders[index] = updated;
+  try {
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  } catch (err) {
+    console.error('Failed to attach photo to order in localStorage', err);
   }
 
   return updated;

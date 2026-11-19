@@ -380,3 +380,59 @@ test('generateStoryWithConfiguredAi falls back safely without leaking keys and w
   assert.ok(aiResult.pages[0].imagePrompt.includes('--cref https://cdn.bubbleverse.example/sheets/zain-ref.png --cw 85 --ar 1:1'));
   assert.doesNotMatch(aiResult.pages[0].imagePrompt, /210\s*[x×]\s*210/i);
 });
+
+test('Master Character Sheet Prompt dynamically adapts pose (2) and outfit across story themes (dinosaurs, space, ocean, fantasy, superhero, bedtime)', () => {
+  // 1. Dinosaurs theme test
+  const dinoDna = createDefaultCharacterDna({
+    childName: 'Tariq',
+    childGender: 'boy',
+    storyTheme: 'dinosaurs',
+  });
+  const dinoPrompt = buildMasterCharacterSheetPrompt(dinoDna, 'nano_banana');
+  assert.match(dinoPrompt, /safari paleontologist/i, 'Dino theme must adapt outfit to paleontologist vest');
+  assert.match(dinoPrompt, /magnifying glass/i, 'Dino theme must adapt pose (2) / prop to magnifying glass');
+  assert.doesNotMatch(dinoPrompt, /holding a glowing bubble/i, 'Dino theme must NOT hardcode glowing bubble');
+
+  // 2. Space theme test
+  const spaceDna = createDefaultCharacterDna({
+    childName: 'Nour',
+    childGender: 'girl',
+    storyTheme: 'space',
+  });
+  const spacePrompt = buildMasterCharacterSheetPrompt(spaceDna, 'nano_banana');
+  assert.match(spacePrompt, /astronaut jumpsuit/i, 'Space theme must adapt outfit to astronaut jumpsuit');
+  assert.match(spacePrompt, /celestial star/i, 'Space theme must adapt pose (2) to celestial star');
+
+  // 3. Ocean theme test
+  const oceanDna = createDefaultCharacterDna({
+    childName: 'Faris',
+    childGender: 'boy',
+    storyTheme: 'ocean',
+  });
+  const oceanPrompt = buildMasterCharacterSheetPrompt(oceanDna, 'nano_banana');
+  assert.match(oceanPrompt, /marine explorer/i, 'Ocean theme must adapt outfit to marine explorer');
+  assert.match(oceanPrompt, /sea pearl/i, 'Ocean theme must adapt pose (2) to sea pearl');
+
+  // 4. Fantasy theme test
+  const fantasyDna = createDefaultCharacterDna({
+    childName: 'Salma',
+    childGender: 'girl',
+    storyTheme: 'fantasy',
+  });
+  const fantasyPrompt = buildMasterCharacterSheetPrompt(fantasyDna, 'nano_banana');
+  assert.match(fantasyPrompt, /magical/i, 'Fantasy theme must adapt outfit to magical tunic/cape');
+  assert.match(fantasyPrompt, /crystal lantern/i, 'Fantasy theme must adapt pose (2) to crystal lantern');
+
+  // 5. Custom prop & pose override test
+  const customDna = createDefaultCharacterDna({
+    childName: 'Zain',
+    childGender: 'boy',
+    storyTheme: 'custom',
+    signatureOutfit: 'red pilot aviator leather jacket and goggles',
+    signatureProp: 'a model vintage wooden airplane',
+    pose2Description: '(2) 3/4 view holding a miniature wooden airplane soaring forward',
+  });
+  const customPrompt = buildMasterCharacterSheetPrompt(customDna, 'nano_banana');
+  assert.match(customPrompt, /red pilot aviator leather jacket/i);
+  assert.match(customPrompt, /miniature wooden airplane soaring forward/i);
+});
