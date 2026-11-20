@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   DEFAULT_PRODUCTION_CHECKLIST,
   DEFAULT_STORY_FALLBACK_IMAGES,
+  THE_SEVEN_BUBBLES,
   buildFullStoryArc,
   buildMasterCharacterSheetPrompt,
   buildProductionPromptPackText,
@@ -12,9 +13,14 @@ import {
   countChecklistCompleted,
   createDefaultCharacterDna,
   createDefaultProductionChecklist,
+  detectStoryTheme,
+  enhanceStoryWithAi,
   generateStoryWithConfiguredAi,
+  getSevenBubble,
+  isSevenBubble,
   normalizeWhatsAppPhone,
   reformatScenePromptForEngine,
+  resolveThemeDna,
 } from '../src/features/studio/stage2PromptEngine.ts';
 
 const sampleBoyDna = createDefaultCharacterDna({
@@ -435,4 +441,137 @@ test('Master Character Sheet Prompt dynamically adapts pose (2) and outfit acros
   const customPrompt = buildMasterCharacterSheetPrompt(customDna, 'nano_banana');
   assert.match(customPrompt, /red pilot aviator leather jacket/i);
   assert.match(customPrompt, /miniature wooden airplane soaring forward/i);
+});
+
+test('THE_SEVEN_BUBBLES defines all 7 therapeutic categories with color codes, lighting, and contracts', () => {
+  assert.equal(THE_SEVEN_BUBBLES.length, 7, 'Must have exactly 7 therapeutic bubbles');
+
+  const expectedBubbles = [
+    { id: 'red_calm', color: 'Red', hex: '#EF4444', icon: '🔴' },
+    { id: 'orange_empathy', color: 'Orange', hex: '#F97316', icon: '🟠' },
+    { id: 'yellow_honesty', color: 'Yellow', hex: '#EAB308', icon: '🟡' },
+    { id: 'green_realworld', color: 'Green', hex: '#22C55E', icon: '🟢' },
+    { id: 'blue_courage', color: 'Blue', hex: '#3B82F6', icon: '🔵' },
+    { id: 'indigo_friendship', color: 'Indigo', hex: '#6366F1', icon: '🌌' },
+    { id: 'purple_sharing', color: 'Purple', hex: '#A855F7', icon: '🟪' },
+  ];
+
+  for (const exp of expectedBubbles) {
+    const bubble = getSevenBubble(exp.id);
+    assert.ok(bubble, `Bubble ${exp.id} must be found`);
+    assert.equal(bubble.color, exp.color);
+    assert.equal(bubble.colorHex, exp.hex);
+    assert.equal(bubble.icon, exp.icon);
+    assert.ok(bubble.labelAr.length > 0);
+    assert.ok(bubble.labelEn.length > 0);
+    assert.ok(bubble.struggleAr.length > 0);
+    assert.ok(bubble.struggleEn.length > 0);
+    assert.ok(bubble.virtueAr.length > 0);
+    assert.ok(bubble.virtueEn.length > 0);
+    assert.ok(bubble.lightingPrompt.length > 0);
+    assert.ok(bubble.colorPalette.length >= 4);
+    assert.ok(bubble.boyOutfit.length > 0);
+    assert.ok(bubble.girlOutfit.length > 0);
+    assert.ok(bubble.signatureProp.length > 0);
+    assert.ok(bubble.pose2Description.length > 0);
+    assert.ok(bubble.beats.length === 12, `${exp.id} must have 12 dramatic beats`);
+    assert.equal(isSevenBubble(exp.id), true);
+  }
+});
+
+test('Zero-Bub Law & 4-Stage Dramatic Structure across all 7 Bubbles', () => {
+  for (const bubble of THE_SEVEN_BUBBLES) {
+    for (let beatIdx = 0; beatIdx < bubble.beats.length; beatIdx++) {
+      const beat = bubble.beats[beatIdx];
+      const arBoy = beat.arBoy('آدم', bubble.labelAr);
+      const arGirl = beat.arGirl('سارة', bubble.labelAr);
+      const en = beat.en('Adam', bubble.labelEn);
+
+      // CRITICAL: NEVER include Bub in story text. The child alone is the hero.
+      for (const text of [arBoy, arGirl, en]) {
+        assert.doesNotMatch(text, /\bBub\b/i, `${bubble.id} beat ${beatIdx + 1} must NEVER mention Bub`);
+        // Check Arabic "باب" as mascot (ensure not referring to mascot Bub)
+        assert.doesNotMatch(text, /«باب»|بـ«باب»|باب الرفيق/i, `${bubble.id} must not have mascot Bub`);
+      }
+    }
+
+    // Verify Stage 4 contains the POP! in beat 10 or 11
+    const popBeat = bubble.beats[10];
+    assert.match(popBeat.arBoy('آدم', bubble.labelAr), /بوب!/);
+    assert.match(popBeat.en('Adam', bubble.labelEn), /POP!/);
+
+    // Verify Stage 1 has the struggle in beat 0 or 1
+    const struggleBeat = bubble.beats[0];
+    assert.ok(struggleBeat.arBoy('آدم', bubble.labelAr).includes('آدم'));
+    assert.ok(struggleBeat.arGirl('سارة', bubble.labelAr).includes('سارة'));
+  }
+});
+
+test('Subconscious Merchandise Placement in 7 Bubbles templates', () => {
+  // Explorer Backpack, Adventure Jacket, Bedtime Night Lamp
+  const allArTexts = THE_SEVEN_BUBBLES.flatMap((b) =>
+    b.beats.map((bt) => bt.arBoy('آدم', b.labelAr))
+  ).join(' ');
+
+  const allEnTexts = THE_SEVEN_BUBBLES.flatMap((b) =>
+    b.beats.map((bt) => bt.en('Adam', b.labelEn))
+  ).join(' ');
+
+  assert.match(allArTexts, /حقيبة/i, 'Templates must organically include Explorer Backpack');
+  assert.match(allArTexts, /سترة/i, 'Templates must organically include Adventure Jacket');
+  assert.match(allArTexts, /مصباح/i, 'Templates must organically include Bedtime Night Lamp');
+
+  assert.match(allEnTexts, /Backpack/i, 'EN templates must include Backpack');
+  assert.match(allEnTexts, /Jacket/i, 'EN templates must include Jacket');
+  assert.match(allEnTexts, /Lamp/i, 'EN templates must include Night Lamp');
+});
+
+test('buildFullStoryArc generates 10, 15, 20, 24 page storybooks for all 7 Bubbles with zero repetition', () => {
+  const childDna = createDefaultCharacterDna({
+    childName: 'سامي',
+    childGender: 'boy',
+  });
+
+  for (const bubble of THE_SEVEN_BUBBLES) {
+    const dna = { ...childDna, storyTheme: bubble.id };
+    for (const pageCount of [10, 15, 20, 24]) {
+      const pages = buildFullStoryArc(dna, pageCount, 'ar', bubble.labelAr, 'nano_banana');
+      assert.equal(pages.length, pageCount);
+
+      const uniqueTexts = new Set(pages.map((p) => p.text.trim()));
+      const uniqueActions = new Set(pages.map((p) => p.action.trim()));
+
+      assert.equal(uniqueTexts.size, pageCount, `${bubble.id} with ${pageCount} pages must have zero text repetition`);
+      assert.equal(uniqueActions.size, pageCount, `${bubble.id} with ${pageCount} pages must have zero action repetition`);
+
+      // Verify the child's name is personalized
+      for (const p of pages) {
+        assert.ok(p.text.includes('سامي'));
+      }
+    }
+  }
+});
+
+test('detectStoryTheme and resolveThemeDna seamlessly adapt to the 7 Bubbles', () => {
+  assert.equal(detectStoryTheme('طفل يعاني من الغضب والعصبية'), 'red_calm');
+  assert.equal(detectStoryTheme('تعاطف ومراعاة مشاعر الآخرين'), 'orange_empathy');
+  assert.equal(detectStoryTheme('الصدق والأمانة وقول الحقيقة'), 'yellow_honesty');
+  assert.equal(detectStoryTheme('إدمان الشاشات وحب اللعب في الطبيعة'), 'green_realworld');
+  assert.equal(detectStoryTheme('الخجل الشديد والثقة بالنفس'), 'blue_courage');
+  assert.equal(detectStoryTheme('الوحدة وبناء الصداقة مع الآخرين'), 'indigo_friendship');
+  assert.equal(detectStoryTheme('الأنانية وحب المشاركة والكرم'), 'purple_sharing');
+
+  // DNA resolution test for Red Calm
+  const redResolved = resolveThemeDna('red_calm', 'boy');
+  assert.match(redResolved.signatureOutfit, /crimson/i);
+  assert.match(redResolved.signatureProp, /ruby/i);
+
+  // DNA resolution test for Blue Courage
+  const blueResolved = resolveThemeDna('blue_courage', 'girl');
+  assert.match(blueResolved.signatureOutfit, /sapphire/i);
+  assert.match(blueResolved.signatureProp, /sapphire/i);
+
+  // enhanceStoryWithAi is exported and matches generateStoryWithConfiguredAi
+  assert.equal(typeof enhanceStoryWithAi, 'function');
+  assert.equal(enhanceStoryWithAi, generateStoryWithConfiguredAi);
 });

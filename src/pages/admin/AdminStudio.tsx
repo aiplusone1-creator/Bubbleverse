@@ -84,6 +84,9 @@ import {
 import { generateRealAiImage } from '@/features/studio/aiImageGenerator';
 import { CharacterLikenessComparator } from '@/components/studio/CharacterLikenessComparator';
 import {
+  THE_SEVEN_BUBBLES,
+  getSevenBubble,
+  type SevenBubbleDefinition,
   buildFullStoryArc,
   buildMasterCharacterSheetPrompt,
   buildProductionPromptPackText,
@@ -793,6 +796,10 @@ export default function AdminStudio() {
 
   const checklistProgress = useMemo(() => countChecklistCompleted(checklist), [checklist]);
 
+  const activeSevenBubble = useMemo<SevenBubbleDefinition | undefined>(() => {
+    return getSevenBubble(characterDna.storyTheme || '');
+  }, [characterDna.storyTheme]);
+
   const handleToggleChecklistStep = (key: keyof StudioProductionChecklist) => {
     setChecklist((prev) => ({
       ...prev,
@@ -844,23 +851,38 @@ export default function AdminStudio() {
   };
 
   const handleSyncDnaToAllPrompts = () => {
+    const bubble = getSevenBubble(characterDna.storyTheme || '');
     setPages((prev) =>
-      prev.map((p) => ({
-        ...p,
-        imagePrompt: reformatScenePromptForEngine(
-          p.imagePrompt,
-          syncedDna,
-          p.pageNumber,
-          prev.length,
-          promptEngine,
-          p.text
-        ),
-      }))
+      prev.map((p) => {
+        let updatedPrompt = p.imagePrompt;
+        if (bubble && /\[ENVIRONMENT\s*&\s*LIGHTING\]:\s*([^\n]+)/i.test(updatedPrompt)) {
+          updatedPrompt = updatedPrompt.replace(
+            /\[ENVIRONMENT\s*&\s*LIGHTING\]:\s*([^\n]+)/i,
+            (_, currentEnv: string) => {
+              const baseEnv = currentEnv
+                .replace(/,?\s*(warm|soft|Pixar|volumetric|ambient|lighting|glow|cinematic).*$/i, '')
+                .trim();
+              return `[ENVIRONMENT & LIGHTING]: ${baseEnv ? `${baseEnv}, ` : ''}${bubble.lightingPrompt}`;
+            }
+          );
+        }
+        return {
+          ...p,
+          imagePrompt: reformatScenePromptForEngine(
+            updatedPrompt,
+            syncedDna,
+            p.pageNumber,
+            prev.length,
+            promptEngine,
+            p.text
+          ),
+        };
+      })
     );
     toast.success(
       isAr
-        ? `تم تطبيق مواصفات البطل والأسلوب الفني على جميع الصفحات (${pages.length})`
-        : `Synced Character DNA & art style across all ${pages.length} scene prompts`
+        ? `تم تطبيق مواصفات البطل والأسلوب الفني وإضاءة المشاهد على جميع الصفحات (${pages.length})`
+        : `Synced Character DNA, art style & scene lighting across all ${pages.length} scene prompts`
     );
   };
 
@@ -909,12 +931,21 @@ export default function AdminStudio() {
   };
 
   const handleCopyCharacterSheetPrompt = () => {
+    const bubble = getSevenBubble(characterDna.storyTheme || '');
+    const lightingClause = bubble
+      ? `${bubble.lightingPrompt}, 300 DPI storybook art, highly detailed, expressive face, 1:1 aspect ratio, no text, no watermark.`
+      : 'warm golden three-point studio lighting, 300 DPI storybook art, highly detailed, expressive face, vibrant rich colors, 1:1 aspect ratio, no text, no watermark.';
+
+    const pose2Text =
+      characterDna.pose2Description ||
+      (bubble ? bubble.pose2Description : `dynamic 3/4 action pose with ${characterDna.signatureProp || 'explorer gear'}`);
+
     const prompt =
       `3D Pixar animated storybook character turnaround sheet of a ${characterDna.childAge || '5'}-year-old ${characterDna.childGender || 'boy'} named ${childName || 'Hero'}, ` +
       `${characterDna.hairAndFeatures}. Showing 3 poses side by side on clean warm studio background: ` +
-      `(1) front view smiling looking at camera, (2) dynamic 3/4 action pose with ${characterDna.signatureProp || 'explorer gear'}, (3) profile view with friendly floating star companion Bub. ` +
+      `(1) front view smiling looking at camera, (2) ${pose2Text}, (3) profile view standing proud with joyful confident expression. ` +
       `Wearing ${characterDna.signatureOutfit}. ` +
-      `warm golden three-point studio lighting, 300 DPI storybook art, highly detailed, expressive face, vibrant rich colors, 1:1 aspect ratio, no text, no watermark.`;
+      lightingClause;
 
     void navigator.clipboard.writeText(prompt);
     toast.success(
@@ -1207,17 +1238,111 @@ export default function AdminStudio() {
   const handleAdaptDnaToTheme = (newTheme: StoryThemeKey | string) => {
     const gender = characterDna.childGender || 'boy';
     const resolved = resolveThemeDna(newTheme, gender);
-    setCharacterDna((prev) => ({
-      ...prev,
+    const bubble = getSevenBubble(newTheme);
+
+    let nextArtStyle = artStyle;
+    if (bubble) {
+      const baseStyle = artStyle.includes('Pixar')
+        ? '3D Pixar Storybook'
+        : artStyle.split(',')[0].trim() || '3D Pixar Storybook';
+      nextArtStyle = `${baseStyle}, ${bubble.color.toLowerCase()} palette (${bubble.colorPalette.slice(0, 3).join(' ')}), rich cinematic lighting, expressive features`;
+      setArtStyle(nextArtStyle);
+    }
+
+    const nextDna: CharacterDna = {
+      ...characterDna,
       storyTheme: newTheme,
       signatureOutfit: resolved.signatureOutfit,
       signatureProp: resolved.signatureProp,
       pose2Description: resolved.pose2Description,
-    }));
+      artStyle: nextArtStyle,
+    };
+    setCharacterDna(nextDna);
+
+    // Automatically synchronize visual scene lighting prompts across all pages to match the bubble color
+    if (bubble) {
+      setPages((prevPages) =>
+        prevPages.map((page) => {
+          let updatedPrompt = page.imagePrompt;
+          if (/\[ENVIRONMENT\s*&\s*LIGHTING\]:\s*([^\n]+)/i.test(updatedPrompt)) {
+            updatedPrompt = updatedPrompt.replace(
+              /\[ENVIRONMENT\s*&\s*LIGHTING\]:\s*([^\n]+)/i,
+              (_, currentEnv: string) => {
+                const baseEnv = currentEnv
+                  .replace(/,?\s*(warm|soft|Pixar|volumetric|ambient|lighting|glow|cinematic).*$/i, '')
+                  .trim();
+                return `[ENVIRONMENT & LIGHTING]: ${baseEnv ? `${baseEnv}, ` : ''}${bubble.lightingPrompt}`;
+              }
+            );
+          }
+          return {
+            ...page,
+            imagePrompt: reformatScenePromptForEngine(
+              updatedPrompt,
+              nextDna,
+              page.pageNumber,
+              prevPages.length,
+              promptEngine,
+              page.text
+            ),
+          };
+        })
+      );
+    }
+
     toast.success(
       isAr
-        ? `تم تهيئة الزي الرسمي والغرض المميز لثيم: ${newTheme}`
+        ? bubble
+          ? `تم تفعيل ${bubble.labelAr} ومزامنة لوحة الألوان وإضاءة المشاهد تلقائياً!`
+          : `تم تهيئة الزي الرسمي والغرض المميز لثيم: ${newTheme}`
+        : bubble
+        ? `Activated ${bubble.labelEn} & synchronized color palette and scene lighting!`
         : `Configured signature outfit & prop for: ${newTheme}`
+    );
+  };
+
+  const handleApplySevenBubbleArc = (bubble: SevenBubbleDefinition) => {
+    const heroName = childName.trim() || (isAr ? 'البطل' : 'Hero');
+    const dnaForArc: CharacterDna = {
+      ...syncedDna,
+      childName: heroName,
+      storyTheme: bubble.id,
+    };
+    const generated = buildFullStoryArc(
+      dnaForArc,
+      bubble.beats.length || 12,
+      storyLang,
+      isAr ? bubble.labelAr : bubble.labelEn,
+      promptEngine
+    );
+    const merged: StudioDraftPage[] = generated.map((g, idx) => {
+      const existing = pages[idx];
+      if (existing && isCustomUploadedPage(existing)) {
+        return {
+          pageNumber: g.pageNumber,
+          text: g.text,
+          imagePrompt: g.imagePrompt,
+          imageUrl: existing.imageUrl,
+          imageVaultId: existing.imageVaultId,
+          imageWidth: existing.imageWidth,
+          imageHeight: existing.imageHeight,
+        };
+      }
+      return {
+        pageNumber: g.pageNumber,
+        text: g.text,
+        imagePrompt: g.imagePrompt,
+        imageUrl: g.imageUrl,
+      };
+    });
+
+    setPages(merged);
+    setPageCount(merged.length);
+    setActivePageIndex(0);
+    toast.success(
+      isAr
+        ? `تم تطبيق سيناريو ${bubble.labelAr} المكوّن من ${merged.length} مشهداً متوافقاً مع الدستور الذهبي وتأثير البوب!`
+        : `Applied full ${merged.length}-scene arc for ${bubble.labelEn} with The Pop! breakthrough`
     );
   };
 
@@ -2949,27 +3074,225 @@ export default function AdminStudio() {
                     </div>
                   </div>
 
-                  {/* Story Theme & Persona Dropdown */}
-                  <div className="sm:col-span-12 space-y-1.5 pt-2 border-t border-white/10 min-w-0">
+                  {/* The 7 Therapeutic Bubbles Selector */}
+                  <div className="sm:col-span-12 space-y-3 pt-3 border-t border-white/10 min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <label htmlFor="studio-theme-select" className="text-xs font-semibold text-slate-300">
-                        {isAr ? 'ثيم القصة وتنسيق الشخصية التلقائي' : 'Story Theme & Auto-Adapt Persona'}
-                      </label>
-                      <span className="text-[11px] text-cyan-300/80">
-                        {isAr ? 'يحدد تلقائياً الزي والغرض والوضعية (2)' : 'Auto-adapts outfit, prop & pose (2)'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-cyan-500/25 to-purple-500/25 border border-cyan-400/40 flex items-center justify-center shadow-[0_0_14px_rgba(34,211,238,0.25)]">
+                          <Sparkles className="w-4 h-4 text-cyan-300" aria-hidden="true" />
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-bold text-white tracking-wide flex items-center gap-1.5">
+                            <span>{isAr ? 'فقاعات بابل فيرس السلوكية (The 7 Bubbles)' : 'The 7 Bubbles (Behavioral Arcs)'}</span>
+                            <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300">
+                              {isAr ? 'القلب السلوكي والتربوي' : 'Core Therapeutic Engine'}
+                            </span>
+                          </label>
+                          <p className="text-[11px] text-slate-400">
+                            {isAr
+                              ? 'اختر إحدى الفقاعات السبع لمزامنة لوحة الألوان والأزياء وإضاءة المشاهد تلقائياً عبر بنية الـ 4 مراحل'
+                              : 'Select any of the 7 behavioral bubbles to auto-sync character palette, outfits & scene lighting across the 4-stage arc'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {activeSevenBubble && (
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-white/20 text-xs text-slate-200 shadow-xs">
+                          <span className="text-sm">{activeSevenBubble.icon}</span>
+                          <span className="font-semibold text-cyan-200">
+                            {isAr ? activeSevenBubble.labelAr : activeSevenBubble.labelEn}
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-medium">({isAr ? 'مُتزامن' : 'Synced'})</span>
+                        </div>
+                      )}
                     </div>
-                    <LiquidSelect
-                      id="studio-theme-select"
-                      aria-label={isAr ? 'ثيم القصة وتنسيق الشخصية' : 'Story theme and persona'}
-                      value={characterDna.storyTheme || 'bubble'}
-                      onChange={(val) => handleAdaptDnaToTheme(val)}
-                      options={THEME_PRESETS.map((preset) => ({
-                        value: preset.id,
-                        label: isAr ? preset.labelAr : preset.labelEn,
-                      }))}
-                      triggerClassName="h-11 rounded-2xl bg-slate-950/80 border-cyan-400/35"
-                    />
+
+                    {/* 7 Interactive Bubbles Responsive Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
+                      {THE_SEVEN_BUBBLES.map((bubble) => {
+                        const isSelected = (characterDna.storyTheme || '').toLowerCase() === bubble.id.toLowerCase();
+                        return (
+                          <button
+                            key={bubble.id}
+                            type="button"
+                            onClick={() => handleAdaptDnaToTheme(bubble.id)}
+                            className={`relative group text-start p-3 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-md flex flex-col justify-between min-h-[148px] ${
+                              isSelected
+                                ? 'bg-slate-900/95 ring-2 ring-offset-2 ring-offset-slate-950 shadow-xl'
+                                : 'bg-slate-950/65 hover:bg-slate-900/80 border border-white/10 hover:border-white/25 hover:shadow-md'
+                            }`}
+                            style={{
+                              borderColor: isSelected ? bubble.colorHex : undefined,
+                              boxShadow: isSelected ? `0 0 24px -2px ${bubble.colorHex}55` : undefined,
+                            }}
+                          >
+                            {/* Ambient colored corner glow */}
+                            <div
+                              className="absolute -top-6 -right-6 w-20 h-20 rounded-full blur-xl opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity"
+                              style={{ backgroundColor: bubble.colorHex }}
+                            />
+
+                            {/* Top row: Icon, Color Badge, and Active Check */}
+                            <div className="flex items-center justify-between w-full relative z-10 gap-1.5 mb-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xl shrink-0 transform group-hover:scale-115 transition-transform">
+                                  {bubble.icon}
+                                </span>
+                                <span
+                                  className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg"
+                                  style={{
+                                    backgroundColor: `${bubble.colorHex}22`,
+                                    color: bubble.colorHex,
+                                    border: `1px solid ${bubble.colorHex}44`,
+                                  }}
+                                >
+                                  {bubble.color}
+                                </span>
+                              </div>
+                              {isSelected ? (
+                                <span
+                                  className="w-5 h-5 rounded-full flex items-center justify-center text-white shrink-0 text-xs font-bold shadow-sm"
+                                  style={{ backgroundColor: bubble.colorHex }}
+                                >
+                                  ✓
+                                </span>
+                              ) : (
+                                <span
+                                  className="w-2.5 h-2.5 rounded-full opacity-35 group-hover:opacity-75 transition-opacity"
+                                  style={{ backgroundColor: bubble.colorHex }}
+                                />
+                              )}
+                            </div>
+
+                            {/* Middle: Bubble Name & Psychological Struggle */}
+                            <div className="space-y-1 relative z-10 my-auto">
+                              <h4 className="text-xs font-bold text-white line-clamp-1 group-hover:text-cyan-200 transition-colors">
+                                {isAr ? bubble.labelAr : bubble.labelEn}
+                              </h4>
+                              <p className="text-[10px] text-slate-300 leading-snug line-clamp-2">
+                                <span className="text-slate-400 font-semibold">{isAr ? 'التحدي: ' : 'Struggle: '}</span>
+                                {isAr ? bubble.struggleAr : bubble.struggleEn}
+                              </p>
+                            </div>
+
+                            {/* Bottom: 5-color palette swatches & Virtue */}
+                            <div className="pt-2 mt-2 border-t border-white/10 relative z-10 space-y-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-[9px] text-slate-400 font-medium truncate">
+                                  {isAr ? 'لوحة الألوان:' : 'Palette:'}
+                                </span>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {bubble.colorPalette.map((hex, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="w-2.5 h-2.5 rounded-full border border-white/20 shadow-xs"
+                                      style={{ backgroundColor: hex }}
+                                      title={hex}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="text-[9px] text-slate-400 truncate" title={isAr ? bubble.virtueAr : bubble.virtueEn}>
+                                ✨ {isAr ? bubble.virtueAr : bubble.virtueEn}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Active Bubble Synchronized Details & Lighting Banner */}
+                    {activeSevenBubble && (
+                      <div
+                        className="p-3.5 rounded-2xl border backdrop-blur-md transition-all relative overflow-hidden"
+                        style={{
+                          backgroundColor: `${activeSevenBubble.colorHex}0e`,
+                          borderColor: `${activeSevenBubble.colorHex}45`,
+                        }}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-2xl">{activeSevenBubble.icon}</span>
+                            <div>
+                              <div className="text-xs font-bold text-white flex items-center gap-2">
+                                <span>{isAr ? activeSevenBubble.labelAr : activeSevenBubble.labelEn}</span>
+                                <span
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                  style={{
+                                    backgroundColor: `${activeSevenBubble.colorHex}25`,
+                                    color: activeSevenBubble.colorHex,
+                                    border: `1px solid ${activeSevenBubble.colorHex}40`,
+                                  }}
+                                >
+                                  {isAr ? 'مُتزامن مع لوحة الألوان وإضاءة المشاهد' : 'Color Palette & Lighting Synced'}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                                <span className="text-slate-400 font-semibold">{isAr ? 'إضاءة المشاهد البصرية: ' : 'Visual Lighting: '}</span>
+                                <span className="text-slate-200">{activeSevenBubble.lightingPrompt}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            {/* 5-Color Palette preview */}
+                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-950/80 border border-white/10">
+                              <span className="text-[10px] text-slate-400 mr-1">{isAr ? 'الباليت:' : 'Palette:'}</span>
+                              {activeSevenBubble.colorPalette.map((hex, idx) => (
+                                <span
+                                  key={idx}
+                                  className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-xs"
+                                  style={{ backgroundColor: hex }}
+                                  title={hex}
+                                />
+                              ))}
+                            </div>
+
+                            {/* Apply Full 12-Beat Arc Button */}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApplySevenBubbleArc(activeSevenBubble)}
+                              className="h-8 px-3 rounded-xl text-xs font-medium bg-slate-900/90 hover:bg-slate-800 text-cyan-200 border-cyan-400/35 hover:border-cyan-400/60 gap-1.5 shadow-sm"
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-cyan-300" aria-hidden="true" />
+                              <span>
+                                {isAr
+                                  ? 'تطبيق سيناريو الـ 12 مشهداً الكامل (مع البوب!)'
+                                  : 'Apply Full 12-Scene Arc with Pop!'}
+                              </span>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Classic Adventure Themes Dropdown (Alongside) */}
+                    <div className="space-y-1.5 pt-2 border-t border-white/10">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label htmlFor="studio-theme-select" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                          <span>{isAr ? 'أو اختر من ثيمات المغامرات الكلاسيكية:' : 'Or Select Classic Adventure Themes:'}</span>
+                          <span className="text-[11px] text-slate-400 font-normal">
+                            ({isAr ? 'ديناصورات، فضاء، محيطات، أبطال خارقين، خيال...' : 'Dinosaurs, Space, Ocean, Superheroes, Fantasy...'})
+                          </span>
+                        </label>
+                        <span className="text-[11px] text-cyan-300/80">
+                          {isAr ? 'يحدد تلقائياً الزي والغرض والوضعية (2)' : 'Auto-adapts outfit, prop & pose (2)'}
+                        </span>
+                      </div>
+                      <LiquidSelect
+                        id="studio-theme-select"
+                        aria-label={isAr ? 'ثيم القصة وتنسيق الشخصية' : 'Story theme and persona'}
+                        value={characterDna.storyTheme || 'bubble'}
+                        onChange={(val) => handleAdaptDnaToTheme(val)}
+                        options={THEME_PRESETS.map((preset) => ({
+                          value: preset.id,
+                          label: isAr ? preset.labelAr : preset.labelEn,
+                        }))}
+                        triggerClassName="h-11 rounded-2xl bg-slate-950/80 border-cyan-400/35"
+                      />
+                    </div>
                   </div>
 
                   <div className="sm:col-span-12 space-y-1.5 min-w-0">
