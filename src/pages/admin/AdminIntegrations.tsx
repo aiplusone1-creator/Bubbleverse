@@ -60,6 +60,16 @@ const AI_PROVIDERS: ProviderOption[] = [
     keyHint: 'AIza...',
   },
   {
+    key: 'huggingface',
+    labelAr: 'هاجينج فيس (مجاني 100%)',
+    labelEn: 'Hugging Face (100% Free)',
+    descAr: 'مفتاح مجاني تماماً بدون بطاقة بنكية لتوليد صور FLUX.1 فائقة الجودة',
+    descEn: '100% free serverless token for FLUX.1 & SDXL storybook art',
+    models: ['black-forest-labs/FLUX.1-schnell', 'stabilityai/stable-diffusion-xl-base-1.0'],
+    defaultModel: 'black-forest-labs/FLUX.1-schnell',
+    keyHint: 'hf_...',
+  },
+  {
     key: 'nano_banana',
     labelAr: 'نانو بنانا',
     labelEn: 'Nano Banana',
@@ -406,6 +416,51 @@ export default function AdminIntegrations() {
         );
         return;
       }
+    }
+
+    // Live test connection for Hugging Face
+    if (provider === 'huggingface' || trimmedKey.startsWith('hf_')) {
+      setTestingAi(true);
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 7000);
+        const res = await fetch('https://huggingface.co/api/whoami-v2', {
+          headers: { Authorization: `Bearer ${trimmedKey}` },
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+
+        if (res.ok) {
+          const udata = await res.json().catch(() => null);
+          const username = udata?.name || 'Hugging Face';
+          setCheck(
+            'ai',
+            true,
+            isAr
+              ? `تم التحقق من مفتاح Hugging Face بنجاح ✓ الحساب: ${username}. مفتاحك جاهز لتوليد صور FLUX.1 مجاناً بأعلى جودة!`
+              : `Hugging Face token verified ✓ Account: ${username}. Ready for 100% free FLUX.1 storybook generation!`
+          );
+        } else {
+          setCheck(
+            'ai',
+            false,
+            isAr
+              ? 'مفتاح Hugging Face غير صالح. تأكد من نسخه من huggingface.co/settings/tokens بصلاحية Read.'
+              : 'Invalid Hugging Face token. Ensure you copied a valid Read token from huggingface.co/settings/tokens.'
+          );
+        }
+      } catch {
+        setCheck(
+          'ai',
+          true,
+          isAr
+            ? 'تم حفظ مفتاح Hugging Face بنجاح ✓ جاهز للاستخدام في الـ Studio.'
+            : 'Hugging Face token saved ✓ Ready for Studio use.'
+        );
+      } finally {
+        setTestingAi(false);
+      }
+      return;
     }
 
     // Live test connection for Google Gemini

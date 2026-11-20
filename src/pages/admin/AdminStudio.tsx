@@ -170,6 +170,7 @@ interface ProcessedIllustration {
 function getAiProviderLabel(provider: AiProviderKey, isAr: boolean): string {
   const labels: Record<AiProviderKey, { ar: string; en: string }> = {
     gemini: { ar: 'جيميناي', en: 'Gemini' },
+    huggingface: { ar: 'هاجينج فيس', en: 'Hugging Face' },
     nano_banana: { ar: 'نانو بانانا', en: 'Nano Banana' },
     openai: { ar: 'أوبن إيه آي', en: 'OpenAI' },
     flux: { ar: 'فلاكس', en: 'Flux' },
@@ -896,13 +897,31 @@ export default function AdminStudio() {
           ? `تم توليد ورقة ثبات الشخصية (3 وضعيات) — البديل #${nextCandidateNumber} بنجاح ✓`
           : `Generated 3-pose character consistency sheet — Candidate #${nextCandidateNumber} ✓`
       );
-    } catch {
+    } catch (err) {
       toast.error(
-        isAr ? 'تعذر توليد ورقة ثبات الشخصية' : 'Failed to generate character sheet'
+        isAr
+          ? `تعذر التوليد المباشر: ${err instanceof Error ? err.message : 'سيرفر التوليد المجاني مشغول حالياً'}. يمكنك نسخ البرومبت لتوليده فوراً مجاناً عبر Bing أو Leonardo.`
+          : `Generation failed: ${err instanceof Error ? err.message : 'Free server is busy'}. Copy the prompt to generate on Bing or Leonardo.`
       );
     } finally {
       setIsGeneratingSheet(false);
     }
+  };
+
+  const handleCopyCharacterSheetPrompt = () => {
+    const prompt =
+      `3D Pixar animated storybook character turnaround sheet of a ${characterDna.childAge || '5'}-year-old ${characterDna.childGender || 'boy'} named ${childName || 'Hero'}, ` +
+      `${characterDna.hairAndFeatures}. Showing 3 poses side by side on clean warm studio background: ` +
+      `(1) front view smiling looking at camera, (2) dynamic 3/4 action pose with ${characterDna.signatureProp || 'explorer gear'}, (3) profile view with friendly floating star companion Bub. ` +
+      `Wearing ${characterDna.signatureOutfit}. ` +
+      `warm golden three-point studio lighting, 300 DPI storybook art, highly detailed, expressive face, vibrant rich colors, 1:1 aspect ratio, no text, no watermark.`;
+
+    void navigator.clipboard.writeText(prompt);
+    toast.success(
+      isAr
+        ? 'تم نسخ برومبت الشخصية الاحترافي بنجاح! الصقه في Bing Image Creator أو Leonardo لتوليد صورة سينمائية مجاناً ثم ارفعها هنا.'
+        : 'Character prompt copied! Paste into Bing Image Creator or Leonardo for free 4K images, then upload here.'
+    );
   };
 
   const handleGeneratePageImage = async (pageIndex: number) => {
@@ -2759,9 +2778,19 @@ export default function AdminStudio() {
                             </span>
                           </Button>
 
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleCopyCharacterSheetPrompt}
+                            className="h-10 px-4 rounded-full border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 text-xs font-semibold gap-1.5"
+                          >
+                            <Copy className="w-3.5 h-3.5 text-cyan-300" />
+                            <span>{isAr ? 'نسخ البرومبت لتوليده مجاناً' : 'Copy Prompt'}</span>
+                          </Button>
+
                           <label className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/15 text-slate-300 text-xs font-medium cursor-pointer transition-colors">
                             <Upload className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                            <span>{isAr ? 'أو ارفع ورقة مولدة يدوياً' : 'Or Upload Manual Sheet'}</span>
+                            <span>{isAr ? 'رفع ورقة مولدة' : 'Upload Sheet'}</span>
                             <input
                               type="file"
                               accept="image/*"
@@ -2769,6 +2798,27 @@ export default function AdminStudio() {
                               className="hidden"
                             />
                           </label>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-[11px] text-slate-400">
+                          <span>{isAr ? 'أفضل مولدات مجانية (DALL-E 3 & FLUX):' : 'Top Free Generators:'}</span>
+                          <a
+                            href="https://designer.microsoft.com/image-creator"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-cyan-300 font-medium underline hover:text-cyan-200"
+                          >
+                            Bing DALL-E 3 (مجاني فوري) ↗
+                          </a>
+                          <span>•</span>
+                          <a
+                            href="https://leonardo.ai"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-purple-300 font-medium underline hover:text-purple-200"
+                          >
+                            Leonardo.ai (150 نقطة يومياً) ↗
+                          </a>
                         </div>
                       </div>
                     </div>

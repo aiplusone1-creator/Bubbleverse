@@ -94,21 +94,62 @@ async function responseToDataUrl(response: Response): Promise<string> {
 }
 
 /**
- * Generates an image using FLUX.1 via Pollinations AI (free, open, high quality).
+ * Generates an image using Hugging Face Serverless Inference.
+ * Free with any Hugging Face token (hf_...).
  */
-async function callPollinationsFlux(
+async function callHuggingFace(
+  token: string,
+  prompt: string,
+  model = 'black-forest-labs/FLUX.1-schnell'
+): Promise<string | null> {
+  const url = `https://router.huggingface.co/hf-inference/models/${model}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token.trim()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ inputs: prompt }),
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return responseToDataUrl(response);
+}
+
+/**
+ * Generates an image using Pollinations AI (free, open, high quality).
+ * Attempts FLUX first, then falls back to Sana if FLUX rate-limits.
+ */
+async function callPollinationsFree(
   prompt: string,
   seed?: number,
   width = 1024,
   height = 1024
 ): Promise<string> {
   const s = seed ?? Math.floor(Math.random() * 1000000);
-  const encoded = encodeURIComponent(prompt.trim().slice(0, 950));
-  const url = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${s}&model=flux&nologo=true`;
+  const encoded = encodeURIComponent(prompt.trim().slice(0, 900));
 
-  const response = await fetch(url);
+  // 1. Try FLUX model first
+  try {
+    const fluxUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${s}&model=flux&nologo=true`;
+    const res = await fetch(fluxUrl);
+    if (res.ok) {
+      return await responseToDataUrl(res);
+    }
+  } catch {
+    // Continue to default engine
+  }
+
+  // 2. Try default / Sana model (unrestricted free)
+  const defaultUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${s}&nologo=true`;
+  const response = await fetch(defaultUrl);
   if (!response.ok) {
-    throw new Error(`Pollinations AI error HTTP ${response.status}`);
+    throw new Error(
+      `سيرفر التوليد المجاني مشغول حالياً (${response.status}). انتظر 30 ثانية أو استخدم المفتاح المجاني.`
+    );
   }
 
   return responseToDataUrl(response);
@@ -121,10 +162,27 @@ export async function generateRealAiImage(
   options: GenerateAiImageOptions
 ): Promise<GenerateAiImageResult> {
   const apiKey = options.aiConfig?.apiKey?.trim() || '';
+  const provider = options.aiConfig?.provider || '';
   const isAiEnabled = Boolean(options.aiConfig?.enabled);
 
-  // 1. If user supplied a Google Gemini API Key, try Google Imagen 3 first
-  if (isAiEnabled && apiKey) {
+  // 1. If user supplied a Hugging Face Token (hf_...), use FLUX.1-schnell
+  if (isAiEnabled && (apiKey.startsWith('hf_') || provider === 'huggingface')) {
+    try {
+      const hfDataUrl = await callHuggingFace(apiKey, options.prompt);
+      if (hfDataUrl) {
+        return {
+          dataUrl: hfDataUrl,
+          engine: 'Hugging Face (FLUX.1)',
+          notice: 'تم التوليد بنجاح عبر محرك FLUX.1 من Hugging Face.',
+        };
+      }
+    } catch {
+      // Fall through to open free engines
+    }
+  }
+
+  // 2. If user supplied a Google Gemini API Key, try Google Imagen 3
+  if (isAiEnabled && apiKey && apiKey.startsWith('AIza')) {
     try {
       const imagenDataUrl = await callGoogleImagen3(apiKey, options.prompt);
       if (imagenDataUrl) {
@@ -135,13 +193,13 @@ export async function generateRealAiImage(
         };
       }
     } catch {
-      // Imagen 3 failed (e.g. 403 billing required on free tier key) — gracefully fall through to FLUX.1
+      // Imagen 3 failed (e.g. 403 billing required on free tier key) — gracefully fall through
     }
   }
 
-  // 2. High-Performance Free AI Engine: FLUX.1 via Pollinations
+  // 3. High-Performance Free AI Engine: Pollinations (FLUX / Sana)
   try {
-    const fluxDataUrl = await callPollinationsFlux(
+    const freeDataUrl = await callPollinationsFree(
       options.prompt,
       options.seed,
       options.width || 1024,
@@ -149,15 +207,15 @@ export async function generateRealAiImage(
     );
 
     return {
-      dataUrl: fluxDataUrl,
-      engine: 'FLUX.1 (Free AI Engine)',
+      dataUrl: freeDataUrl,
+      engine: 'FLUX / Sana 3D (Free AI)',
       notice: apiKey
-        ? 'حساب Gemini المجاني مخصص للنصوص، فقام النظام بتوليد الصورة تلقائياً عبر محرك FLUX.1 فائق الجودة مجاناً.'
-        : 'تم التوليد بنجاح عبر محرك FLUX.1 الذكي مجاناً.',
+        ? 'حسابك الحالي مخصص للنصوص، فقام النظام بتوليد الصورة تلقائياً عبر محرك الرسم الذكي مجاناً.'
+        : 'تم التوليد بنجاح عبر محرك الذكاء الاصطناعي المجاني.',
     };
   } catch (err) {
     throw new Error(
-      `Failed to generate AI image: ${err instanceof Error ? err.message : String(err)}`
+      `تعذر توليد الصورة: ${err instanceof Error ? err.message : String(err)}`
     );
   }
 }

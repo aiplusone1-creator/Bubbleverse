@@ -774,9 +774,11 @@ export async function generateCharacterSheetCandidate(
     });
     dataUrl = aiResult.dataUrl;
     engineLabel = aiResult.engine;
-  } catch {
-    // Graceful offline fallback
-    dataUrl = await renderTurnaroundSheetCanvas(options, variation);
+  } catch (err) {
+    // Do NOT silently replace with primitive 2D canvas drawing
+    throw new Error(
+      err instanceof Error ? err.message : 'تعذر توليد صورة الذكاء الاصطناعي من السيرفر المجاني'
+    );
   }
 
   // Save to persistent PhotoVault

@@ -93,7 +93,7 @@ export interface WhatsAppHelperBundle {
 }
 
 export interface AiIntegrationSettings {
-  provider: 'gemini' | 'nano_banana' | 'openai' | 'flux' | 'custom';
+  provider: 'gemini' | 'huggingface' | 'nano_banana' | 'openai' | 'flux' | 'custom';
   enabled: boolean;
   apiKey: string;
   model: string;

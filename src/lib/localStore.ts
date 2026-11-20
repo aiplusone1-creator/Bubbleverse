@@ -259,7 +259,7 @@ export interface BirthdayClubLeadInput {
   source: BirthdayClubSource;
 }
 
-export type AiProviderKey = 'gemini' | 'nano_banana' | 'openai' | 'flux' | 'custom';
+export type AiProviderKey = 'gemini' | 'huggingface' | 'nano_banana' | 'openai' | 'flux' | 'custom';
 export type PaymentGatewayMode = 'sandbox' | 'live';
 
 export interface ApiIntegrationsRecord {
