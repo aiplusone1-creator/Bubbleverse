@@ -2445,8 +2445,8 @@ export default function AdminStudio() {
                     />
                   </div>
 
-                  {/* Story Theme & Persona Presets */}
-                  <div className="sm:col-span-12 space-y-2 pt-2 border-t border-white/10 min-w-0">
+                  {/* Story Theme & Persona Dropdown */}
+                  <div className="sm:col-span-12 space-y-1.5 pt-2 border-t border-white/10 min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <label htmlFor="studio-theme-select" className="text-xs font-semibold text-slate-300">
                         {isAr ? 'ثيم القصة وتنسيق الشخصية التلقائي' : 'Story Theme & Auto-Adapt Persona'}
@@ -2455,25 +2455,17 @@ export default function AdminStudio() {
                         {isAr ? 'يحدد تلقائياً الزي والغرض والوضعية (2)' : 'Auto-adapts outfit, prop & pose (2)'}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5" id="studio-theme-select">
-                      {THEME_PRESETS.map((preset) => {
-                        const isCurrent = (characterDna.storyTheme || 'bubble') === preset.id;
-                        return (
-                          <button
-                            key={preset.id}
-                            type="button"
-                            onClick={() => handleAdaptDnaToTheme(preset.id)}
-                            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer ${
-                              isCurrent
-                                ? 'bg-cyan-500/25 border-cyan-400 text-cyan-100 shadow-sm shadow-cyan-500/20'
-                                : 'bg-slate-900/70 border-white/10 text-slate-300 hover:border-white/30 hover:text-white'
-                            }`}
-                          >
-                            {isAr ? preset.labelAr : preset.labelEn}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <LiquidSelect
+                      id="studio-theme-select"
+                      aria-label={isAr ? 'ثيم القصة وتنسيق الشخصية' : 'Story theme and persona'}
+                      value={characterDna.storyTheme || 'bubble'}
+                      onChange={(val) => handleAdaptDnaToTheme(val)}
+                      options={THEME_PRESETS.map((preset) => ({
+                        value: preset.id,
+                        label: isAr ? preset.labelAr : preset.labelEn,
+                      }))}
+                      triggerClassName="h-11 rounded-2xl bg-slate-950/80 border-cyan-400/35"
+                    />
                   </div>
 
                   <div className="sm:col-span-12 space-y-1.5 min-w-0">
@@ -2521,49 +2513,62 @@ export default function AdminStudio() {
                   </div>
                 </div>
 
-                {/* Global Art Direction Presets */}
+                {/* Global Art Direction Presets Dropdown + Manual Input */}
                 <div className="space-y-2 pt-2 border-t border-white/10">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <label
-                      htmlFor="studio-art-style-step1"
+                      htmlFor="studio-art-style-select"
                       className="text-xs font-semibold text-slate-300"
                     >
                       {isAr ? 'الأسلوب الفني العام للقصة' : 'Global Art Direction Style'}
                     </label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {ART_STYLE_PRESETS.map((preset) => (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() => setArtStyle(preset.value)}
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer ${
-                            artStyle === preset.value
-                              ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-200'
-                              : 'bg-slate-900/70 border-white/10 text-slate-300 hover:border-white/25'
-                          }`}
-                        >
-                          {isAr ? preset.labelAr : preset.labelEn}
-                        </button>
-                      ))}
-                    </div>
+                    <span className="text-[11px] text-cyan-300/80">
+                      {isAr ? 'اختر نمطاً فنياً جاهزاً أو عدّل النص' : 'Choose preset or customize text'}
+                    </span>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input
-                      id="studio-art-style-step1"
-                      dir="ltr"
-                      value={artStyle}
-                      onChange={(e) => setArtStyle(e.target.value)}
-                      className="h-10 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-slate-200 flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleSyncDnaToAllPrompts}
-                      className="h-10 px-4 rounded-2xl bg-slate-900/80 border-white/15 text-xs font-semibold text-cyan-200 hover:border-cyan-400/45 gap-1.5 shrink-0"
-                    >
-                      <RefreshCw className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span>{isAr ? 'تطبيق على كل المشاهد' : 'Sync to All Scenes'}</span>
-                    </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <div className="sm:col-span-5">
+                      <LiquidSelect
+                        id="studio-art-style-select"
+                        aria-label={isAr ? 'نمط الرسم الفني' : 'Art direction style'}
+                        value={
+                          ART_STYLE_PRESETS.find((p) => p.value === artStyle)?.value || 'custom'
+                        }
+                        onChange={(val) => {
+                          if (val !== 'custom') setArtStyle(val);
+                        }}
+                        options={[
+                          ...ART_STYLE_PRESETS.map((p) => ({
+                            value: p.value,
+                            label: isAr ? p.labelAr : p.labelEn,
+                          })),
+                          {
+                            value: 'custom',
+                            label: isAr ? '— نمط فني مخصص يدوي —' : '— Custom Manual Prompt —',
+                          },
+                        ]}
+                        triggerClassName="h-11 rounded-2xl bg-slate-950/80 border-white/15"
+                      />
+                    </div>
+                    <div className="sm:col-span-7 flex gap-2">
+                      <Input
+                        id="studio-art-style-step1"
+                        dir="ltr"
+                        value={artStyle}
+                        onChange={(e) => setArtStyle(e.target.value)}
+                        className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-slate-200 flex-1"
+                        placeholder="3D Pixar Storybook, rich pastel lighting..."
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleSyncDnaToAllPrompts}
+                        className="h-11 px-4 rounded-2xl bg-slate-900/80 border-white/15 text-xs font-semibold text-cyan-200 hover:border-cyan-400/45 gap-1.5 shrink-0"
+                      >
+                        <RefreshCw className="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <span>{isAr ? 'تطبيق للكل' : 'Sync All'}</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
