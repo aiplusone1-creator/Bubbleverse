@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import {
   Dialog,
   DialogContent,
@@ -651,23 +652,23 @@ export default function AdminShowcase() {
                           <Label className="text-xs text-slate-300">
                             {isAr ? 'القصة المرتبطة في الكتالوج' : 'Linked Catalog Story'}
                           </Label>
-                          <select
+                          <LiquidSelect
                             value={slide.linkedStoryId}
-                            onChange={(e) =>
-                              handleUpdateHeroBook(idx, { linkedStoryId: e.target.value })
+                            onChange={(val) =>
+                              handleUpdateHeroBook(idx, { linkedStoryId: val })
                             }
-                            className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                          >
-                            {!catalogStories.some((s) => s.id === slide.linkedStoryId) &&
-                              slide.linkedStoryId && (
-                                <option value={slide.linkedStoryId}>{slide.linkedStoryId}</option>
-                              )}
-                            {catalogStories.map((story) => (
-                              <option key={story.id} value={story.id}>
-                                {isAr ? story.titleAr : story.titleEn}
-                              </option>
-                            ))}
-                          </select>
+                            options={[
+                              ...(!catalogStories.some((s) => s.id === slide.linkedStoryId) &&
+                              slide.linkedStoryId
+                                ? [{ value: slide.linkedStoryId, label: slide.linkedStoryId }]
+                                : []),
+                              ...catalogStories.map((story) => ({
+                                value: story.id,
+                                label: isAr ? story.titleAr : story.titleEn,
+                              })),
+                            ]}
+                            triggerClassName="h-10 text-xs"
+                          />
                         </div>
 
                         <div className="space-y-1">

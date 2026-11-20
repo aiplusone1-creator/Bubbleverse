@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import { useLanguage } from '@/hooks/useLanguage';
 import {
   calculateB2BBulkQuote,
@@ -1315,23 +1316,21 @@ export default function SchoolsPortal() {
                   </div>
 
                   {/* Occasion Selector */}
-                  <label htmlFor="b2b-occasion" className="space-y-1.5 block">
+                  <div className="space-y-1.5 block">
                     <span className="text-xs font-semibold text-foreground/85">
                       {text('Occasion / Campaign', 'المناسبة المستهدفة')}
                     </span>
-                    <select
+                    <LiquidSelect
                       id="b2b-occasion"
                       value={occasion}
-                      onChange={(e) => setOccasion(e.target.value as OccasionKey)}
-                      className="h-12 w-full rounded-xl border border-white/15 bg-slate-950/90 px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80"
-                    >
-                      {OCCASIONS.map((item) => (
-                        <option key={item.key} value={item.key} className="bg-slate-950 text-white">
-                          {isAr ? item.labelAr : item.labelEn}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      onChange={(val) => setOccasion(val as OccasionKey)}
+                      options={OCCASIONS.map((item) => ({
+                        value: item.key,
+                        label: isAr ? item.labelAr : item.labelEn,
+                      }))}
+                      triggerClassName="h-12 text-sm"
+                    />
+                  </div>
 
                   {/* Notes */}
                   <label htmlFor="b2b-notes" className="space-y-1.5 block">

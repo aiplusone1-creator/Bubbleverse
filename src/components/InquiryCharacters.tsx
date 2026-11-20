@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Upload, X, CheckCircle2, User, Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import { useLanguage } from '@/hooks/useLanguage';
 import type { Character } from '@/features/stories/types';
 
@@ -111,22 +112,20 @@ export default function InquiryCharacters({
                   />
                 </label>
 
-                <label className="space-y-1.5">
+                <div className="space-y-1.5">
                   <span className="block text-xs font-semibold text-slate-200">
                     {language === 'ar' ? 'دوره في القصة' : 'Story Role'}
                   </span>
-                  <select
-                    className="h-11 w-full rounded-xl border border-white/15 bg-slate-950/90 px-3 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  <LiquidSelect
                     value={character.role}
-                    onChange={(e) => onUpdateCharacter(character.id, { role: e.target.value })}
-                  >
-                    {roles.map((r) => (
-                      <option key={r} value={r}>
-                        {t('role' + r[0].toUpperCase() + r.slice(1))}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    onChange={(val) => onUpdateCharacter(character.id, { role: val })}
+                    options={roles.map((r) => ({
+                      value: r,
+                      label: t('role' + r[0].toUpperCase() + r.slice(1)),
+                    }))}
+                    triggerClassName="h-11 text-xs sm:text-sm"
+                  />
+                </div>
               </div>
 
               {/* Photo Upload Dropzone */}

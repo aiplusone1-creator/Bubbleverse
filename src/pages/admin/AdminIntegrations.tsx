@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import { useLanguage } from '@/hooks/useLanguage';
 import {
   getIntegrationsConfig,
@@ -922,7 +923,7 @@ export default function AdminIntegrations() {
                 <Label htmlFor="ai-model-select" className="text-xs font-semibold text-slate-200">
                   {isAr ? 'النموذج المعتمد' : 'Target Model'}
                 </Label>
-                <select
+                <LiquidSelect
                   id="ai-model-select"
                   dir="ltr"
                   value={
@@ -930,27 +931,27 @@ export default function AdminIntegrations() {
                       ? config.ai.model
                       : '__custom__'
                   }
-                  onChange={(e) => {
-                    if (e.target.value !== '__custom__') {
+                  onChange={(val) => {
+                    if (val !== '__custom__') {
                       updateConfig((prev) => ({
                         ...prev,
-                        ai: { ...prev.ai, model: e.target.value },
+                        ai: { ...prev.ai, model: val },
                       }));
                     }
                   }}
-                  className="w-full h-11 px-3.5 rounded-xl bg-slate-950/80 border border-white/15 text-white text-sm font-numeric text-left focus:outline-none focus:border-cyan-400/60"
-                >
-                  {activeProviderMeta.models.map((m) => (
-                    <option key={m} value={m} className="bg-slate-900">
-                      {m}
-                    </option>
-                  ))}
-                  {!activeProviderMeta.models.includes(config.ai.model) && (
-                    <option value="__custom__" className="bg-slate-900">
-                      {config.ai.model || (isAr ? 'نموذج مخصص' : 'Custom model')}
-                    </option>
-                  )}
-                </select>
+                  options={[
+                    ...activeProviderMeta.models.map((m) => ({ value: m, label: m })),
+                    ...(!activeProviderMeta.models.includes(config.ai.model)
+                      ? [
+                          {
+                            value: '__custom__',
+                            label: config.ai.model || (isAr ? 'نموذج مخصص' : 'Custom model'),
+                          },
+                        ]
+                      : []),
+                  ]}
+                  triggerClassName="h-11 text-sm font-numeric"
+                />
                 <Input
                   aria-label={isAr ? 'اسم النموذج يدوياً' : 'Custom model identifier'}
                   dir="ltr"

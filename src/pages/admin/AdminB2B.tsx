@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import {
   Table,
   TableBody,
@@ -187,27 +188,29 @@ export default function AdminB2B() {
 
             <div className="space-y-1.5">
               <label className="text-xs text-slate-400">الدولة والعملة</label>
-              <select
+              <LiquidSelect
                 value={country}
-                onChange={(e) => setCountry(e.target.value as 'EG' | 'SA')}
-                className="w-full bg-slate-950 border border-slate-800 rounded-md h-9 px-3 text-xs text-slate-200"
-              >
-                <option value="SA">🇸🇦 السعودية (35 ر.س / طالب)</option>
-                <option value="EG">🇪🇬 مصر (120 ج.م / طالب)</option>
-              </select>
+                onChange={(val) => setCountry(val as 'EG' | 'SA')}
+                options={[
+                  { value: 'SA', label: '🇸🇦 السعودية (35 ر.س / طالب)' },
+                  { value: 'EG', label: '🇪🇬 مصر (120 ج.م / طالب)' },
+                ]}
+                triggerClassName="h-10 text-xs"
+              />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs text-slate-400">قالب القصة المعتمد</label>
-              <select
+              <LiquidSelect
                 value={selectedTheme}
-                onChange={(e) => setSelectedTheme(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-md h-9 px-3 text-xs text-slate-200"
-              >
-                <option value="space_adventure">رحلة إلى الفضاء مع أبطال المدرسة</option>
-                <option value="cooperation_magic">قوة الصداقة والتعاون في الغابة السحرية</option>
-                <option value="graduation_heroes">حفل تخرج أبطال المستقبل (روضة النخبة)</option>
-              </select>
+                onChange={(val) => setSelectedTheme(val)}
+                options={[
+                  { value: 'space_adventure', label: 'رحلة إلى الفضاء مع أبطال المدرسة' },
+                  { value: 'cooperation_magic', label: 'قوة الصداقة والتعاون في الغابة السحرية' },
+                  { value: 'graduation_heroes', label: 'حفل تخرج أبطال المستقبل (روضة النخبة)' },
+                ]}
+                triggerClassName="h-10 text-xs"
+              />
             </div>
           </div>
 

@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from 'sonner';
@@ -1153,26 +1154,27 @@ export default function AdminPdfBuilder() {
                 <FolderOpen className="w-4 h-4 text-cyan-300" aria-hidden="true" />
                 {isAr ? 'استيراد من طلب عميل' : 'Pull from Customer Order'}
               </label>
-              <select
+              <LiquidSelect
                 id="kdp-order-select"
-                value={selectedOrderId}
-                onChange={(e) => {
-                  const id = e.target.value;
+                value={selectedOrderId || '__none__'}
+                onChange={(val) => {
+                  const id = val === '__none__' ? '' : val;
                   setSelectedOrderId(id);
                   const found = orders.find((o) => o.id === id);
                   if (found) void loadFromOrder(found);
                 }}
-                className="w-full h-11 rounded-xl bg-slate-900/90 border border-white/15 px-3 text-xs sm:text-sm text-white focus:border-cyan-400 focus:outline-none"
-              >
-                <option value="">
-                  {isAr ? '— اختر طلباً محفوظاً —' : '— Select an existing order —'}
-                </option>
-                {orders.map((ord) => (
-                  <option key={ord.id} value={ord.id}>
-                    {ord.reference} • {ord.items[0]?.childName || ord.customerName}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  {
+                    value: '__none__',
+                    label: isAr ? '— اختر طلباً محفوظاً —' : '— Select an existing order —',
+                  },
+                  ...orders.map((ord) => ({
+                    value: ord.id,
+                    label: `${ord.reference} • ${ord.items[0]?.childName || ord.customerName}`,
+                  })),
+                ]}
+                triggerClassName="w-full h-11 text-xs sm:text-sm"
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -1183,26 +1185,27 @@ export default function AdminPdfBuilder() {
                 <Sparkles className="w-4 h-4 text-purple-300" aria-hidden="true" />
                 {isAr ? 'استيراد من مسودة الاستوديو' : 'Pull from Story Studio Draft'}
               </label>
-              <select
+              <LiquidSelect
                 id="kdp-draft-select"
-                value={selectedDraftKey}
-                onChange={(e) => {
-                  const key = e.target.value;
+                value={selectedDraftKey || '__none__'}
+                onChange={(val) => {
+                  const key = val === '__none__' ? '' : val;
                   setSelectedDraftKey(key);
                   const found = drafts.find((d) => d.key === key);
                   if (found) void loadFromStudioDraft(found);
                 }}
-                className="w-full h-11 rounded-xl bg-slate-900/90 border border-white/15 px-3 text-xs sm:text-sm text-white focus:border-cyan-400 focus:outline-none"
-              >
-                <option value="">
-                  {isAr ? '— اختر مسودة استوديو —' : '— Select a Studio draft —'}
-                </option>
-                {drafts.map((d) => (
-                  <option key={d.key} value={d.key}>
-                    {d.storyTitle} ({d.pages.length}p)
-                  </option>
-                ))}
-              </select>
+                options={[
+                  {
+                    value: '__none__',
+                    label: isAr ? '— اختر مسودة استوديو —' : '— Select a Studio draft —',
+                  },
+                  ...drafts.map((d) => ({
+                    value: d.key,
+                    label: `${d.storyTitle} (${d.pages.length}p)`,
+                  })),
+                ]}
+                triggerClassName="w-full h-11 text-xs sm:text-sm"
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -1649,46 +1652,58 @@ export default function AdminPdfBuilder() {
                         <label className="text-[11px] text-slate-300 font-semibold">
                           {isAr ? 'قالب هذه الصفحة' : 'Per-Page Template'}
                         </label>
-                        <select
+                        <LiquidSelect
                           value={activeStoryPage.layoutOverride}
-                          onChange={(e) =>
+                          onChange={(val) =>
                             updateStoryPage(activeStoryIndex, {
-                              layoutOverride: e.target.value as PageLayoutOverride,
+                              layoutOverride: val as PageLayoutOverride,
                             })
                           }
-                          className="w-full h-10 rounded-xl bg-slate-900 border border-white/15 px-2.5 text-xs text-white"
-                        >
-                          <option value="default">
-                            {isAr ? 'افتراضي الكتاب' : 'Use Book Default'}
-                          </option>
-                          <option value="full_bleed_overlay">
-                            {isAr ? 'لوحة + صندوق نص' : 'Full-Bleed + Text Box'}
-                          </option>
-                          <option value="split_spread">
-                            {isAr ? 'صفحتان متقابلتان' : 'Classic Split Spread'}
-                          </option>
-                          <option value="full_bleed_clean">
-                            {isAr ? 'لوحة صافية فقط' : 'Artwork Only (No Text)'}
-                          </option>
-                        </select>
+                          options={[
+                            {
+                              value: 'default',
+                              label: isAr ? 'افتراضي الكتاب' : 'Use Book Default',
+                            },
+                            {
+                              value: 'full_bleed_overlay',
+                              label: isAr ? 'لوحة + صندوق نص' : 'Full-Bleed + Text Box',
+                            },
+                            {
+                              value: 'split_spread',
+                              label: isAr ? 'صفحتان متقابلتان' : 'Classic Split Spread',
+                            },
+                            {
+                              value: 'full_bleed_clean',
+                              label: isAr ? 'لوحة صافية فقط' : 'Artwork Only (No Text)',
+                            },
+                          ]}
+                          triggerClassName="w-full h-10 text-xs"
+                        />
                       </div>
 
                       <div className="space-y-1">
                         <label className="text-[11px] text-slate-300 font-semibold">
                           {isAr ? 'موضع صندوق النص' : 'Overlay Box Position'}
                         </label>
-                        <select
+                        <LiquidSelect
                           value={activeStoryPage.overlayPosition}
-                          onChange={(e) =>
+                          onChange={(val) =>
                             updateStoryPage(activeStoryIndex, {
-                              overlayPosition: e.target.value as TextOverlayPosition,
+                              overlayPosition: val as TextOverlayPosition,
                             })
                           }
-                          className="w-full h-10 rounded-xl bg-slate-900 border border-white/15 px-2.5 text-xs text-white"
-                        >
-                          <option value="bottom">{isAr ? 'أسفل الصورة' : 'Bottom Overlay'}</option>
-                          <option value="top">{isAr ? 'أعلى الصورة' : 'Top Overlay'}</option>
-                        </select>
+                          options={[
+                            {
+                              value: 'bottom',
+                              label: isAr ? 'أسفل الصورة' : 'Bottom Overlay',
+                            },
+                            {
+                              value: 'top',
+                              label: isAr ? 'أعلى الصورة' : 'Top Overlay',
+                            },
+                          ]}
+                          triggerClassName="w-full h-10 text-xs"
+                        />
                       </div>
                     </div>
 
@@ -2006,46 +2021,56 @@ export default function AdminPdfBuilder() {
                       <label className="text-xs text-slate-300 font-semibold">
                         {isAr ? 'نوع التغليف' : 'Binding Type'}
                       </label>
-                      <select
+                      <LiquidSelect
                         value={project.bindingType}
-                        onChange={(e) =>
+                        onChange={(val) =>
                           setProject((prev) => ({
                             ...prev,
-                            bindingType: e.target.value as BindingType,
+                            bindingType: val as BindingType,
                           }))
                         }
-                        className="w-full h-11 rounded-xl bg-slate-900 border border-white/15 px-3 text-xs text-white"
-                      >
-                        <option value="paperback">
-                          {isAr ? 'غلاف ناعم Paperback (0.125" bleed)' : 'Paperback (0.125" bleed)'}
-                        </option>
-                        <option value="hardcover">
-                          {isAr ? 'غلاف مقوّى Hardcover (0.591" wrap)' : 'Hardcover Casewrap (0.591" wrap)'}
-                        </option>
-                      </select>
+                        options={[
+                          {
+                            value: 'paperback',
+                            label: isAr
+                              ? 'غلاف ناعم Paperback (0.125" bleed)'
+                              : 'Paperback (0.125" bleed)',
+                          },
+                          {
+                            value: 'hardcover',
+                            label: isAr
+                              ? 'غلاف مقوّى Hardcover (0.591" wrap)'
+                              : 'Hardcover Casewrap (0.591" wrap)',
+                          },
+                        ]}
+                        triggerClassName="w-full h-11 text-xs"
+                      />
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-xs text-slate-300 font-semibold">
                         {isAr ? 'ثيم الصفحات النصية' : 'Editorial Paper Theme'}
                       </label>
-                      <select
+                      <LiquidSelect
                         value={project.interiorTheme}
-                        onChange={(e) =>
+                        onChange={(val) =>
                           setProject((prev) => ({
                             ...prev,
-                            interiorTheme: e.target.value as InteriorTheme,
+                            interiorTheme: val as InteriorTheme,
                           }))
                         }
-                        className="w-full h-11 rounded-xl bg-slate-900 border border-white/15 px-3 text-xs text-white"
-                      >
-                        <option value="cream_paper">
-                          {isAr ? 'ورق كريمي دافئ (للقراءة)' : 'Warm Storybook Cream'}
-                        </option>
-                        <option value="midnight_magic">
-                          {isAr ? 'سحر منتصف الليل (داكن)' : 'Midnight Magic Dark'}
-                        </option>
-                      </select>
+                        options={[
+                          {
+                            value: 'cream_paper',
+                            label: isAr ? 'ورق كريمي دافئ (للقراءة)' : 'Warm Storybook Cream',
+                          },
+                          {
+                            value: 'midnight_magic',
+                            label: isAr ? 'سحر منتصف الليل (داكن)' : 'Midnight Magic Dark',
+                          },
+                        ]}
+                        triggerClassName="w-full h-11 text-xs"
+                      />
                     </div>
                   </div>
 
@@ -2053,23 +2078,21 @@ export default function AdminPdfBuilder() {
                     <label htmlFor="kdp-paper-stock" className="text-xs text-slate-300 font-semibold">
                       {isAr ? 'نوع الورق لحساب سُمك الكعب تلقائياً' : 'Paper Stock (Auto Spine Calculator)'}
                     </label>
-                    <select
+                    <LiquidSelect
                       id="kdp-paper-stock"
                       value={project.paperStockId}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         setProject((prev) => ({
                           ...prev,
-                          paperStockId: e.target.value as PaperStockId,
+                          paperStockId: val as PaperStockId,
                         }))
                       }
-                      className="w-full h-11 rounded-xl bg-slate-900 border border-white/15 px-3 text-xs text-white"
-                    >
-                      {PAPER_STOCKS.map((stock) => (
-                        <option key={stock.id} value={stock.id}>
-                          {isAr ? stock.labelAr : stock.labelEn}
-                        </option>
-                      ))}
-                    </select>
+                      options={PAPER_STOCKS.map((stock) => ({
+                        value: stock.id,
+                        label: isAr ? stock.labelAr : stock.labelEn,
+                      }))}
+                      triggerClassName="w-full h-11 text-xs"
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2102,20 +2125,25 @@ export default function AdminPdfBuilder() {
                       <label className="text-xs text-slate-300 font-semibold">
                         {isAr ? 'دقة التصدير (DPI)' : 'Export Resolution (DPI)'}
                       </label>
-                      <select
-                        value={exportDpi}
-                        onChange={(e) =>
-                          setExportDpi(Number(e.target.value) === 150 ? 150 : 300)
+                      <LiquidSelect
+                        value={String(exportDpi)}
+                        onChange={(val) =>
+                          setExportDpi(Number(val) === 150 ? 150 : 300)
                         }
-                        className="w-full h-10 rounded-xl bg-slate-900 border border-white/15 px-3 text-xs text-white font-numeric"
-                      >
-                        <option value={300}>
-                          {isAr ? '300 DPI — طباعة احترافية (KDP Master)' : '300 DPI — Press Master (KDP)'}
-                        </option>
-                        <option value={150}>
-                          {isAr ? '150 DPI — مسودة سريعة للواتساب' : '150 DPI — Fast WhatsApp Proof'}
-                        </option>
-                      </select>
+                        options={[
+                          {
+                            value: '300',
+                            label: isAr
+                              ? '300 DPI — طباعة احترافية (KDP Master)'
+                              : '300 DPI — Press Master (KDP)',
+                          },
+                          {
+                            value: '150',
+                            label: isAr ? '150 DPI — مسودة سريعة للواتساب' : '150 DPI — Fast WhatsApp Proof',
+                          },
+                        ]}
+                        triggerClassName="w-full h-10 text-xs font-numeric"
+                      />
                     </div>
                   </div>
 

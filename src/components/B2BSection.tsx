@@ -8,6 +8,7 @@ import GlassCard from './GlassCard';
 import BubbleButton from './BubbleButton';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
+import { LiquidSelect } from './ui/LiquidSelect';
 
 export default function B2BSection() {
   const { isRTL } = useLanguage();
@@ -244,41 +245,44 @@ export default function B2BSection() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <label className="space-y-1 block">
+                  <div className="space-y-1 block">
                     <span className="text-xs font-semibold text-foreground/80">{text('Country', 'الدولة')}</span>
-                    <select
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    <LiquidSelect
                       value={country}
-                      onChange={(e) => setCountry(e.target.value as OrderCountry)}
-                    >
-                      <option value="EG">{text('Egypt (EGP)', 'مصر (ج.م)')}</option>
-                      <option value="SA">{text('Saudi Arabia (SAR)', 'السعودية (ر.س)')}</option>
-                    </select>
-                  </label>
+                      onChange={(val) => setCountry(val as OrderCountry)}
+                      options={[
+                        { value: 'EG', label: text('Egypt (EGP)', 'مصر (ج.م)') },
+                        { value: 'SA', label: text('Saudi Arabia (SAR)', 'السعودية (ر.س)') },
+                      ]}
+                      triggerClassName="h-10 text-xs sm:text-sm"
+                    />
+                  </div>
 
-                  <label className="space-y-1 block">
+                  <div className="space-y-1 block">
                     <span className="text-xs font-semibold text-foreground/80">{text('Format', 'نوع النسخة')}</span>
-                    <select
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    <LiquidSelect
                       value={format}
-                      onChange={(e) => setFormat(e.target.value as OrderFormat)}
-                    >
-                      <option value="digital_pdf">{text('Digital PDF', 'نسخة رقمية PDF')}</option>
-                      <option value="hardcopy_book">{text('Printed Hardcover', 'كتاب مطبوع')}</option>
-                    </select>
-                  </label>
+                      onChange={(val) => setFormat(val as OrderFormat)}
+                      options={[
+                        { value: 'digital_pdf', label: text('Digital PDF', 'نسخة رقمية PDF') },
+                        { value: 'hardcopy_book', label: text('Printed Hardcover', 'كتاب مطبوع') },
+                      ]}
+                      triggerClassName="h-10 text-xs sm:text-sm"
+                    />
+                  </div>
 
-                  <label className="space-y-1 block">
+                  <div className="space-y-1 block">
                     <span className="text-xs font-semibold text-foreground/80">{text('Language', 'اللغة')}</span>
-                    <select
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    <LiquidSelect
                       value={language}
-                      onChange={(e) => setLanguage(e.target.value as OrderLanguage)}
-                    >
-                      <option value="ar">{text('Arabic', 'العربية')}</option>
-                      <option value="en">{text('English', 'الإنجليزية')}</option>
-                    </select>
-                  </label>
+                      onChange={(val) => setLanguage(val as OrderLanguage)}
+                      options={[
+                        { value: 'ar', label: text('Arabic', 'العربية') },
+                        { value: 'en', label: text('English', 'الإنجليزية') },
+                      ]}
+                      triggerClassName="h-10 text-xs sm:text-sm"
+                    />
+                  </div>
 
                   <label className="space-y-1 block">
                     <span className="text-xs font-semibold text-foreground/80">{text('Children Count', 'عدد الطلاب')}</span>

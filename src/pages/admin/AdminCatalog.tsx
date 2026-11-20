@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import {
   Dialog,
   DialogContent,
@@ -892,66 +893,60 @@ export default function AdminCatalog() {
                     <label className="text-xs font-semibold text-slate-200">
                       {isAr ? 'التصنيف' : 'Category'}
                     </label>
-                    <select
+                    <LiquidSelect
                       value={editing.category}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         setEditing({
                           ...editing,
-                          category: e.target.value as StoryCategory,
+                          category: val as StoryCategory,
                         })
                       }
-                      className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                    >
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {isAr ? CATEGORY_LABELS[cat].ar : CATEGORY_LABELS[cat].en}
-                        </option>
-                      ))}
-                    </select>
+                      options={CATEGORIES.map((cat) => ({
+                        value: cat,
+                        label: isAr ? CATEGORY_LABELS[cat].ar : CATEGORY_LABELS[cat].en,
+                      }))}
+                      triggerClassName="h-10 text-xs"
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-200">
                       {isAr ? 'الفئة' : 'Gender'}
                     </label>
-                    <select
+                    <LiquidSelect
                       value={editing.gender}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         setEditing({
                           ...editing,
-                          gender: e.target.value as StoryGender,
+                          gender: val as StoryGender,
                         })
                       }
-                      className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                    >
-                      {(['all', 'boy', 'girl'] as StoryGender[]).map((g) => (
-                        <option key={g} value={g}>
-                          {isAr ? GENDER_LABELS[g].ar : GENDER_LABELS[g].en}
-                        </option>
-                      ))}
-                    </select>
+                      options={(['all', 'boy', 'girl'] as StoryGender[]).map((g) => ({
+                        value: g,
+                        label: isAr ? GENDER_LABELS[g].ar : GENDER_LABELS[g].en,
+                      }))}
+                      triggerClassName="h-10 text-xs"
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-200">
                       {isAr ? 'الفئة العمرية' : 'Age Range'}
                     </label>
-                    <select
+                    <LiquidSelect
                       value={editing.ageRange}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         setEditing({
                           ...editing,
-                          ageRange: e.target.value as StoryAgeRange,
+                          ageRange: val as StoryAgeRange,
                         })
                       }
-                      className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                    >
-                      {(['all', '2-4', '5-7', '8-10'] as StoryAgeRange[]).map((age) => (
-                        <option key={age} value={age}>
-                          {isAr ? AGE_LABELS[age].ar : AGE_LABELS[age].en}
-                        </option>
-                      ))}
-                    </select>
+                      options={(['all', '2-4', '5-7', '8-10'] as StoryAgeRange[]).map((age) => ({
+                        value: age,
+                        label: isAr ? AGE_LABELS[age].ar : AGE_LABELS[age].en,
+                      }))}
+                      triggerClassName="h-10 text-xs"
+                    />
                   </div>
                 </div>
 

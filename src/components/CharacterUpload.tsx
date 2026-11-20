@@ -3,6 +3,7 @@ import { Upload, X, User, Heart, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { readCharacterPhoto } from '@/lib/characterPhoto';
 import { useLanguage } from '@/hooks/useLanguage';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 
 import type { Character } from '@/features/stories/types';
 
@@ -143,15 +144,15 @@ const CharacterUpload = ({ characters, onAddCharacter, onRemoveCharacter, onUpda
                     </span>
                   )}
                 </div>
-                <select
+                <LiquidSelect
                   value={character.role}
-                  onChange={(e) => onUpdateCharacter(character.id, { role: e.target.value })}
-                  className="w-full bg-muted/30 border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  {roleOptions.map(role => (
-                    <option key={role.value} value={role.value}>{role.label}</option>
-                  ))}
-                </select>
+                  onChange={(val) => onUpdateCharacter(character.id, { role: val })}
+                  options={roleOptions.map((role) => ({
+                    value: role.value,
+                    label: role.label,
+                  }))}
+                  triggerClassName="h-10 text-xs sm:text-sm"
+                />
               </div>
             </div>
           </motion.div>

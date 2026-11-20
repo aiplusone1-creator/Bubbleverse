@@ -47,6 +47,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
 import {
@@ -2129,26 +2130,27 @@ export default function AdminStudio() {
                       <span>{isAr ? 'كل الطلبات' : 'All Orders'}</span>
                     </button>
                   </div>
-                  <select
+                  <LiquidSelect
                     id="studio-order-select-step1"
-                    value={selectedOrder?.id || ''}
-                    onChange={(e) => handleSelectOrder(e.target.value)}
-                    className="w-full h-11 rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-3.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  >
-                    <option value="">
-                      {isAr ? '— وضع القصة المستقلة الحر —' : '— Free Standalone Story Mode —'}
-                    </option>
-                    {orders.map((o) => {
-                      const hasDraft = Boolean(getStudioDraft(o.id));
-                      return (
-                        <option key={o.id} value={o.id}>
-                          {o.reference} — {o.customerName} (
-                          {o.items[0]?.childName || (isAr ? 'البطل' : 'Hero')})
-                          {hasDraft ? (isAr ? ' [مسودة محفوظة]' : ' [Saved Draft]') : ''}
-                        </option>
-                      );
-                    })}
-                  </select>
+                    value={selectedOrder?.id || '__standalone__'}
+                    onChange={(val) => handleSelectOrder(val === '__standalone__' ? '' : val)}
+                    options={[
+                      {
+                        value: '__standalone__',
+                        label: isAr
+                          ? '— وضع القصة المستقلة الحر —'
+                          : '— Free Standalone Story Mode —',
+                      },
+                      ...orders.map((o) => {
+                        const hasDraft = Boolean(getStudioDraft(o.id));
+                        return {
+                          value: o.id,
+                          label: `${o.reference} — ${o.customerName} (${o.items[0]?.childName || (isAr ? 'البطل' : 'Hero')})${hasDraft ? (isAr ? ' [مسودة محفوظة]' : ' [Saved Draft]') : ''}`,
+                        };
+                      }),
+                    ]}
+                    triggerClassName="w-full h-11 text-xs"
+                  />
                 </div>
 
                 <div className="lg:col-span-7 flex flex-wrap items-center gap-2">
@@ -2679,39 +2681,45 @@ export default function AdminStudio() {
                   <label htmlFor="studio-lang-select-step2" className="text-xs text-slate-300 font-medium">
                     {isAr ? 'لغة القصة' : 'Story Language'}
                   </label>
-                  <select
+                  <LiquidSelect
                     id="studio-lang-select-step2"
                     value={storyLang}
-                    onChange={(e) => setStoryLang(e.target.value as 'ar' | 'en')}
-                    className="h-11 w-full rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                  >
-                    <option value="ar">{isAr ? 'عربي (RTL)' : 'Arabic (RTL)'}</option>
-                    <option value="en">{isAr ? 'إنجليزي (LTR)' : 'English (LTR)'}</option>
-                  </select>
+                    onChange={(val) => setStoryLang(val as 'ar' | 'en')}
+                    options={[
+                      { value: 'ar', label: isAr ? 'عربي (RTL)' : 'Arabic (RTL)' },
+                      { value: 'en', label: isAr ? 'إنجليزي (LTR)' : 'English (LTR)' },
+                    ]}
+                    triggerClassName="h-11 w-full text-xs"
+                  />
                 </div>
 
                 <div className="sm:col-span-3 space-y-1.5 min-w-0">
                   <label htmlFor="studio-page-count-step2" className="text-xs text-slate-300 font-medium">
                     {isAr ? 'عدد الصفحات (حد KDP: 24)' : 'Page Count (KDP Min: 24)'}
                   </label>
-                  <select
+                  <LiquidSelect
                     id="studio-page-count-step2"
-                    value={pageCount}
-                    onChange={(e) => setPageCount(Number(e.target.value))}
-                    className="h-11 w-full rounded-2xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 font-numeric cursor-pointer"
-                  >
-                    <option value={10}>{isAr ? '10 صفحات' : '10 pages'}</option>
-                    <option value={15}>{isAr ? '15 صفحة' : '15 pages'}</option>
-                    <option value={20}>{isAr ? '20 صفحة' : '20 pages'}</option>
-                    <option value={24}>
-                      {isAr ? '24 صفحة (حد KDP الأدنى)' : '24 pages (KDP Min)'}
-                    </option>
-                    {isNonStandardPageCount && (
-                      <option value={pageCount}>
-                        {isAr ? `${pageCount} صفحة` : `${pageCount} pages`}
-                      </option>
-                    )}
-                  </select>
+                    value={String(pageCount)}
+                    onChange={(val) => setPageCount(Number(val))}
+                    options={[
+                      { value: '10', label: isAr ? '10 صفحات' : '10 pages' },
+                      { value: '15', label: isAr ? '15 صفحة' : '15 pages' },
+                      { value: '20', label: isAr ? '20 صفحة' : '20 pages' },
+                      {
+                        value: '24',
+                        label: isAr ? '24 صفحة (حد KDP الأدنى)' : '24 pages (KDP Min)',
+                      },
+                      ...(isNonStandardPageCount
+                        ? [
+                            {
+                              value: String(pageCount),
+                              label: isAr ? `${pageCount} صفحة` : `${pageCount} pages`,
+                            },
+                          ]
+                        : []),
+                    ]}
+                    triggerClassName="h-11 w-full text-xs font-numeric"
+                  />
                 </div>
               </div>
 

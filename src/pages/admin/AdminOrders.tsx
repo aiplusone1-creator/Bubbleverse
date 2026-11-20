@@ -40,6 +40,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { LiquidSelect } from '@/components/ui/LiquidSelect';
 import {
   Dialog,
   DialogContent,
@@ -1879,24 +1880,22 @@ export default function AdminOrders() {
 
                       {/* Quick Inline Actions */}
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <select
+                        <LiquidSelect
                           aria-label={
                             isAr
                               ? `تغيير حالة الطلب ${order.reference}`
                               : `Status for ${order.reference}`
                           }
                           value={order.status}
-                          onChange={(e) =>
-                            handleStatusChange(order.id, e.target.value as OrderStatus)
+                          onChange={(val) =>
+                            handleStatusChange(order.id, val as OrderStatus)
                           }
-                          className="h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                        >
-                          {ALL_STATUSES.map((st) => (
-                            <option key={st} value={st}>
-                              {isAr ? STATUS_META[st].labelAr : STATUS_META[st].labelEn}
-                            </option>
-                          ))}
-                        </select>
+                          options={ALL_STATUSES.map((st) => ({
+                            value: st,
+                            label: isAr ? STATUS_META[st].labelAr : STATUS_META[st].labelEn,
+                          }))}
+                          triggerClassName="h-10 text-xs w-[145px]"
+                        />
 
                         <Button
                           type="button"
@@ -2265,25 +2264,28 @@ export default function AdminOrders() {
                     <label className="text-xs text-slate-200">
                       {isAr ? 'الدولة' : 'Country'}
                     </label>
-                    <select
+                    <LiquidSelect
                       value={manualForm.country}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         updateManualPricing(
                           manualForm.storyId,
-                          e.target.value as CurrencyCountry,
+                          val as CurrencyCountry,
                           manualForm.formatKey
                         )
                       }
-                      className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                    >
-                      <option value="EG">{isAr ? 'مصر (جنيه مصري)' : 'Egypt (EGP)'}</option>
-                      <option value="SA">
-                        {isAr ? 'السعودية (ريال سعودي)' : 'Saudi Arabia (SAR)'}
-                      </option>
-                      <option value="AE">
-                        {isAr ? 'الإمارات (درهم إماراتي)' : 'UAE (AED)'}
-                      </option>
-                    </select>
+                      options={[
+                        { value: 'EG', label: isAr ? 'مصر (جنيه مصري)' : 'Egypt (EGP)' },
+                        {
+                          value: 'SA',
+                          label: isAr ? 'السعودية (ريال سعودي)' : 'Saudi Arabia (SAR)',
+                        },
+                        {
+                          value: 'AE',
+                          label: isAr ? 'الإمارات (درهم إماراتي)' : 'UAE (AED)',
+                        },
+                      ]}
+                      triggerClassName="w-full h-10 text-xs"
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs text-slate-200">
@@ -2322,26 +2324,27 @@ export default function AdminOrders() {
                     <label className="text-xs text-slate-200">
                       {isAr ? 'اختيار القصة من الكتالوج أو قصة مخصصة' : 'Select Story or Custom'}
                     </label>
-                    <select
+                    <LiquidSelect
                       value={manualForm.storyId}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         updateManualPricing(
-                          e.target.value,
+                          val,
                           manualForm.country,
                           manualForm.formatKey
                         )
                       }
-                      className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                    >
-                      {catalogStories.map((story) => (
-                        <option key={story.id} value={story.id}>
-                          {isAr ? story.titleAr : story.titleEn}
-                        </option>
-                      ))}
-                      <option value="custom">
-                        {isAr ? 'قصة مخصصة من الصفر' : 'Custom Story from Scratch'}
-                      </option>
-                    </select>
+                      options={[
+                        ...catalogStories.map((story) => ({
+                          value: story.id,
+                          label: isAr ? story.titleAr : story.titleEn,
+                        })),
+                        {
+                          value: 'custom',
+                          label: isAr ? 'قصة مخصصة من الصفر' : 'Custom Story from Scratch',
+                        },
+                      ]}
+                      triggerClassName="w-full h-10 text-xs"
+                    />
                   </div>
 
                   {manualForm.storyId === 'custom' && (
@@ -2403,19 +2406,20 @@ export default function AdminOrders() {
                       <label className="text-xs text-slate-200">
                         {isAr ? 'النوع' : 'Gender'}
                       </label>
-                      <select
+                      <LiquidSelect
                         value={manualForm.childGender}
-                        onChange={(e) =>
+                        onChange={(val) =>
                           setManualForm({
                             ...manualForm,
-                            childGender: e.target.value as 'boy' | 'girl',
+                            childGender: val as 'boy' | 'girl',
                           })
                         }
-                        className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                      >
-                        <option value="boy">{isAr ? 'ولد' : 'Boy'}</option>
-                        <option value="girl">{isAr ? 'بنت' : 'Girl'}</option>
-                      </select>
+                        options={[
+                          { value: 'boy', label: isAr ? 'ولد' : 'Boy' },
+                          { value: 'girl', label: isAr ? 'بنت' : 'Girl' },
+                        ]}
+                        triggerClassName="w-full h-10 text-xs"
+                      />
                     </div>
                   </div>
 
@@ -2423,47 +2427,52 @@ export default function AdminOrders() {
                     <label className="text-xs text-slate-200">
                       {isAr ? 'الإصدار / عدد الصفحات' : 'Book Format'}
                     </label>
-                    <select
+                    <LiquidSelect
                       value={manualForm.formatKey}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         updateManualPricing(
                           manualForm.storyId,
                           manualForm.country,
-                          e.target.value as ManualFormatKey
+                          val as ManualFormatKey
                         )
                       }
-                      className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                    >
-                      <option value="15p">
-                        {isAr ? 'كتاب مطبوع فاخر — 15 صفحة' : 'Hardcover Book — 15 Pages'}
-                      </option>
-                      <option value="25p">
-                        {isAr ? 'كتاب مطبوع فاخر — 25 صفحة' : 'Hardcover Book — 25 Pages'}
-                      </option>
-                      <option value="pdf">
-                        {isAr ? 'نسخة رقمية عالية الدقة' : 'Digital PDF Edition'}
-                      </option>
-                    </select>
+                      options={[
+                        {
+                          value: '15p',
+                          label: isAr ? 'كتاب مطبوع فاخر — 15 صفحة' : 'Hardcover Book — 15 Pages',
+                        },
+                        {
+                          value: '25p',
+                          label: isAr ? 'كتاب مطبوع فاخر — 25 صفحة' : 'Hardcover Book — 25 Pages',
+                        },
+                        {
+                          value: 'pdf',
+                          label: isAr ? 'نسخة رقمية عالية الدقة' : 'Digital PDF Edition',
+                        },
+                      ]}
+                      triggerClassName="w-full h-10 text-xs"
+                    />
                   </div>
 
                   <div className="space-y-1">
                     <label className="text-xs text-slate-200">
                       {isAr ? 'لغة القصة' : 'Story Language'}
                     </label>
-                    <select
+                    <LiquidSelect
                       value={manualForm.storyLanguage}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         setManualForm({
                           ...manualForm,
-                          storyLanguage: e.target.value as 'ar' | 'en' | 'bilingual',
+                          storyLanguage: val as 'ar' | 'en' | 'bilingual',
                         })
                       }
-                      className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                    >
-                      <option value="ar">{isAr ? 'العربية' : 'Arabic'}</option>
-                      <option value="en">{isAr ? 'الإنجليزية' : 'English'}</option>
-                      <option value="bilingual">{isAr ? 'ثنائية اللغة' : 'Bilingual'}</option>
-                    </select>
+                      options={[
+                        { value: 'ar', label: isAr ? 'العربية' : 'Arabic' },
+                        { value: 'en', label: isAr ? 'الإنجليزية' : 'English' },
+                        { value: 'bilingual', label: isAr ? 'ثنائية اللغة' : 'Bilingual' },
+                      ]}
+                      triggerClassName="w-full h-10 text-xs"
+                    />
                   </div>
                 </div>
               </div>
@@ -2518,19 +2527,17 @@ export default function AdminOrders() {
                     <label className="text-xs text-slate-200">
                       {isAr ? 'الحالة المبدئية' : 'Initial Status'}
                     </label>
-                    <select
+                    <LiquidSelect
                       value={manualForm.status}
-                      onChange={(e) =>
-                        setManualForm({ ...manualForm, status: e.target.value as OrderStatus })
+                      onChange={(val) =>
+                        setManualForm({ ...manualForm, status: val as OrderStatus })
                       }
-                      className="w-full h-10 rounded-xl bg-slate-950/80 border border-white/15 text-xs text-white px-3 cursor-pointer"
-                    >
-                      {ALL_STATUSES.map((st) => (
-                        <option key={st} value={st}>
-                          {isAr ? STATUS_META[st].labelAr : STATUS_META[st].labelEn}
-                        </option>
-                      ))}
-                    </select>
+                      options={ALL_STATUSES.map((st) => ({
+                        value: st,
+                        label: isAr ? STATUS_META[st].labelAr : STATUS_META[st].labelEn,
+                      }))}
+                      triggerClassName="w-full h-10 text-xs"
+                    />
                   </div>
                 </div>
 
@@ -2824,20 +2831,18 @@ export default function AdminOrders() {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <select
+                      <LiquidSelect
                         aria-label={isAr ? 'حالة الطلب' : 'Order status'}
                         value={selectedOrder.status}
-                        onChange={(e) =>
-                          handleStatusChange(selectedOrder.id, e.target.value as OrderStatus)
+                        onChange={(val) =>
+                          handleStatusChange(selectedOrder.id, val as OrderStatus)
                         }
-                        className="h-10 rounded-xl bg-slate-950/90 border border-cyan-400/40 text-xs text-white px-3 cursor-pointer"
-                      >
-                        {ALL_STATUSES.map((st) => (
-                          <option key={st} value={st}>
-                            {isAr ? STATUS_META[st].labelAr : STATUS_META[st].labelEn}
-                          </option>
-                        ))}
-                      </select>
+                        options={ALL_STATUSES.map((st) => ({
+                          value: st,
+                          label: isAr ? STATUS_META[st].labelAr : STATUS_META[st].labelEn,
+                        }))}
+                        triggerClassName="h-10 text-xs w-[160px]"
+                      />
                       <a
                         href={`/track?ref=${encodeURIComponent(selectedOrder.reference)}`}
                         target="_blank"
