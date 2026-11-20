@@ -8,6 +8,7 @@
 import { savePhotoToVault } from '@/lib/photoVault';
 import type { CharacterDna, StoryThemeKey } from '@/features/studio/stage2PromptEngine';
 import type { CharacterSheetCandidate } from '@/lib/localStore';
+import { generateRealAiImage } from '@/features/studio/aiImageGenerator';
 
 export interface LikenessPreset {
   id: string;
@@ -743,6 +744,7 @@ export function renderTurnaroundSheetCanvas(
 
 /**
  * Main generator: creates a character sheet candidate with full PhotoVault persistence.
+ * Uses real AI image synthesis (Google Imagen 3 with fallback to FLUX.1) or high-res studio canvas.
  */
 export async function generateCharacterSheetCandidate(
   options: GenerateSheetOptions
@@ -750,26 +752,49 @@ export async function generateCharacterSheetCandidate(
   const variationIndex = (options.candidateNumber - 1) % CANDIDATE_VARIATIONS.length;
   const variation = CANDIDATE_VARIATIONS[variationIndex];
 
-  // Render the high-resolution turnaround sheet
-  const dataUrl = await renderTurnaroundSheetCanvas(options, variation);
+  // Construct high-detail prompt for real AI illustration
+  const aiSheetPrompt =
+    `3D Pixar animated storybook character turnaround sheet of a ${options.childAge}-year-old ${options.childGender} named ${options.childName}, ` +
+    `${options.dna.hairAndFeatures}. Showing 3 poses side by side on clean warm studio background: ` +
+    `(1) front view smiling looking at camera, (2) dynamic 3/4 action pose with ${options.dna.signatureProp || 'explorer gear'}, (3) profile view with friendly floating star companion Bub. ` +
+    `Wearing ${options.dna.signatureOutfit}. ` +
+    `${variation.lightingStyle}, 300 DPI storybook art, highly detailed, expressive face, vibrant rich colors, 1:1 aspect ratio, no text, no watermark.`;
+
+  let dataUrl = '';
+  let engineLabel = 'Bubbleverse 3-Pose Studio';
+
+  try {
+    const aiResult = await generateRealAiImage({
+      prompt: aiSheetPrompt,
+      seed: Math.abs(
+        options.childName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) * 1000 +
+          options.candidateNumber * 777
+      ),
+      aiConfig: options.aiConfig,
+    });
+    dataUrl = aiResult.dataUrl;
+    engineLabel = aiResult.engine;
+  } catch {
+    // Graceful offline fallback
+    dataUrl = await renderTurnaroundSheetCanvas(options, variation);
+  }
 
   // Save to persistent PhotoVault
   const vaultId = `char_sheet_${options.draftKey}_cand${options.candidateNumber}_${Date.now()}`;
   await savePhotoToVault(vaultId, dataUrl);
 
-  const engineLabel =
-    options.aiConfig?.enabled && options.aiConfig?.apiKey?.trim()
-      ? options.aiConfig.provider === 'gemini'
-        ? 'Gemini 2.5 Flash / Imagen 3'
-        : 'OpenAI Image Engine'
-      : 'Bubbleverse 3-Pose Studio Engine';
+  const shortEngine = engineLabel.includes('Google')
+    ? 'Google Imagen 3'
+    : engineLabel.includes('FLUX')
+    ? 'FLUX.1 AI'
+    : 'استوديو 3 وضعيات';
 
   return {
     id: `cand_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     vaultId,
     url: dataUrl,
     createdAt: Date.now(),
-    label: `بديل #${options.candidateNumber} (${variation.labelAr.split('•')[1]?.trim() || 'استوديو 3 وضعيات'})`,
+    label: `بديل #${options.candidateNumber} (${shortEngine})`,
     engine: engineLabel,
     promptUsed: options.dna.hairAndFeatures,
     likenessScore: variation.likenessScore,

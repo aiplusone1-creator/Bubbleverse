@@ -81,6 +81,7 @@ import {
   LIKENESS_FEATURE_PRESETS,
   type LikenessPreset,
 } from '@/features/studio/characterSheetEngine';
+import { generateRealAiImage } from '@/features/studio/aiImageGenerator';
 import { CharacterLikenessComparator } from '@/components/studio/CharacterLikenessComparator';
 import {
   buildFullStoryArc,
@@ -396,6 +397,8 @@ export default function AdminStudio() {
   const [isGeneratingSheet, setIsGeneratingSheet] = useState<boolean>(false);
   const [isExtractingLikeness, setIsExtractingLikeness] = useState<boolean>(false);
   const [isComparatorOpen, setIsComparatorOpen] = useState<boolean>(false);
+  const [generatingPageIndexes, setGeneratingPageIndexes] = useState<Record<number, boolean>>({});
+  const [isBatchGenerating, setIsBatchGenerating] = useState<boolean>(false);
   const [checklist, setChecklist] = useState<StudioProductionChecklist>(initial.checklist);
   const [pages, setPages] = useState<StudioDraftPage[]>(initial.pages);
   const [activePageIndex, setActivePageIndex] = useState<number>(initial.activePageIndex);
@@ -899,6 +902,83 @@ export default function AdminStudio() {
       );
     } finally {
       setIsGeneratingSheet(false);
+    }
+  };
+
+  const handleGeneratePageImage = async (pageIndex: number) => {
+    const targetPage = pages[pageIndex];
+    if (!targetPage) return;
+
+    setGeneratingPageIndexes((prev) => ({ ...prev, [pageIndex]: true }));
+    try {
+      const pageSeed = Math.abs(
+        childName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) * 1000 +
+          targetPage.pageNumber * 999
+      );
+
+      const result = await generateRealAiImage({
+        prompt: targetPage.imagePrompt,
+        seed: pageSeed,
+        width: 1024,
+        height: 1024,
+        aiConfig: {
+          enabled: aiConfig.enabled,
+          apiKey: aiConfig.apiKey,
+          provider: aiConfig.provider,
+          model: aiConfig.model,
+        },
+      });
+
+      const vaultId = `scene_art_${activeDraftKey}_p${targetPage.pageNumber}_${Date.now()}`;
+      await savePhotoToVault(vaultId, result.dataUrl);
+
+      updatePage(pageIndex, {
+        imageUrl: result.dataUrl,
+        imageVaultId: vaultId,
+        imageWidth: 1024,
+        imageHeight: 1024,
+      });
+
+      if (pageIndex === activePageIndex) {
+        setActiveVaultImageUrl(result.dataUrl);
+      }
+
+      setChecklist((prev) => ({ ...prev, artworkUploaded: true }));
+
+      toast.success(
+        isAr
+          ? `تم توليد رسمة صفحة ${targetPage.pageNumber} بنجاح عبر ${result.engine} ✓`
+          : `Generated Page ${targetPage.pageNumber} artwork via ${result.engine} ✓`
+      );
+    } catch {
+      toast.error(
+        isAr
+          ? `تعذر توليد رسمة صفحة ${targetPage.pageNumber}`
+          : `Failed to generate image for page ${targetPage.pageNumber}`
+      );
+    } finally {
+      setGeneratingPageIndexes((prev) => ({ ...prev, [pageIndex]: false }));
+    }
+  };
+
+  const handleBatchGeneratePages = async () => {
+    setIsBatchGenerating(true);
+    let successCount = 0;
+    try {
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        if (!page.imageVaultId) {
+          await handleGeneratePageImage(i);
+          successCount++;
+        }
+      }
+      toast.success(
+        isAr
+          ? `تم اكتمال توليد جميع رسومات الكتاب بنجاح (${successCount} صفحات) ✓`
+          : `Completed batch generation for ${successCount} pages ✓`
+      );
+    } finally {
+      setIsBatchGenerating(false);
     }
   };
 
@@ -3337,6 +3417,45 @@ export default function AdminStudio() {
               )}
             </div>
 
+            {/* AI Image Generation Action Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-purple-500/15 via-cyan-500/10 to-slate-900 border border-purple-400/30">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white block">
+                    {isAr ? 'محرك توليد رسومات المشاهد بالذكاء الاصطناعي (AI Scene Painter)' : 'AI Scene Illustration Engine'}
+                  </span>
+                  <span className="text-[11px] text-slate-300">
+                    {isAr
+                      ? 'يولد صوراً فائقة الجودة متوافقة مع KDP 8.5"×8.5" عبر Google Imagen 3 ومحرك FLUX.1 مجاناً.'
+                      : 'Generates 1:1 high-resolution illustrations using Google Imagen 3 and FLUX.1 free engine.'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={() => void handleBatchGeneratePages()}
+                  disabled={isBatchGenerating}
+                  className="bubble-btn-purple h-10 px-5 text-xs font-bold gap-2 shadow-md"
+                >
+                  <Sparkles className={`w-4 h-4 ${isBatchGenerating ? 'animate-spin text-cyan-300' : ''}`} />
+                  <span>
+                    {isBatchGenerating
+                      ? isAr
+                        ? 'جاري توليد رسومات الكتاب...'
+                        : 'Batch Generating...'
+                      : isAr
+                      ? '🎨 توليد جميع رسومات الكتاب بالذكاء الاصطناعي'
+                      : '🎨 Batch Generate All Scenes'}
+                  </span>
+                </Button>
+              </div>
+            </div>
+
             {/* Main Studio Workspace: Pages Rail (Bulk Upload + 300 DPI) + Spread Preview & Editor */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Story Pages Rail */}
@@ -3531,7 +3650,33 @@ export default function AdminStudio() {
                     {/* Open Book Double-Spread Container */}
                     <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch p-3 sm:p-4 rounded-3xl bg-slate-950/90 border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
                       {/* Illustration Page (1:1 Square KDP 8.5"×8.5") */}
-                      <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shadow-inner">
+                      <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shadow-inner group">
+                        {generatingPageIndexes[activePageIndex] && (
+                          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20 animate-in fade-in">
+                            <Sparkles className="w-9 h-9 text-cyan-400 animate-spin" />
+                            <span className="text-xs font-bold text-white">
+                              {isAr ? 'جاري توليد رسمة المشهد بالذكاء الاصطناعي...' : 'Generating Scene Artwork with AI...'}
+                            </span>
+                            <span className="text-[11px] text-cyan-300 font-numeric">
+                              KDP 8.5"×8.5" • 300 DPI
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="absolute top-3 end-3 flex items-center gap-1.5 z-10">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => void handleGeneratePageImage(activePageIndex)}
+                            disabled={generatingPageIndexes[activePageIndex]}
+                            className="h-8 px-2.5 rounded-full bg-slate-950/80 hover:bg-purple-600/80 backdrop-blur-md border border-purple-400/40 text-purple-100 text-[11px] font-bold gap-1 shadow-md transition-all"
+                            title={isAr ? 'توليد هذه الصفحة بالـ AI' : 'Generate with AI'}
+                          >
+                            <Sparkles className={`w-3.5 h-3.5 ${generatingPageIndexes[activePageIndex] ? 'animate-spin text-cyan-300' : ''}`} />
+                            <span>{isAr ? 'توليد بالـ AI' : 'Generate'}</span>
+                          </Button>
+                        </div>
+
                         <img
                           src={activePreviewImageUrl}
                           alt={
@@ -3629,7 +3774,31 @@ export default function AdminStudio() {
                               : `Stage 2 Scene Prompt — ${getEngineDisplayName(promptEngine)}`}
                           </span>
                         </label>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => void handleGeneratePageImage(activePageIndex)}
+                            disabled={generatingPageIndexes[activePageIndex]}
+                            className="bubble-btn-purple h-8 px-3.5 text-xs font-bold gap-1.5 shadow-md"
+                          >
+                            <Sparkles
+                              className={`w-3.5 h-3.5 ${
+                                generatingPageIndexes[activePageIndex]
+                                  ? 'animate-spin text-cyan-300'
+                                  : ''
+                              }`}
+                            />
+                            <span>
+                              {generatingPageIndexes[activePageIndex]
+                                ? isAr
+                                  ? 'جاري التوليد بالـ AI...'
+                                  : 'Generating AI Art...'
+                                : isAr
+                                ? '✨ توليد رسمة المشهد بالذكاء الاصطناعي'
+                                : '✨ Generate Scene with AI'}
+                            </span>
+                          </Button>
                           <Button
                             type="button"
                             size="sm"
