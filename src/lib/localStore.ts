@@ -350,6 +350,17 @@ export interface StudioDraftPage {
   imageHeight?: number;
 }
 
+export interface CharacterSheetCandidate {
+  id: string;
+  vaultId: string;
+  url: string;
+  createdAt: number;
+  label: string;
+  engine: string;
+  promptUsed?: string;
+  likenessScore?: number;
+}
+
 export interface StudioDraftRecord {
   key: string;
   orderReference?: string;
@@ -362,6 +373,8 @@ export interface StudioDraftRecord {
   activePageIndex?: number;
   characterDna?: CharacterDna;
   characterSheetVaultId?: string;
+  characterSheetCandidates?: CharacterSheetCandidate[];
+  activeCandidateId?: string;
   promptEngine?: PromptEngineMode;
   checklist?: StudioProductionChecklist;
   updatedAt: number;

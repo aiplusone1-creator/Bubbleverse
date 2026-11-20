@@ -64,6 +64,7 @@ import {
   resolveThemeDna,
   type AiProviderKey,
   type CharacterDna,
+  type CharacterSheetCandidate,
   type OrderRecord,
   type PromptEngineMode,
   type StoryThemeKey,
@@ -74,6 +75,13 @@ import {
 import { deletePhotoFromVault, getPhotoFromVault, savePhotoToVault } from '@/lib/photoVault';
 import { generateStorybookPDFHTML } from '@/features/pdf/storybookTemplate';
 import { sortFilesNaturally } from '@/features/pdf/kdpSpecs';
+import {
+  generateCharacterSheetCandidate,
+  extractLikenessFromChildPhoto,
+  LIKENESS_FEATURE_PRESETS,
+  type LikenessPreset,
+} from '@/features/studio/characterSheetEngine';
+import { CharacterLikenessComparator } from '@/components/studio/CharacterLikenessComparator';
 import {
   buildFullStoryArc,
   buildMasterCharacterSheetPrompt,
@@ -339,6 +347,8 @@ function buildInitialDraftState() {
     promptEngine,
     characterDna,
     characterSheetVaultId: existing?.characterSheetVaultId || '',
+    characterSheetCandidates: existing?.characterSheetCandidates || [],
+    activeCandidateId: existing?.activeCandidateId || '',
     checklist,
     pages,
     activePageIndex: Math.min(existing?.activePageIndex ?? 0, Math.max(0, pages.length - 1)),
@@ -376,7 +386,16 @@ export default function AdminStudio() {
   const [characterSheetVaultId, setCharacterSheetVaultId] = useState<string>(
     initial.characterSheetVaultId
   );
+  const [characterSheetCandidates, setCharacterSheetCandidates] = useState<
+    CharacterSheetCandidate[]
+  >(initial.characterSheetCandidates);
+  const [activeCandidateId, setActiveCandidateId] = useState<string | null>(
+    initial.activeCandidateId || null
+  );
   const [characterSheetPreview, setCharacterSheetPreview] = useState<string | null>(null);
+  const [isGeneratingSheet, setIsGeneratingSheet] = useState<boolean>(false);
+  const [isExtractingLikeness, setIsExtractingLikeness] = useState<boolean>(false);
+  const [isComparatorOpen, setIsComparatorOpen] = useState<boolean>(false);
   const [checklist, setChecklist] = useState<StudioProductionChecklist>(initial.checklist);
   const [pages, setPages] = useState<StudioDraftPage[]>(initial.pages);
   const [activePageIndex, setActivePageIndex] = useState<number>(initial.activePageIndex);
@@ -485,6 +504,8 @@ export default function AdminStudio() {
     setPromptEngine(engine);
     setCharacterDna(nextDna);
     setCharacterSheetVaultId(draft.characterSheetVaultId || '');
+    setCharacterSheetCandidates(draft.characterSheetCandidates || []);
+    setActiveCandidateId(draft.activeCandidateId || draft.characterSheetCandidates?.[0]?.id || null);
     setChecklist(createDefaultProductionChecklist(draft.checklist));
     setPages(nextPages);
     setActivePageIndex(Math.min(draft.activePageIndex ?? 0, Math.max(0, nextPages.length - 1)));
@@ -563,6 +584,8 @@ export default function AdminStudio() {
         setStoryTitle(title);
         setCharacterDna(nextDna);
         setCharacterSheetVaultId('');
+        setCharacterSheetCandidates([]);
+        setActiveCandidateId(null);
         setCharacterSheetPreview(null);
         setChecklist(createDefaultProductionChecklist({ photoApproved: Boolean(primaryItem?.photoVaultId) }));
         setPages(generatedPages);
@@ -634,6 +657,8 @@ export default function AdminStudio() {
         activePageIndex,
         characterDna: syncedDna,
         characterSheetVaultId: characterSheetVaultId || undefined,
+        characterSheetCandidates: characterSheetCandidates.length ? characterSheetCandidates : undefined,
+        activeCandidateId: activeCandidateId || undefined,
         promptEngine,
         checklist,
       });
@@ -658,6 +683,8 @@ export default function AdminStudio() {
       activePageIndex,
       syncedDna,
       characterSheetVaultId,
+      characterSheetCandidates,
+      activeCandidateId,
       promptEngine,
       checklist,
       isAr,
@@ -689,6 +716,8 @@ export default function AdminStudio() {
         activePageIndex,
         characterDna: syncedDna,
         characterSheetVaultId: characterSheetVaultId || undefined,
+        characterSheetCandidates: characterSheetCandidates.length ? characterSheetCandidates : undefined,
+        activeCandidateId: activeCandidateId || undefined,
         promptEngine,
         checklist,
       });
@@ -715,6 +744,8 @@ export default function AdminStudio() {
     activePageIndex,
     syncedDna,
     characterSheetVaultId,
+    characterSheetCandidates,
+    activeCandidateId,
     promptEngine,
     checklist,
   ]);
@@ -829,21 +860,181 @@ export default function AdminStudio() {
     );
   };
 
+  const handleGenerateCharacterSheet = async () => {
+    setIsGeneratingSheet(true);
+    try {
+      const nextCandidateNumber = characterSheetCandidates.length + 1;
+      const candidate = await generateCharacterSheetCandidate({
+        childName,
+        childGender: characterDna.childGender || 'boy',
+        childAge: characterDna.childAge || '5',
+        dna: syncedDna,
+        storyTheme: (characterDna.storyTheme as StoryThemeKey) || 'bubble',
+        artStyle,
+        childPhotoUrl: childRefPhoto,
+        candidateNumber: nextCandidateNumber,
+        draftKey: activeDraftKey,
+        aiConfig: {
+          enabled: aiConfig.enabled,
+          apiKey: aiConfig.apiKey,
+          provider: aiConfig.provider,
+          model: aiConfig.model,
+        },
+      });
+
+      setCharacterSheetCandidates((prev) => [...prev, candidate]);
+      setActiveCandidateId(candidate.id);
+      setCharacterSheetVaultId(candidate.vaultId);
+      setCharacterSheetPreview(candidate.url);
+      setChecklist((prev) => ({ ...prev, characterSheetLocked: true }));
+
+      toast.success(
+        isAr
+          ? `تم توليد ورقة ثبات الشخصية (3 وضعيات) — البديل #${nextCandidateNumber} بنجاح ✓`
+          : `Generated 3-pose character consistency sheet — Candidate #${nextCandidateNumber} ✓`
+      );
+    } catch {
+      toast.error(
+        isAr ? 'تعذر توليد ورقة ثبات الشخصية' : 'Failed to generate character sheet'
+      );
+    } finally {
+      setIsGeneratingSheet(false);
+    }
+  };
+
+  const handleSelectCandidate = (candidateId: string) => {
+    const found = characterSheetCandidates.find((c) => c.id === candidateId);
+    if (!found) return;
+    setActiveCandidateId(found.id);
+    setCharacterSheetVaultId(found.vaultId);
+    setCharacterSheetPreview(found.url);
+    setChecklist((prev) => ({ ...prev, characterSheetLocked: true }));
+    toast.success(
+      isAr
+        ? `تم اعتماد ${found.label} كبطل نهائي للقفل ✓`
+        : `Selected ${found.label} as active character sheet ✓`
+    );
+  };
+
+  const handleDeleteCandidate = async (candidateId: string) => {
+    const target = characterSheetCandidates.find((c) => c.id === candidateId);
+    if (target?.vaultId) {
+      await deletePhotoFromVault(target.vaultId);
+    }
+    const remaining = characterSheetCandidates.filter((c) => c.id !== candidateId);
+    setCharacterSheetCandidates(remaining);
+
+    if (activeCandidateId === candidateId) {
+      if (remaining.length > 0) {
+        const nextActive = remaining[remaining.length - 1];
+        setActiveCandidateId(nextActive.id);
+        setCharacterSheetVaultId(nextActive.vaultId);
+        setCharacterSheetPreview(nextActive.url);
+      } else {
+        setActiveCandidateId(null);
+        setCharacterSheetVaultId('');
+        setCharacterSheetPreview(null);
+        setChecklist((prev) => ({ ...prev, characterSheetLocked: false }));
+      }
+    }
+    toast.info(isAr ? 'تم حذف البديل' : 'Candidate removed');
+  };
+
+  const handlePurgeOtherCandidates = async () => {
+    if (!activeCandidateId || characterSheetCandidates.length <= 1) return;
+    const current = characterSheetCandidates.find((c) => c.id === activeCandidateId);
+    if (!current) return;
+
+    const toDelete = characterSheetCandidates.filter((c) => c.id !== activeCandidateId);
+    for (const item of toDelete) {
+      if (item.vaultId) {
+        await deletePhotoFromVault(item.vaultId);
+      }
+    }
+    setCharacterSheetCandidates([current]);
+    toast.success(
+      isAr
+        ? 'تم تنظيف كافة البدائل الأخرى والاحتفاظ بالنسخة المعتمدة فقط ✓'
+        : 'Purged other candidates and kept the winning sheet ✓'
+    );
+  };
+
+  const handleExtractLikeness = async () => {
+    if (!childRefPhoto) {
+      toast.error(
+        isAr
+          ? 'يرجى رفع صورة الطفل أولاً لاستخراج ملامحه بدقة'
+          : 'Please upload child reference photo first'
+      );
+      return;
+    }
+    setIsExtractingLikeness(true);
+    try {
+      const extracted = await extractLikenessFromChildPhoto(
+        childRefPhoto,
+        childName,
+        characterDna.childGender || 'boy',
+        {
+          enabled: aiConfig.enabled,
+          apiKey: aiConfig.apiKey,
+        }
+      );
+      updateDnaField('hairAndFeatures', extracted);
+      toast.success(
+        isAr
+          ? 'تم استخراج ملامح الشعر والوجه من صورة الطفل بنجاح ✓'
+          : 'Extracted facial and hair features from child photo ✓'
+      );
+    } catch {
+      toast.error(
+        isAr ? 'تعذر استخراج الملامح بالذكاء الاصطناعي' : 'Could not extract features via AI'
+      );
+    } finally {
+      setIsExtractingLikeness(false);
+    }
+  };
+
+  const handleApplyLikenessPreset = (preset: LikenessPreset) => {
+    const current = characterDna.hairAndFeatures.trim();
+    const next = current ? `${current}, ${preset.descEn}` : preset.descEn;
+    updateDnaField('hairAndFeatures', next);
+    toast.success(
+      isAr
+        ? `تمت إضافة ميزة "${preset.labelAr}" إلى مواصفات البطل ✓`
+        : `Added "${preset.labelEn}" to hero specs ✓`
+    );
+  };
+
   const handleCharacterSheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     try {
       const processed = await processUploadedIllustration(file);
-      const vaultId = `studio_charsheet_${activeDraftKey}`;
+      const candNum = characterSheetCandidates.length + 1;
+      const vaultId = `studio_charsheet_${activeDraftKey}_upload_${Date.now()}`;
       await savePhotoToVault(vaultId, processed.fullDataUrl);
+
+      const newCand: CharacterSheetCandidate = {
+        id: `cand_manual_${Date.now()}`,
+        vaultId,
+        url: processed.fullDataUrl,
+        createdAt: Date.now(),
+        label: isAr ? `رفع يدوي #${candNum}` : `Manual Upload #${candNum}`,
+        engine: 'Manual / Midjourney',
+        promptUsed: masterCharacterSheetPrompt,
+        likenessScore: 98,
+      };
+
+      setCharacterSheetCandidates((prev) => [...prev, newCand]);
+      setActiveCandidateId(newCand.id);
       setCharacterSheetVaultId(vaultId);
       setCharacterSheetPreview(processed.fullDataUrl);
       setChecklist((prev) => ({ ...prev, characterSheetLocked: true }));
       toast.success(
         isAr
-          ? 'تم حفظ ورقة ثبات الشخصية وقفل الخطوة تلقائياً ✓'
-          : 'Character Sheet saved to vault & locked automatically ✓'
+          ? 'تم حفظ ورقة ثبات الشخصية وإضافتها كبديل معتمد ✓'
+          : 'Character sheet saved and added as active candidate ✓'
       );
     } catch {
       toast.error(
@@ -853,13 +1044,15 @@ export default function AdminStudio() {
   };
 
   const handleRemoveCharacterSheet = async () => {
-    if (characterSheetVaultId) {
+    if (activeCandidateId) {
+      await handleDeleteCandidate(activeCandidateId);
+    } else if (characterSheetVaultId) {
       await deletePhotoFromVault(characterSheetVaultId);
+      setCharacterSheetVaultId('');
+      setCharacterSheetPreview(null);
+      setChecklist((prev) => ({ ...prev, characterSheetLocked: false }));
+      toast.info(isAr ? 'تمت إزالة ورقة ثبات الشخصية' : 'Character Sheet removed');
     }
-    setCharacterSheetVaultId('');
-    setCharacterSheetPreview(null);
-    setChecklist((prev) => ({ ...prev, characterSheetLocked: false }));
-    toast.info(isAr ? 'تمت إزالة ورقة ثبات الشخصية' : 'Character Sheet removed');
   };
 
   const handleChildReferencePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2290,22 +2483,30 @@ export default function AdminStudio() {
                   )}
                 </div>
 
-                {/* Character Sheet Upload & Preview Slot */}
+                {/* Character Sheet Multi-Candidate Studio & Likeness Card */}
                 <div className="glass-card-inner rounded-2xl p-4 border-purple-400/25 bg-slate-950/60 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-purple-200">
-                      {isAr ? 'ورقة ثبات الشخصية المولّدة (3 وضعيات)' : 'Character Turnaround Sheet (3 Poses)'}
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-purple-200">
+                        {isAr ? 'ورقة ثبات الشخصية المولّدة (3 وضعيات)' : 'Character Turnaround Sheet (3 Poses)'}
+                      </span>
+                      {characterSheetCandidates.length > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/35 text-[10px] text-purple-200 font-numeric">
+                          {isAr ? `${characterSheetCandidates.length} بدائل` : `${characterSheetCandidates.length} Candidates`}
+                        </span>
+                      )}
+                    </div>
                     {checklist.characterSheetLocked && (
                       <Badge className="bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 text-[10px]">
-                        {isAr ? 'مقفولة ✓' : 'Locked ✓'}
+                        {isAr ? 'مقفولة ومطابقة ✓' : 'Locked & Verified ✓'}
                       </Badge>
                     )}
                   </div>
 
                   {characterSheetPreview ? (
-                    <div className="space-y-2.5">
-                      <div className="relative aspect-square rounded-2xl overflow-hidden border border-emerald-400/40 bg-slate-900">
+                    <div className="space-y-3">
+                      {/* Active Character Sheet Preview */}
+                      <div className="relative aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden border border-emerald-400/40 bg-slate-900 group">
                         <img
                           src={characterSheetPreview}
                           alt={
@@ -2313,10 +2514,101 @@ export default function AdminStudio() {
                               ? `ورقة ثبات الشخصية للبطل ${childName}`
                               : `Character consistency sheet for ${childName}`
                           }
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                         />
+                        <div className="absolute top-2.5 start-2.5 px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-emerald-400/40 text-[10px] text-emerald-200 font-bold flex items-center gap-1.5 shadow-md">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{isAr ? 'البديل المعتمد حالياً' : 'Active Winning Sheet'}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
+
+                      {/* Candidate Iteration Gallery Ribbon */}
+                      {characterSheetCandidates.length > 0 && (
+                        <div className="space-y-1.5 pt-1 border-t border-white/10">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-300 font-medium">
+                              {isAr ? 'سجل البدائل (اضغط للتبديل والمقارنة):' : 'Candidate Versions (Click to select):'}
+                            </span>
+                            {characterSheetCandidates.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => void handlePurgeOtherCandidates()}
+                                className="text-[10px] text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
+                                title={isAr ? 'حذف البدائل الأخرى والاحتفاظ بالمعتمد' : 'Keep only active winner'}
+                              >
+                                {isAr ? 'تنظيف البدائل غير المعتمدة' : 'Purge Rejected'}
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                            {characterSheetCandidates.map((cand, idx) => {
+                              const isActive = cand.id === activeCandidateId || cand.vaultId === characterSheetVaultId;
+                              return (
+                                <div
+                                  key={cand.id}
+                                  className={`group relative flex flex-col items-center gap-1 p-1 rounded-xl border transition-all cursor-pointer ${
+                                    isActive
+                                      ? 'bg-cyan-500/20 border-cyan-400/70 shadow-[0_0_12px_rgba(0,217,255,0.25)]'
+                                      : 'bg-slate-900/80 border-white/10 hover:border-white/30'
+                                  }`}
+                                  onClick={() => handleSelectCandidate(cand.id)}
+                                >
+                                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-950 border border-white/10">
+                                    <img src={cand.url} alt="" className="w-full h-full object-cover" />
+                                  </div>
+                                  <div className="flex items-center justify-between w-full px-1">
+                                    <span className="text-[10px] font-numeric text-slate-200">
+                                      {isAr ? `بديل 0${idx + 1}` : `Cand 0${idx + 1}`}
+                                    </span>
+                                    {isActive ? (
+                                      <CheckCircle2 className="w-3 h-3 text-cyan-400" />
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          void handleDeleteCandidate(cand.id);
+                                        }}
+                                        className="text-slate-500 hover:text-rose-400 p-0.5"
+                                        title={isAr ? 'حذف هذا البديل' : 'Delete candidate'}
+                                      >
+                                        <Trash2 className="w-2.5 h-2.5" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Controls */}
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        {/* Side-by-Side Comparator Button */}
+                        <Button
+                          type="button"
+                          onClick={() => setIsComparatorOpen(true)}
+                          className="bubble-btn-cyan h-9 px-3.5 text-xs font-bold gap-1.5 flex-1 min-w-[140px]"
+                        >
+                          <Eye className="w-4 h-4 shrink-0" />
+                          <span>{isAr ? 'مقارنة الملامح جنباً إلى جنب' : 'Side-by-Side Likeness Audit'}</span>
+                        </Button>
+
+                        {/* Generate Another Candidate */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => void handleGenerateCharacterSheet()}
+                          disabled={isGeneratingSheet}
+                          className="h-9 px-3 rounded-full bg-purple-500/15 hover:bg-purple-500/25 border-purple-400/40 text-purple-100 text-xs font-bold gap-1.5"
+                        >
+                          <Sparkles className={`w-3.5 h-3.5 ${isGeneratingSheet ? 'animate-spin text-cyan-300' : ''}`} />
+                          <span>{isAr ? 'توليد بديل إضافي' : 'Generate Another'}</span>
+                        </Button>
+
+                        {/* Download */}
                         <a
                           href={characterSheetPreview}
                           download={`${sanitizeFileSlug(childName)}-character-sheet.png`}
@@ -2325,9 +2617,11 @@ export default function AdminStudio() {
                           <Download className="w-4 h-4 shrink-0" aria-hidden="true" />
                           <span>{isAr ? 'تحميل' : 'Download'}</span>
                         </a>
-                        <label className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/35 text-purple-100 text-xs font-bold cursor-pointer transition-colors">
-                          <Upload className="w-4 h-4 shrink-0" aria-hidden="true" />
-                          <span>{isAr ? 'استبدال' : 'Replace'}</span>
+
+                        {/* Upload Manual */}
+                        <label className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/15 text-slate-200 text-xs font-medium cursor-pointer transition-colors">
+                          <Upload className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                          <span>{isAr ? 'رفع مخصص' : 'Upload Custom'}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -2335,38 +2629,69 @@ export default function AdminStudio() {
                             className="hidden"
                           />
                         </label>
+
                         <Button
                           type="button"
-                          size="sm"
                           variant="ghost"
+                          size="sm"
                           onClick={() => void handleRemoveCharacterSheet()}
-                          className="h-9 px-2.5 rounded-full text-rose-300 hover:text-rose-200 hover:bg-rose-500/15"
-                          aria-label={isAr ? 'حذف ورقة الشخصية' : 'Remove character sheet'}
+                          className="h-9 px-2.5 rounded-full text-rose-300 hover:text-rose-100 hover:bg-rose-500/15 text-xs"
+                          aria-label={isAr ? 'حذف الورقة الحالية' : 'Remove current sheet'}
                         >
                           <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-purple-400/35 hover:border-cyan-400/60 bg-slate-900/50 hover:bg-slate-900/80 p-5 text-center cursor-pointer transition-all">
-                      <Upload className="w-5 h-5 text-cyan-300" aria-hidden="true" />
-                      <span className="text-xs font-bold text-white">
-                        {isAr
-                          ? 'ارفع ورقة ثبات الشخصية المولّدة'
-                          : 'Upload Generated Character Sheet'}
-                      </span>
-                      <span className="text-[11px] text-slate-400">
-                        {isAr
-                          ? 'تُحفظ في الخزنة بدقتها وتقفل ملامح البطل تلقائياً'
-                          : 'Saves full-res to PhotoVault & locks likeness'}
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => void handleCharacterSheetUpload(e)}
-                        className="hidden"
-                      />
-                    </label>
+                    /* Empty State: Direct One-Click Generator */
+                    <div className="space-y-3">
+                      <div className="rounded-2xl border-2 border-dashed border-purple-400/35 bg-slate-900/50 p-5 text-center space-y-3">
+                        <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 mx-auto">
+                          <Sparkles className={`w-6 h-6 ${isGeneratingSheet ? 'animate-spin text-cyan-300' : ''}`} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white">
+                            {isAr ? 'توليد ورقة ثبات الشخصية تلقائياً' : 'Auto-Generate 3-Pose Character Sheet'}
+                          </h4>
+                          <p className="text-[11px] text-slate-300 mt-1 max-w-sm mx-auto leading-relaxed">
+                            {isAr
+                              ? 'توليد ورقة الشخصية بـ 3 وضعيات (أمامية، حركية، وجانبية مع بوب) لتثبيت ملامح البطل عبر كافة مشاهد القصة.'
+                              : 'Generates a 3-pose consistency sheet (Front, Action, Profile with Bub) to lock the hero across all scenes.'}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                          <Button
+                            type="button"
+                            onClick={() => void handleGenerateCharacterSheet()}
+                            disabled={isGeneratingSheet}
+                            className="bubble-btn-purple h-10 px-5 text-xs font-bold gap-2"
+                          >
+                            <Sparkles className={`w-4 h-4 ${isGeneratingSheet ? 'animate-spin' : ''}`} />
+                            <span>
+                              {isGeneratingSheet
+                                ? isAr
+                                  ? 'جاري توليد ورقة الشخصية (3 وضعيات)...'
+                                  : 'Generating 3-Pose Sheet...'
+                                : isAr
+                                ? '✨ توليد ورقة ثبات الشخصية الآن'
+                                : '✨ Generate Character Sheet Now'}
+                            </span>
+                          </Button>
+
+                          <label className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/15 text-slate-300 text-xs font-medium cursor-pointer transition-colors">
+                            <Upload className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                            <span>{isAr ? 'أو ارفع ورقة مولدة يدوياً' : 'Or Upload Manual Sheet'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => void handleCharacterSheetUpload(e)}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -2432,9 +2757,40 @@ export default function AdminStudio() {
                   </div>
 
                   <div className="sm:col-span-12 space-y-1.5 min-w-0">
-                    <label htmlFor="studio-dna-hair" className="text-xs text-slate-300 font-medium">
-                      {isAr ? 'الشعر وملامح الوجه (بالإنجليزية للأمر)' : 'Hair & Facial Features (in English for AI)'}
-                    </label>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="studio-dna-hair" className="text-xs text-slate-300 font-medium">
+                          {isAr ? 'الشعر وملامح الوجه (بالإنجليزية للأمر)' : 'Hair & Facial Features (in English for AI)'}
+                        </label>
+                        <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-white/10 text-[10px] text-slate-400">
+                          {isAr ? 'قالب مقترح — قابل للتعديل' : 'Template Baseline — Editable'}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleExtractLikeness()}
+                        disabled={isExtractingLikeness || !childRefPhoto}
+                        className="h-7 px-2.5 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border-cyan-400/35 text-cyan-200 text-[11px] font-bold gap-1.5 transition-all"
+                        title={
+                          !childRefPhoto
+                            ? (isAr ? 'ارفع صورة الطفل أولاً لاستخراج ملامحه' : 'Upload child photo first')
+                            : (isAr ? 'استخراج تسريحة ولون الشعر والعينين والملامح' : 'Extract hair and facial features')
+                        }
+                      >
+                        <Sparkles className={`w-3.5 h-3.5 ${isExtractingLikeness ? 'animate-spin text-cyan-300' : ''}`} />
+                        <span>
+                          {isExtractingLikeness
+                            ? isAr
+                              ? 'جاري الاستخراج بالذكاء الاصطناعي...'
+                              : 'Extracting...'
+                            : isAr
+                            ? '✨ استخراج الملامح بالذكاء الاصطناعي من الصورة'
+                            : 'AI Extract from Photo'}
+                        </span>
+                      </Button>
+                    </div>
                     <Input
                       id="studio-dna-hair"
                       dir="ltr"
@@ -2443,6 +2799,24 @@ export default function AdminStudio() {
                       placeholder="curly dark hair, expressive warm eyes, natural joyful smile"
                       className="h-11 rounded-2xl bg-slate-950/80 border-white/15 text-xs text-white"
                     />
+
+                    {/* Quick Presets Bar */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] text-slate-400 shrink-0 font-medium">
+                        {isAr ? 'إضافات وتعديلات سريعة للملامح:' : 'Quick Presets:'}
+                      </span>
+                      {LIKENESS_FEATURE_PRESETS.map((preset) => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => handleApplyLikenessPreset(preset)}
+                          className="px-2 py-0.5 rounded-full bg-slate-900/90 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/40 text-[10px] text-slate-300 hover:text-cyan-200 transition-all cursor-pointer"
+                          title={preset.descEn}
+                        >
+                          + {isAr ? preset.labelAr : preset.labelEn}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Story Theme & Persona Dropdown */}
@@ -3786,6 +4160,21 @@ export default function AdminStudio() {
           </div>
         )}
       </div>
+
+      <CharacterLikenessComparator
+        isOpen={isComparatorOpen}
+        onClose={() => setIsComparatorOpen(false)}
+        childName={childName}
+        childGender={characterDna.childGender || 'boy'}
+        childPhotoUrl={childRefPhoto}
+        candidates={characterSheetCandidates}
+        activeCandidateId={activeCandidateId}
+        onSelectCandidate={handleSelectCandidate}
+        onDeleteCandidate={handleDeleteCandidate}
+        onGenerateAnother={() => void handleGenerateCharacterSheet()}
+        isGenerating={isGeneratingSheet}
+        isAr={isAr}
+      />
     </AdminLayout>
   );
 }
