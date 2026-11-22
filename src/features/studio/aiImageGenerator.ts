@@ -1,17 +1,23 @@
 /**
  * Bubbleverse Hybrid AI Image Generator
  * Provides production-grade image synthesis for Character Sheets and Story Scenes.
- * 1. Attempts Google Imagen 3 if a Gemini / Google API key is configured.
- * 2. Seamlessly falls back to FLUX.1 via Pollinations.ai (100% free, no credit card required)
- *    if the Google API key lacks Imagen 3 billing or returns an error.
- * 3. Converts all outputs to full-resolution Data URLs and stores them in PhotoVault.
+ * 1. Sanitizes and transforms studio prompts into direct, child-likeness-anchored prompts
+ *    that prevent stranger/adult generation and enforce Pixar 3D storybook consistency.
+ * 2. Attempts Hugging Face FLUX.1 Serverless with automatic 503 model-loading and 429 backoff.
+ * 3. Attempts Google Imagen 3 if a Gemini / Google API key is configured.
+ * 4. Seamlessly falls back to FLUX.1 / Sana / Turbo via Pollinations.ai (100% free, no credit card required)
+ *    with timeouts and multi-tier model fallbacks.
+ * 5. Converts all outputs to full-resolution Data URLs and stores them in PhotoVault.
  */
+
+import type { CharacterDna } from '@/features/studio/stage2PromptEngine';
 
 export interface GenerateAiImageOptions {
   prompt: string;
   seed?: number;
   width?: number;
   height?: number;
+  dna?: Partial<CharacterDna>;
   aiConfig?: {
     enabled?: boolean;
     apiKey?: string;
@@ -24,6 +30,104 @@ export interface GenerateAiImageResult {
   dataUrl: string;
   engine: string;
   notice?: string;
+}
+
+/**
+ * Strips technical studio metadata, KDP frame directions, and administrative tags,
+ * translating the prompt into a pure, child-anchored 3D Pixar storybook illustration prompt.
+ * Crucially eliminates stranger/adult generation by strictly enforcing child likeness, age,
+ * and outfit in the very first tokens of the prompt.
+ */
+export function transformStudioPromptForImageModel(
+  rawPrompt: string,
+  dna?: Partial<CharacterDna>
+): string {
+  if (!rawPrompt || typeof rawPrompt !== 'string') {
+    return '';
+  }
+
+  const promptText = rawPrompt.trim();
+
+  // 1. Extract core components if studio tags exist
+  const actionMatch = promptText.match(/\[ACTION\]:\s*([^\n]+)/i);
+  const envMatch = promptText.match(/\[ENVIRONMENT\s*&\s*LIGHTING\]:\s*([^\n]+)/i);
+  const charLockMatch = promptText.match(/\[CHARACTER LOCK\]:\s*([^\n]+)/i);
+
+  // If no studio tags are found, clean up any leading headers/markdown and return
+  if (!actionMatch && !envMatch && !charLockMatch) {
+    return promptText
+      .replace(/^(SCENE\s*\d+\/\d+\s*PROMPT[^\n]*\n*)/i, '')
+      .replace(/^(Flux\s*Kontext[^\n]*\n*)/i, '')
+      .replace(/^(MASTER\s*CHARACTER\s*SHEET[^\n]*\n*)/i, '')
+      .trim();
+  }
+
+  // 2. Resolve Child Likeness Anchor
+  let childName = dna?.childName?.trim() || 'Hero';
+  let childAge = dna?.childAge?.trim() || '5-year-old';
+  if (/^\d+$/.test(childAge)) {
+    childAge = `${childAge}-year-old`;
+  }
+  const childGender = dna?.childGender === 'girl' ? 'girl' : 'boy';
+  let hairAndFeatures = dna?.hairAndFeatures?.trim() || '';
+  let signatureOutfit = dna?.signatureOutfit?.trim() || '';
+
+  // If DNA was not explicitly provided, extract from [CHARACTER LOCK] block
+  if (charLockMatch) {
+    const lockText = charLockMatch[1];
+
+    const ageGenderNameMatch = lockText.match(
+      /(\d+-year-old|\d+)\s*(boy|girl)\s+([A-Za-z\u0600-\u06FF]+)/i
+    );
+    if (ageGenderNameMatch) {
+      if (!dna?.childAge) {
+        childAge = ageGenderNameMatch[1].includes('-year-old')
+          ? ageGenderNameMatch[1]
+          : `${ageGenderNameMatch[1]}-year-old`;
+      }
+      if (!dna?.childName) childName = ageGenderNameMatch[3];
+    }
+
+    if (!hairAndFeatures) {
+      const featuresMatch = lockText.match(
+        /(?:skin tone,\s*|with\s*)([A-Za-z0-9\s,]+?)(?:,\s*wearing|\.\s*Art style|$)/i
+      );
+      if (featuresMatch) {
+        hairAndFeatures = featuresMatch[1].trim();
+      }
+    }
+
+    if (!signatureOutfit) {
+      const outfitMatch = lockText.match(/wearing\s+([^.]+?)(?:\.\s*Art style|$)/i);
+      if (outfitMatch) {
+        signatureOutfit = outfitMatch[1].trim();
+      }
+    }
+  }
+
+  const action = actionMatch
+    ? actionMatch[1].trim()
+    : `${childName} exploring a magical storybook moment with joyful wonder.`;
+
+  const environment = envMatch
+    ? envMatch[1].trim()
+    : 'Dreamy enchanted storybook setting with soft golden volumetric lighting and floating magical sparkles.';
+
+  // Build the clean likeness anchor
+  const childDescriptor = `an adorable ${childAge} ${childGender} named ${childName}`;
+  const featuresPart = hairAndFeatures
+    ? `with ${hairAndFeatures}`
+    : 'with cheerful sparkling eyes and warm smile';
+  const outfitPart = signatureOutfit ? `, wearing ${signatureOutfit}` : '';
+
+  // Compose the high-potency, distraction-free prompt
+  return (
+    `3D Pixar Disney style children's storybook illustration of ${childDescriptor} ${featuresPart}${outfitPart}. ` +
+    `${action}. ` +
+    `${environment}. ` +
+    `Vibrant warm colors, soft volumetric cinematic lighting, magical cozy atmosphere, centered 1:1 square composition, 8k render, masterpiece children's book art, ` +
+    `no adult, no stranger, no ugly, no deformed, no extra limbs, no watermark, no text, no borders.`
+  );
 }
 
 /**
@@ -96,32 +200,85 @@ async function responseToDataUrl(response: Response): Promise<string> {
 /**
  * Generates an image using Hugging Face Serverless Inference.
  * Free with any Hugging Face token (hf_...).
+ * Handles HTTP 503 (model loading with estimated_time) and HTTP 429 (rate-limit backoff) automatically.
  */
 async function callHuggingFace(
   token: string,
   prompt: string,
-  model = 'black-forest-labs/FLUX.1-schnell'
+  model = 'black-forest-labs/FLUX.1-schnell',
+  maxRetries = 2
 ): Promise<string | null> {
-  const url = `https://router.huggingface.co/hf-inference/models/${model}`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token.trim()}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ inputs: prompt }),
-  });
+  const cleanToken = token.trim();
+  if (!cleanToken) return null;
 
-  if (!response.ok) {
-    return null;
+  const endpoints = [
+    `https://router.huggingface.co/hf-inference/models/${model}`,
+    `https://api-inference.huggingface.co/models/${model}`,
+  ];
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    for (const url of endpoints) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${cleanToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: prompt,
+            parameters: {
+              width: 1024,
+              height: 1024,
+            },
+          }),
+        });
+
+        // 1. Success
+        if (response.ok) {
+          return await responseToDataUrl(response);
+        }
+
+        // 2. Model is loading (HTTP 503)
+        if (response.status === 503) {
+          try {
+            const errJson = await response.json();
+            const waitSec =
+              typeof errJson?.estimated_time === 'number'
+                ? Math.min(Math.max(errJson.estimated_time, 3), 12)
+                : 4;
+            await new Promise((r) => setTimeout(r, waitSec * 1000));
+            continue;
+          } catch {
+            await new Promise((r) => setTimeout(r, 4000));
+            continue;
+          }
+        }
+
+        // 3. Rate limited (HTTP 429)
+        if (response.status === 429) {
+          const backoff = (attempt + 1) * 3500;
+          await new Promise((r) => setTimeout(r, backoff));
+          continue;
+        }
+
+        // 4. Endpoint not found -> try secondary endpoint
+        if (response.status === 404) {
+          continue;
+        }
+      } catch {
+        // Network timeout / transient fetch failure
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
   }
 
-  return responseToDataUrl(response);
+  return null;
 }
 
 /**
  * Generates an image using Pollinations AI (free, open, high quality).
- * Attempts FLUX first, then falls back to Sana if FLUX rate-limits.
+ * Attempts FLUX first with 35s timeout, then falls back to Sana/Turbo if FLUX rate-limits.
  */
 async function callPollinationsFree(
   prompt: string,
@@ -130,50 +287,69 @@ async function callPollinationsFree(
   height = 1024
 ): Promise<string> {
   const s = seed ?? Math.floor(Math.random() * 1000000);
-  const encoded = encodeURIComponent(prompt.trim().slice(0, 900));
+  const encoded = encodeURIComponent(prompt.trim().slice(0, 950));
 
-  // 1. Try FLUX model first
+  // 1. Try FLUX model first (with 35s timeout)
   try {
     const fluxUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${s}&model=flux&nologo=true`;
-    const res = await fetch(fluxUrl);
+    const res = await fetch(fluxUrl, { signal: AbortSignal.timeout(35000) });
     if (res.ok) {
       return await responseToDataUrl(res);
     }
   } catch {
-    // Continue to default engine
+    // Continue to default / sana model
   }
 
-  // 2. Try default / Sana model (unrestricted free)
-  const defaultUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${s}&nologo=true`;
-  const response = await fetch(defaultUrl);
-  if (!response.ok) {
-    throw new Error(
-      `سيرفر التوليد المجاني مشغول حالياً (${response.status}). انتظر 30 ثانية أو استخدم المفتاح المجاني.`
-    );
+  // 2. Try default / Sana model (unrestricted free with 25s timeout)
+  try {
+    const defaultUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${s}&nologo=true`;
+    const response = await fetch(defaultUrl, { signal: AbortSignal.timeout(25000) });
+    if (response.ok) {
+      return await responseToDataUrl(response);
+    }
+  } catch {
+    // Continue to turbo model
   }
 
-  return responseToDataUrl(response);
+  // 3. Ultra-fast Turbo model fallback (highest availability)
+  try {
+    const turboUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${s}&model=turbo&nologo=true`;
+    const turboRes = await fetch(turboUrl, { signal: AbortSignal.timeout(20000) });
+    if (turboRes.ok) {
+      return await responseToDataUrl(turboRes);
+    }
+  } catch {
+    // Exhausted
+  }
+
+  throw new Error(
+    'سيرفرات التوليد المجانية تشهد ضغطاً مؤقتاً. انتظر دقيقة ثم أعد المحاولة، أو تأكد من تفعيل رمز Hugging Face في صفحة الربط.'
+  );
 }
 
 /**
- * Main entry point: Generates a real AI illustration with automatic engine fallback.
+ * Main entry point: Generates a real AI illustration with automatic engine fallback
+ * and deterministic child likeness enforcement.
  */
 export async function generateRealAiImage(
   options: GenerateAiImageOptions
 ): Promise<GenerateAiImageResult> {
+  // Transform raw studio prompt into pure, child-anchored storybook format
+  const aiPrompt = transformStudioPromptForImageModel(options.prompt, options.dna);
+
   const apiKey = options.aiConfig?.apiKey?.trim() || '';
   const provider = options.aiConfig?.provider || '';
   const isAiEnabled = Boolean(options.aiConfig?.enabled);
 
-  // 1. If user supplied a Hugging Face Token (hf_...), use FLUX.1-schnell
+  // 1. If user supplied a Hugging Face Token (hf_...), use FLUX.1-schnell with auto-retry & backoff
   if (isAiEnabled && (apiKey.startsWith('hf_') || provider === 'huggingface')) {
     try {
-      const hfDataUrl = await callHuggingFace(apiKey, options.prompt);
+      const hfDataUrl = await callHuggingFace(apiKey, aiPrompt);
       if (hfDataUrl) {
         return {
           dataUrl: hfDataUrl,
           engine: 'Hugging Face (FLUX.1)',
-          notice: 'تم التوليد بنجاح عبر محرك FLUX.1 من Hugging Face.',
+          notice: 'تم التوليد بنجاح عبر محرك FLUX.1 من Hugging Face مع تثبيت ملامح البطل.',
         };
       }
     } catch {
@@ -184,7 +360,7 @@ export async function generateRealAiImage(
   // 2. If user supplied a Google Gemini API Key, try Google Imagen 3
   if (isAiEnabled && apiKey && apiKey.startsWith('AIza')) {
     try {
-      const imagenDataUrl = await callGoogleImagen3(apiKey, options.prompt);
+      const imagenDataUrl = await callGoogleImagen3(apiKey, aiPrompt);
       if (imagenDataUrl) {
         return {
           dataUrl: imagenDataUrl,
@@ -197,10 +373,10 @@ export async function generateRealAiImage(
     }
   }
 
-  // 3. High-Performance Free AI Engine: Pollinations (FLUX / Sana)
+  // 3. High-Performance Free AI Engine: Pollinations (FLUX / Sana / Turbo)
   try {
     const freeDataUrl = await callPollinationsFree(
-      options.prompt,
+      aiPrompt,
       options.seed,
       options.width || 1024,
       options.height || 1024
@@ -210,7 +386,7 @@ export async function generateRealAiImage(
       dataUrl: freeDataUrl,
       engine: 'FLUX / Sana 3D (Free AI)',
       notice: apiKey
-        ? 'حسابك الحالي مخصص للنصوص، فقام النظام بتوليد الصورة تلقائياً عبر محرك الرسم الذكي مجاناً.'
+        ? 'تم توليد الصورة تلقائياً عبر محرك الرسم الذكي المجاني مع تثبيت ملامح البطل.'
         : 'تم التوليد بنجاح عبر محرك الذكاء الاصطناعي المجاني.',
     };
   } catch (err) {

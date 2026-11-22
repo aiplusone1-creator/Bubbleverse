@@ -955,9 +955,9 @@ export default function AdminStudio() {
     );
   };
 
-  const handleGeneratePageImage = async (pageIndex: number) => {
+  const handleGeneratePageImage = async (pageIndex: number): Promise<boolean> => {
     const targetPage = pages[pageIndex];
-    if (!targetPage) return;
+    if (!targetPage) return false;
 
     setGeneratingPageIndexes((prev) => ({ ...prev, [pageIndex]: true }));
     try {
@@ -968,6 +968,7 @@ export default function AdminStudio() {
 
       const result = await generateRealAiImage({
         prompt: targetPage.imagePrompt,
+        dna: syncedDna,
         seed: pageSeed,
         width: 1024,
         height: 1024,
@@ -993,41 +994,100 @@ export default function AdminStudio() {
         setActiveVaultImageUrl(result.dataUrl);
       }
 
-      setChecklist((prev) => ({ ...prev, artworkUploaded: true }));
+      setChecklist((prev) => ({ ...prev, artCompleted: true }));
 
       toast.success(
         isAr
           ? `تم توليد رسمة صفحة ${targetPage.pageNumber} بنجاح عبر ${result.engine} ✓`
           : `Generated Page ${targetPage.pageNumber} artwork via ${result.engine} ✓`
       );
-    } catch {
+      return true;
+    } catch (err) {
       toast.error(
         isAr
-          ? `تعذر توليد رسمة صفحة ${targetPage.pageNumber}`
-          : `Failed to generate image for page ${targetPage.pageNumber}`
+          ? `تعذر توليد رسمة صفحة ${targetPage.pageNumber}: ${err instanceof Error ? err.message : 'خطأ في التوليد'}`
+          : `Failed to generate image for page ${targetPage.pageNumber}: ${err instanceof Error ? err.message : 'Generation error'}`
       );
+      return false;
     } finally {
       setGeneratingPageIndexes((prev) => ({ ...prev, [pageIndex]: false }));
     }
   };
 
-  const handleBatchGeneratePages = async () => {
+  const handleBatchGeneratePages = async (forceRegenerateAll = false) => {
     setIsBatchGenerating(true);
     let successCount = 0;
+    let failCount = 0;
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const pagesToProcess = pages
+      .map((p, idx) => ({ page: p, index: idx }))
+      .filter(({ page }) => forceRegenerateAll || !page.imageVaultId);
+
+    if (pagesToProcess.length === 0) {
+      toast.info(
+        isAr
+          ? 'جميع المشاهد مولدة بالفعل! اضغط "إعادة توليد كل المشاهد" إذا كنت ترغب في استبدالها بالبطل الحقيقي.'
+          : 'All scenes are already generated! Use "Regenerate All" to overwrite with locked likeness.'
+      );
+      setIsBatchGenerating(false);
+      return;
+    }
+
+    toast.info(
+      isAr
+        ? `بدء التوليد التلقائي لـ ${pagesToProcess.length} مشهد مع تثبيت ملامح ${childName || 'البطل'}...`
+        : `Starting batch generation for ${pagesToProcess.length} scenes with locked likeness...`
+    );
+
     try {
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i];
-        if (!page.imageVaultId) {
-          await handleGeneratePageImage(i);
+      for (let step = 0; step < pagesToProcess.length; step++) {
+        const { page, index } = pagesToProcess[step];
+
+        // Pacing delay between consecutive scenes (2.5s) to avoid 429 rate limit
+        if (step > 0) {
+          await sleep(2500);
+        }
+
+        toast.loading(
+          isAr
+            ? `جاري رسم المشهد (${page.pageNumber}/${pages.length}) لـ ${childName || 'البطل'}...`
+            : `Drawing scene (${page.pageNumber}/${pages.length}) for ${childName || 'Hero'}...`,
+          { id: 'batch-gen-progress' }
+        );
+
+        let ok = await handleGeneratePageImage(index);
+
+        // Per-page retry with 3s backoff if initial attempt failed
+        if (!ok) {
+          await sleep(3000);
+          ok = await handleGeneratePageImage(index);
+        }
+
+        if (ok) {
           successCount++;
+        } else {
+          failCount++;
         }
       }
-      toast.success(
-        isAr
-          ? `تم اكتمال توليد جميع رسومات الكتاب بنجاح (${successCount} صفحات) ✓`
-          : `Completed batch generation for ${successCount} pages ✓`
-      );
+
+      toast.dismiss('batch-gen-progress');
+
+      if (successCount > 0) {
+        toast.success(
+          isAr
+            ? `اكتمل توليد ${successCount} مشهد بنجاح${failCount > 0 ? ` (وتعذر ${failCount})` : ''} ✓`
+            : `Successfully generated ${successCount} scenes${failCount > 0 ? ` (${failCount} failed)` : ''} ✓`
+        );
+      } else {
+        toast.error(
+          isAr
+            ? 'تعذر توليد المشاهد. يرجى التأكد من اتصال الإنترنت أو استخدام مفتاح Hugging Face / Gemini.'
+            : 'Could not generate scenes. Please check internet or configure a Hugging Face / Gemini key.'
+        );
+      }
     } finally {
+      toast.dismiss('batch-gen-progress');
       setIsBatchGenerating(false);
     }
   };
@@ -3808,22 +3868,36 @@ export default function AdminStudio() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <Button
                   type="button"
-                  onClick={() => void handleBatchGeneratePages()}
+                  onClick={() => void handleBatchGeneratePages(false)}
                   disabled={isBatchGenerating}
-                  className="bubble-btn-purple h-10 px-5 text-xs font-bold gap-2 shadow-md"
+                  className="bubble-btn-purple h-10 px-4 text-xs font-bold gap-2 shadow-md"
                 >
                   <Sparkles className={`w-4 h-4 ${isBatchGenerating ? 'animate-spin text-cyan-300' : ''}`} />
                   <span>
                     {isBatchGenerating
                       ? isAr
-                        ? 'جاري توليد رسومات الكتاب...'
-                        : 'Batch Generating...'
+                        ? 'جاري التوليد الموزون...'
+                        : 'Generating with Likeness...'
                       : isAr
-                      ? '🎨 توليد جميع رسومات الكتاب بالذكاء الاصطناعي'
-                      : '🎨 Batch Generate All Scenes'}
+                      ? '🎨 توليد المشاهد المتبقية'
+                      : '🎨 Generate Missing Scenes'}
+                  </span>
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => void handleBatchGeneratePages(true)}
+                  disabled={isBatchGenerating}
+                  variant="outline"
+                  className="h-10 px-3.5 rounded-2xl bg-slate-900/80 border-cyan-400/35 hover:border-cyan-400 text-xs font-semibold text-cyan-200 hover:text-white gap-1.5 transition-all cursor-pointer"
+                  title={isAr ? 'إعادة توليد كافة مشاهد القصة وتثبيت ملامح البطل بدقة' : 'Regenerate all scenes with locked child likeness'}
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>
+                    {isAr ? 'إعادة توليد كل المشاهد' : 'Regenerate All'}
                   </span>
                 </Button>
               </div>

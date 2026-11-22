@@ -22,6 +22,7 @@ import {
   reformatScenePromptForEngine,
   resolveThemeDna,
 } from '../src/features/studio/stage2PromptEngine.ts';
+import { transformStudioPromptForImageModel } from '../src/features/studio/aiImageGenerator.ts';
 
 const sampleBoyDna = createDefaultCharacterDna({
   childName: 'Zain',
@@ -574,4 +575,39 @@ test('detectStoryTheme and resolveThemeDna seamlessly adapt to the 7 Bubbles', (
   // enhanceStoryWithAi is exported and matches generateStoryWithConfiguredAi
   assert.equal(typeof enhanceStoryWithAi, 'function');
   assert.equal(enhanceStoryWithAi, generateStoryWithConfiguredAi);
+});
+
+test('transformStudioPromptForImageModel strips technical studio headers and anchors child likeness front and center', () => {
+  const rawFluxPrompt = buildStage2ScenePrompt(
+    sampleBoyDna,
+    {
+      pageNumber: 1,
+      totalPages: 12,
+      action: 'Zain discovering a sparkling cyan bubble by his sunlit window with a happy joyful grin.',
+      environment: 'Sunlit cozy bedroom with floating starlight dust and pastel sky.',
+    },
+    'flux'
+  );
+
+  // 1. Raw prompt has studio/administrative headers
+  assert.match(rawFluxPrompt, /SCENE 01\/12 PROMPT/);
+  assert.match(rawFluxPrompt, /Flux Kontext \/ PuLID Face Lock reference/);
+  assert.match(rawFluxPrompt, /\[CHARACTER LOCK\]:/);
+
+  // 2. Transformed prompt cleanly strips headers, extracts DNA, and anchors 3D Pixar child likeness
+  const cleaned = transformStudioPromptForImageModel(rawFluxPrompt, sampleBoyDna);
+
+  assert.ok(!cleaned.includes('SCENE 01/12 PROMPT'), 'Must strip SCENE header');
+  assert.ok(!cleaned.includes('PuLID Face Lock reference'), 'Must strip PuLID reference');
+  assert.ok(!cleaned.includes('[CHARACTER LOCK]:'), 'Must strip raw brackets');
+  assert.ok(!cleaned.includes('[ACTION]:'), 'Must strip raw brackets');
+  assert.ok(!cleaned.includes('KDP Hardcover'), 'Must strip pre-press technical directives');
+
+  // Must contain child name, age, gender, outfit, hair, and action
+  assert.match(cleaned, /5-year-old (little )?boy named Zain/i);
+  assert.match(cleaned, /curly dark hair/i);
+  assert.match(cleaned, /junior astronaut jacket/i);
+  assert.match(cleaned, /discovering a sparkling cyan bubble/i);
+  assert.match(cleaned, /3D Pixar/i);
+  assert.match(cleaned, /storybook illustration/i);
 });
