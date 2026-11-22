@@ -169,6 +169,33 @@ Bubbleverse generates stories in Arabic (`ar`) and English (`en`), respecting gr
 
 ---
 
+## 2.6 The 7 Therapeutic Bubbles Engine (`THE_SEVEN_BUBBLES`) & 4-Stage Dramaturgy
+
+To address real behavioral and developmental hurdles faced by young children (ages 2–9), the Stage 2 Engine integrates the **7 Therapeutic Bubbles Engine (`THE_SEVEN_BUBBLES`)**, establishing an evidence-based pedagogical dramaturgy:
+
+| # | Bubble ID | Chromatic Aura | Behavioral Struggle Addressed | Moral Virtue & Thematic Insight |
+|---|---|---|---|---|
+| 1 | `red_calm` | 🔴 Red | العصبية والاندفاع والصراخ (Anger, Impulsiveness & Tantrums) | الهدوء والتحكم بالنفس (Self-Regulation & Peace) |
+| 2 | `orange_empathy` | 🟠 Orange | إيذاء الآخرين وتجاهل المشاعر (Hurtful Behavior & Rough Play) | التعاطف ومراعاة المشاعر (Compassion & Empathy) |
+| 3 | `yellow_honesty` | 🟡 Yellow | الكذب وأخذ أشياء الغير (Dishonesty & Hiding the Truth) | الصدق والأمانة ونقاء القلب (Truthfulness & Integrity) |
+| 4 | `green_realworld` | 🟢 Green | إدمان الشاشات والانطوائية (Screen Addiction & Isolation) | مغامرات الواقع والتواصل الطبيعي (Real-World Connection) |
+| 5 | `blue_courage` | 🔵 Blue | الخجل المفرط والتردد والخوف (Extreme Shyness & Fear) | الشجاعة والمبادرة والإيمان بالنفس (Bravery & Confidence) |
+| 6 | `indigo_friendship` | 🌌 Indigo | العزلة وصعوبة تكوين صداقات (Loneliness & Exclusion) | الصداقة الحقيقية والمودة والمرح (True Friendship & Belonging) |
+| 7 | `purple_sharing` | 🟪 Purple | البخل وحب التملك ورفض المشاركة (Selfishness & Clinging to Toys) | لذة العطاء والمشاركة مع الآخرين (Generosity & Joy of Sharing) |
+
+### The 4-Stage Dramatic Progression:
+1. **Stage 1 (Real-World Struggle):** The child faces their specific behavioral struggle in their real environment (e.g., snatching a toy, throwing a tantrum, staring at a screen).
+2. **Stage 2 (The Bubble Enclosure):** The specific colored luminous bubble gently materializes and expands around the child, isolating them safely from the conflict.
+3. **Stage 3 (The Reflective Journey — NO POP):** Inside the bubble, the child experiences an allegorical adventure where they observe the consequences of their actions and discover how to resolve the struggle. **The bubble NEVER pops prematurely here.**
+4. **Stage 4 (The Heroic Return & THE POP!):** The child returns to the real-world situation. Armed with moral insight, the child chooses the courageous moral action. At that exact triumphant moment: **THE BUBBLE POPS WITH CELEBRATORY LIGHT («بوب!» / "POP!")**.
+
+### The Zero-Bub Law & Subconscious Merchandising:
+- **Zero-Bub Law**: The platform mascot Bub must never appear as an in-text narrative character. The child alone is the hero who makes the moral breakthrough.
+- **Subconscious Merchandise**: Bubbleverse Explorer Backpack, Adventure Jacket, and Bedtime Night Lamp are naturally woven into real-world spreads without commercial friction.
+- **Visual & Lighting Sync in Studio**: In `AdminStudio.tsx`, selecting any of the 7 bubbles automatically synchronizes the Character DNA outfit, prop, pose 2, color palette (`artStyle`), and scene lighting prompts (`[ENVIRONMENT & LIGHTING]:`) across all generated spreads.
+
+---
+
 # 3. THE 10 ADMIN PANEL MODULES (DEEP DIVE & SOP)
 
 ## 3.1 Module 1: Story Production Studio (`/admin/studio`)

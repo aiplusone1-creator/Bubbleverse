@@ -417,6 +417,53 @@ Different production studios and generative models require radically different p
 
 ---
 
+### 4.5 The 7 Therapeutic Bubbles Engine (`THE_SEVEN_BUBBLES`) & Dramaturgy
+
+To address real behavioral and developmental hurdles faced by young children (ages 2–9), Bubbleverse incorporates the **7 Therapeutic Bubbles Engine (`THE_SEVEN_BUBBLES`)**, establishing an evidence-based pedagogical dramaturgy modeled on child emotional development:
+
+```
++----------------------------------------------------------------------------------------------------+
+|                         THE 7 BEHAVIORAL & THERAPEUTIC BUBBLES                                      |
++---+--------------------+--------+-------------------------------+----------------------------------+
+| # | Bubble ID          | Color  | Behavioral Struggle Addressed | Moral Virtue & Thematic Insight  |
++---+--------------------+--------+-------------------------------+----------------------------------+
+| 1 | red_calm           | 🔴 Red | العصبية والاندفاع والصراخ     | الهدوء والتحكم بالنفس والسكينة   |
+|   |                    |        | Anger, Impulsiveness, Tantrums| Self-Regulation, Inner Peace     |
++---+--------------------+--------+-------------------------------+----------------------------------+
+| 2 | orange_empathy     | 🟠 Orng| إيذاء الآخرين وتجاهل المشاعر  | التعاطف والرحمة ومراعاة المشاعر  |
+|   |                    |        | Hurtful Behavior, Rough Play  | Compassion, Empathy, Gentleness  |
++---+--------------------+--------+-------------------------------+----------------------------------+
+| 3 | yellow_honesty     | 🟡 Yllw| الكذب وأخذ أشياء الغير        | الصدق والأمانة والشجاعة الأخلاقية|
+|   |                    |        | Dishonesty, Hiding the Truth  | Truthfulness, Integrity, Honesty |
++---+--------------------+--------+-------------------------------+----------------------------------+
+| 4 | green_realworld    | 🟢 Grn | إدمان الشاشات والانطوائية     | مغامرات الواقع والتواصل الطبيعي  |
+|   |                    |        | Screen Addiction, Isolation   | Real-World Adventure, Outdoors   |
++---+--------------------+--------+-------------------------------+----------------------------------+
+| 5 | blue_courage       | 🔵 Blue| الخجل المفرط والتردد والخوف   | الشجاعة والمبادرة والإيمان بالنفس|
+|   |                    |        | Extreme Shyness, Self-Doubt   | Bravery, Confidence, Heroism     |
++---+--------------------+--------+-------------------------------+----------------------------------+
+| 6 | indigo_friendship  | 🌌 Indg| العزلة وصعوبة تكوين صداقات    | الصداقة الحقيقية والمودة والمرح  |
+|   |                    |        | Loneliness, Feeling Excluded  | True Companionship & Belonging   |
++---+--------------------+--------+-------------------------------+----------------------------------+
+| 7 | purple_sharing     | 🟪 Prpl| البخل وحب التملك ورفض المشاركة| لذة العطاء والمشاركة مع الآخرين  |
+|   |                    |        | Selfishness, Clinging to Toys | Generosity, Joy of Sharing       |
++---+--------------------+--------+-------------------------------+----------------------------------+
+```
+
+#### The 4-Stage Dramatic Structure
+Every therapeutic story strictly adheres to a 4-stage narrative progression:
+1. **Stage 1 (The Real-World Setup):** The child protagonist experiences their specific behavioral difficulty in a relatable, everyday scenario (e.g., snatching a toy, throwing a temper tantrum, refusing to put away a smartphone).
+2. **Stage 2 (The Bubble Enclosure):** The specific colored luminous bubble gently materializes and expands around the child, isolating them safely from the escalating conflict.
+3. **Stage 3 (The Reflective Journey — NO POP):** Inside the bubble's wondrous world, the child experiences an allegorical adventure where they observe the consequences of their action, empathize with others, and discover the moral breakthrough. **Crucial rule: The bubble NEVER pops during this stage.**
+4. **Stage 4 (The Heroic Return & THE POP!):** The child is deposited right back into the exact real-world scenario from Stage 1. Armed with newfound wisdom, the child chooses the courageous moral action. At that precise triumphant second: **THE BUBBLE BURSTS WITH CELEBRATORY RADIANCE («بوب!» / "POP!")**.
+
+#### The Zero-Bub Law & Subconscious Merchandising
+- **The Zero-Bub Law:** To protect pedagogical immersion, the platform mascot "Bub" is strictly prohibited from appearing as an in-text narrative character. **The child alone must be the hero who resolves the moral dilemma.**
+- **Subconscious Lifestyle Merchandising:** High-end physical brand merchandise (Bubbleverse Explorer Backpack, Adventure Windbreaker Jacket, Bedtime Night Lamp) is naturally integrated into real-world spreads as ordinary childhood objects, seeding brand familiarity organically without commercial friction.
+- **Visual & Lighting Synchronization:** In `AdminStudio.tsx`, selecting any of the 7 bubbles automatically synchronizes the Character DNA outfit, prop, pose 2, color palette (`artStyle`), and scene lighting prompt (`[ENVIRONMENT & LIGHTING]:`) across all generated spreads to reflect the therapeutic bubble's signature chromatic aura.
+
+---
+
 ## 5. Architectural Data Flow & Verification Checkpoints
 
 To ensure complete operational integrity from user click to physical print dispatch, every story progresses through six verified checkpoints:
