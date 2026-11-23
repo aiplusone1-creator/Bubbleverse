@@ -80,11 +80,11 @@ type SimBookPreset = 'hardcover_15' | 'hardcover_25' | 'digital_pdf';
 const LOW_STOCK_THRESHOLD = 10;
 
 const PRESET_MERCH_IMAGES = [
-  '/merch/bub-plush-ball.jpg',
-  '/merch/story-bub-giftbox.jpg',
-  '/merch/bub-night-lamp.jpg',
-  '/merch/hero-backpack.jpg',
-  '/showcase/zain-sample/scene-01.jpg',
+  '/artwork/merch-plush.webp',
+  '/artwork/merch-giftbox.webp',
+  '/artwork/merch-lamp.webp',
+  '/artwork/merch-backpack.webp',
+  '/artwork/merch-activity.webp',
 ] as const;
 
 const CATEGORY_BADGE_STYLES: Record<MerchCategory, string> = {
@@ -208,8 +208,8 @@ function createEmptyMerchProduct(): MerchProduct {
     bubLoreEn: 'A magical piece from Bub’s world built to accompany every little hero.',
     bedtimeRitualAr: 'رفيق مثالي لطقس القراءة الهادئ قبل النوم بدون شاشات.',
     bedtimeRitualEn: 'A cozy companion for calm, screen-free bedtime story rituals.',
-    coverImage: '/merch/bub-plush-ball.jpg',
-    galleryImages: ['/merch/bub-plush-ball.jpg'],
+    coverImage: '/artwork/merch-plush.webp',
+    galleryImages: ['/artwork/merch-plush.webp'],
     badgeAr: 'جديد',
     badgeEn: 'New',
     ageRatingAr: '0+ آمن للأطفال',
@@ -583,7 +583,7 @@ export function AdminMerch() {
       `merch-${Date.now().toString(36)}`;
     const cleanId = isNewProduct ? cleanSlug : editing.id.trim() || cleanSlug;
     const cleanSku = editing.sku.trim().toUpperCase() || `BV-${cleanSlug.slice(0, 8).toUpperCase()}`;
-    const cover = editing.coverImage.trim() || '/merch/bub-plush-ball.jpg';
+    const cover = editing.coverImage.trim() || '/artwork/merch-plush.webp';
 
     const sanitizedVariants: MerchVariant[] =
       editing.variants.length > 0
@@ -1531,7 +1531,7 @@ export function AdminMerch() {
                 {/* Selected Gift Preview + Dropdown */}
                 <div className="glass-card-inner rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center">
                   <img
-                    src={draftGwp.coverImage || '/merch/bub-plush-ball.jpg'}
+                    src={draftGwp.coverImage || '/artwork/merch-plush.webp'}
                     alt={isAr ? draftGwp.titleAr : draftGwp.titleEn}
                     className="w-24 h-24 rounded-2xl object-cover border border-pink-400/35 shrink-0 bg-slate-950"
                   />
@@ -2071,7 +2071,7 @@ export function AdminMerch() {
                     <div className="rounded-2xl p-4 bg-gradient-to-br from-emerald-500/18 via-cyan-500/12 to-pink-500/15 border border-emerald-400/45 space-y-3">
                       <div className="flex items-center gap-3">
                         <img
-                          src={draftGwp.coverImage || '/merch/bub-plush-ball.jpg'}
+                          src={draftGwp.coverImage || '/artwork/merch-plush.webp'}
                           alt=""
                           className="w-14 h-14 rounded-xl object-cover border border-emerald-400/40 shrink-0"
                         />
@@ -2215,7 +2215,7 @@ export function AdminMerch() {
                 <div className="glass-card-inner rounded-2xl p-4 space-y-3">
                   <div className="flex flex-col sm:flex-row gap-4 items-center">
                     <img
-                      src={editing.coverImage || '/merch/bub-plush-ball.jpg'}
+                      src={editing.coverImage || '/artwork/merch-plush.webp'}
                       alt={isAr ? 'معاينة صورة المنتج' : 'Product preview'}
                       className="w-24 h-24 rounded-2xl object-cover border border-cyan-400/35 shrink-0 bg-slate-950"
                     />
@@ -2230,7 +2230,7 @@ export function AdminMerch() {
                         onChange={(e) =>
                           setEditing({ ...editing, coverImage: e.target.value })
                         }
-                        placeholder="/merch/bub-plush-ball.jpg"
+                        placeholder="/artwork/merch-plush.webp"
                         className="h-10 rounded-xl bg-slate-950/85 border-white/15 text-xs text-white text-left"
                       />
                       <div className="flex items-center gap-2 flex-wrap pt-0.5">

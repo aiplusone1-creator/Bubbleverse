@@ -623,7 +623,7 @@ export default function CartDrawer() {
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl overflow-hidden border border-cyan-300/40 bg-slate-900 shrink-0 shadow-md shadow-cyan-500/20">
                       <img
-                        src={gwpConfig.coverImage || '/merch/bub-plush-ball.jpg'}
+                        src={gwpConfig.coverImage || '/artwork/merch-plush.webp'}
                         alt={language === 'ar' ? gwpConfig.titleAr : gwpConfig.titleEn}
                         className="w-full h-full object-cover"
                       />
@@ -712,7 +712,7 @@ export default function CartDrawer() {
                         <div className="flex items-start gap-3">
                           <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-900 border border-emerald-300/45 shrink-0 shadow-md relative">
                             <img
-                              src={gwpConfig.coverImage || '/merch/bub-plush-ball.jpg'}
+                              src={gwpConfig.coverImage || '/artwork/merch-plush.webp'}
                               alt={language === 'ar' ? gwpConfig.titleAr : gwpConfig.titleEn}
                               className="w-full h-full object-cover"
                             />

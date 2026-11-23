@@ -1,4 +1,5 @@
 import type { CurrencyCountry, PricedCartItem } from './pricingEngine.ts';
+import { merchArtwork } from '../showcase/siteArtwork.ts';
 import {
   calculateAddonTotal,
   deriveAedFromSar,
@@ -36,7 +37,7 @@ export const DEFAULT_GWP_CONFIG: GwpConfigRecord = {
   titleEn: 'Official Bub Plush Ball — Mini 12cm (FREE Gift!)',
   variantLabelAr: 'مقاس ميني 12 سم • هدية مجانية',
   variantLabelEn: 'Mini 12cm • Complimentary Gift',
-  coverImage: '/merch/bub-plush-ball.jpg',
+  coverImage: merchArtwork.plush,
   retailValueEgp: 190,
   retailValueSar: 49,
   retailValueAed: 49,

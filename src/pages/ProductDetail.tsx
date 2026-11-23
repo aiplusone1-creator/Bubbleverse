@@ -260,7 +260,7 @@ export default function ProductDetail() {
   const gallery =
     story.galleryImages && story.galleryImages.length > 0
       ? story.galleryImages
-      : [story.coverImage, '/bubble-books/jungle.webp', '/bubble-books/ocean.webp'];
+      : [story.coverImage];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   // Spread Preview Modal state
@@ -1611,7 +1611,7 @@ export default function ProductDetail() {
                       className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-cyan-300/45 bg-slate-900 shrink-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       <img
-                        src={gwpConfig.coverImage || '/merch/bub-plush-ball.jpg'}
+                        src={gwpConfig.coverImage || '/artwork/merch-plush.webp'}
                         alt={
                           language === 'ar'
                             ? 'كورة Bub القطيفة المتلألئة — هدية مجانية'
@@ -1779,7 +1779,7 @@ export default function ProductDetail() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950 p-4 rounded-2xl border border-white/10">
                   <div className="aspect-square rounded-2xl overflow-hidden border border-white/10">
                     <img
-                      src={story.sampleSpreads[activeSpreadIndex]?.imageUrl || story.coverImage}
+                      src={story.sampleSpreads[activeSpreadIndex]?.imageUrl || '/placeholder.svg'}
                       alt={
                         language === 'ar'
                           ? `مشهد من قصة ${story.titleAr}`

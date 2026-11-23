@@ -310,40 +310,6 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
             onKeyDown={handleCarouselKeyDown}
             className="relative w-full max-w-[18.5rem] sm:max-w-[21rem] md:max-w-[clamp(16rem,28vw,31rem)]"
           >
-            {/* Floating Parallax Real-Photo Mini Medallion (Top-Start, clear of title plate & arrows) */}
-            <motion.div
-              aria-hidden="true"
-              animate={shouldReduceMotion ? undefined : { y: [0, -7, 0] }}
-              transition={
-                shouldReduceMotion
-                  ? undefined
-                  : { duration: 4.8, repeat: Infinity, ease: 'easeInOut' }
-              }
-              className={`hidden lg:flex items-center gap-2.5 absolute -top-6 z-30 glass-card rounded-2xl p-2 pe-3.5 border-white/20 shadow-xl ${
-                isRTL ? '-right-5' : '-left-5'
-              }`}
-            >
-              <img
-                src="/showcase/character/likeness-real.jpg"
-                alt=""
-                className="w-11 h-11 rounded-xl object-cover border border-cyan-300/40 shrink-0"
-              />
-              <div className="text-start">
-                <span className="block text-[11px] text-cyan-300 font-semibold">
-                  {isAr ? (
-                    'من صورة عادية'
-                  ) : (
-                    <>
-                      From <span className="font-numeric">1</span> Photo
-                    </>
-                  )}
-                </span>
-                <span className="block text-xs font-bold text-white">
-                  {isAr ? 'لبطل كتاب كامل' : 'To Book Hero'}
-                </span>
-              </div>
-            </motion.div>
-
             {/* Floating Upper-Opposite Mini Preview Peek (Top-End, clear of middle arrow & bottom title plate) */}
             <motion.div
               aria-hidden="true"
@@ -360,10 +326,10 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
               <AnimatePresence mode="wait" initial={false}>
                 <motion.img
                   key={activeBook.miniPreviewImage || activeBook.id}
-                  src={activeBook.miniPreviewImage || DEFAULT_HERO_BOOKS[0].miniPreviewImage}
+                  src={activeBook.miniPreviewImage || activeBook.coverImage}
                   alt=""
                   onError={(event) => {
-                    event.currentTarget.src = DEFAULT_HERO_BOOKS[0].miniPreviewImage;
+                    event.currentTarget.src = '/placeholder.svg';
                   }}
                   initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.92 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -441,7 +407,7 @@ const HeroSection = ({ onStartCreating }: HeroSectionProps) => {
                               : `Personalized hardcover storybook cover for ${activeTitle}`
                           }
                           onError={(event) => {
-                            event.currentTarget.src = DEFAULT_HERO_BOOKS[0].coverImage;
+                            event.currentTarget.src = '/placeholder.svg';
                           }}
                           className="w-full h-full object-cover"
                         />

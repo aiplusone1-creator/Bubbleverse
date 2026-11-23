@@ -9,6 +9,8 @@ import StoriesByAgeGender from '../components/showcase/StoriesByAgeGender';
 import FeatureCards from '../components/FeatureCards';
 import BubBrandShowcaseSection from '../components/merch/BubBrandShowcaseSection';
 import CustomerReviewsSection from '../components/showcase/CustomerReviewsSection';
+import NourStoryFeature from '../components/showcase/NourStoryFeature';
+import CareerAdventuresBanner from '../components/showcase/CareerAdventuresBanner';
 import PrivacyAndFaqSection from '../components/showcase/PrivacyAndFaqSection';
 import GrowthRetentionSection from '../components/growth/GrowthRetentionSection';
 import Footer from '../components/Footer';
@@ -58,12 +60,14 @@ const Index = () => {
             >
               {/* 1. Hero Funnel */}
               <HeroSection onStartCreating={openWizard} />
+              <NourStoryFeature />
 
               {/* 2. Before / After Real Photo -> Storybook Hero */}
               <CharacterControlShowcase />
 
               {/* 3. Featured Stories by Age / Gender + Career Adventures */}
               <StoriesByAgeGender />
+              <CareerAdventuresBanner />
 
               {/* 4. How It Works (3 Steps) + 100% Draft Review Guarantee */}
               <FeatureCards />

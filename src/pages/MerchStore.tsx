@@ -354,7 +354,7 @@ export function MerchStore() {
                     className="relative block w-full h-full rounded-[2rem] overflow-hidden border border-cyan-300/35 bg-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <img
-                      src={gwpConfig.coverImage || '/merch/bub-plush-ball.jpg'}
+                      src={gwpConfig.coverImage || '/artwork/merch-plush.webp'}
                       alt={
                         isAr
                           ? 'كورة باب القطيفة المتلألئة من بابل فيرس'
@@ -362,7 +362,7 @@ export function MerchStore() {
                       }
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = '/merch/bub-plush-ball.jpg';
+                        e.currentTarget.src = '/artwork/merch-plush.webp';
                       }}
                     />
 
@@ -622,7 +622,7 @@ export function MerchStore() {
                           decoding="async"
                           className="w-full h-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.04]"
                           onError={(e) => {
-                            e.currentTarget.src = '/merch/bub-plush-ball.jpg';
+                            if (!e.currentTarget.src.endsWith('/placeholder.svg')) e.currentTarget.src = '/placeholder.svg';
                           }}
                         />
 

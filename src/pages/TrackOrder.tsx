@@ -554,7 +554,7 @@ export default function TrackOrder() {
                           }`}
                         >
                           <img
-                            src={item.coverImage || '/merch/bub-plush-ball.jpg'}
+                            src={item.coverImage || '/placeholder.svg'}
                             alt={itemTitle}
                             loading="lazy"
                             decoding="async"

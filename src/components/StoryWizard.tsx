@@ -54,7 +54,7 @@ type BookTier = 'hardcover_15' | 'hardcover_25' | 'digital_pdf';
 type WizardOccasionId = Exclude<StoryOccasion, 'bedtime_values'>;
 
 // Static artwork cover ONLY — child photos must NEVER be stored in coverImage
-const STATIC_CUSTOM_STORY_COVER = '/showcase/career/career-astronaut.jpg';
+const STATIC_CUSTOM_STORY_COVER = '/placeholder.svg';
 const THUMBNAIL_MAX_DIM = 480;
 const THUMBNAIL_JPEG_QUALITY = 0.78;
 

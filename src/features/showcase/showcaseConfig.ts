@@ -1,3 +1,5 @@
+import { careerArtwork, characterArtwork, visual } from './siteArtwork.ts';
+
 export interface HeroBookSlide {
   id: string;
   titleAr: string;
@@ -93,7 +95,7 @@ export interface HomepageShowcaseConfig {
 
 export type ShowcaseConfig = HomepageShowcaseConfig;
 
-export const DEFAULT_HERO_BOOKS: HeroBookSlide[] = [
+const originalHeroBooks: HeroBookSlide[] = [
   {
     id: 'hero-space-odyssey',
     titleAr: 'رحلة إلى الفضاء الخارجي',
@@ -140,8 +142,8 @@ export const DEFAULT_HERO_BOOKS: HeroBookSlide[] = [
   },
 ];
 
-export const DEFAULT_SHOWCASE_CONFIG: HomepageShowcaseConfig = {
-  heroBooks: DEFAULT_HERO_BOOKS,
+const originalShowcaseConfig: HomepageShowcaseConfig = {
+  heroBooks: originalHeroBooks,
   characterSectionTitleAr: 'نرسم طفلك بطلاً للحكاية بكل ملامحه وتفاصيله الحقيقية',
   characterSectionTitleEn: "Your Child, Artfully Illustrated Into the Hero of Every Page",
   characterSectionSubtitleAr: 'رسومات فنية متقنة تُخلد ابتسامة طفلك وشكل عينيه وملامحه المحبوبة في كل صفحة ومغامرة بين دفتي كتاب فاخر.',
@@ -353,6 +355,76 @@ export const DEFAULT_SHOWCASE_CONFIG: HomepageShowcaseConfig = {
   ],
 };
 
+const heroArtwork: Record<string, [string, string]> = {
+  'hero-space-odyssey': [careerArtwork.astronaut, visual('space-ship')],
+  'hero-animal-doctor': [visual('vet-rabbit'), visual('vet-flowers')],
+  'hero-ocean-explorer': [visual('ocean-turtle'), visual('ocean-turtle')],
+  'hero-star-princess': [visual('star-princess'), visual('star-princess')],
+};
+
+const cardArtwork: Record<string, string[]> = {
+  faces: [characterArtwork.reference, characterArtwork.illustrated],
+  expressions: characterArtwork.expressions,
+  angles: characterArtwork.angles,
+  styles: characterArtwork.styles,
+};
+
+function refreshShowcaseArtwork(config: HomepageShowcaseConfig): HomepageShowcaseConfig {
+  return {
+    ...config,
+    heroBooks: config.heroBooks.map((slide) => {
+      const previous = originalHeroBooks.find((book) => book.id === slide.id);
+      const images = heroArtwork[slide.id];
+      if (!previous || !images) return slide;
+      return {
+        ...slide,
+        coverImage: slide.coverImage === previous.coverImage ? images[0] : slide.coverImage,
+        miniPreviewImage: slide.miniPreviewImage === previous.miniPreviewImage ? images[1] : slide.miniPreviewImage,
+      };
+    }),
+    characterCards: config.characterCards.map((card) => {
+      const previous = originalShowcaseConfig.characterCards.find((item) => item.id === card.id);
+      const images = cardArtwork[card.id];
+      if (!previous || !images) return card;
+      return {
+        ...card,
+        primaryImage: card.primaryImage === previous.primaryImage ? images[0] : card.primaryImage,
+        secondaryImage: previous.secondaryImage && card.secondaryImage === previous.secondaryImage ? images[1] : card.secondaryImage,
+        variations: (Array.isArray(card.variations) ? card.variations : previous.variations).map((item, index) => {
+          if (item.image !== previous.variations[index]?.image || !images[index]) return item;
+          if (card.id === 'styles') {
+            const names = [
+              ['رسم ثلاثي الأبعاد', 'Cinematic 3D'],
+              ['ألوان مائية', 'Watercolor'],
+              ['قصص مصوّرة', 'Comic art'],
+            ];
+            const [labelAr, labelEn] = names[index];
+            return { ...item, image: images[index], label: labelAr, labelAr, labelEn, tag: labelAr, tagAr: labelAr, tagEn: labelEn };
+          }
+          if (card.id === 'faces' && index === 0) {
+            return { ...item, image: images[index], label: 'مرجع خيالي', labelAr: 'مرجع خيالي', labelEn: 'Fictional reference',
+              tag: 'مرجع خيالي', tagAr: 'مرجع خيالي', tagEn: 'Fictional reference' };
+          }
+          return { ...item, image: images[index] };
+        }),
+      };
+    }),
+    careerRoles: config.careerRoles.map((role) => {
+      const previous = originalShowcaseConfig.careerRoles.find((item) => item.id === role.id);
+      return previous?.image === role.image
+        ? { ...role, image: careerArtwork[role.roleKey as keyof typeof careerArtwork] ?? role.image }
+        : role;
+    }),
+    reviews: config.reviews.map((review) => {
+      const previous = originalShowcaseConfig.reviews.find((item) => item.id === review.id);
+      return previous?.avatarUrl === review.avatarUrl ? { ...review, avatarUrl: '' } : review;
+    }),
+  };
+}
+
+export const DEFAULT_SHOWCASE_CONFIG = refreshShowcaseArtwork(originalShowcaseConfig);
+export const DEFAULT_HERO_BOOKS = DEFAULT_SHOWCASE_CONFIG.heroBooks;
+
 const STORAGE_KEY = 'bubbleverse_homepage_showcase_v2';
 
 export function getShowcaseConfig(): HomepageShowcaseConfig {
@@ -361,7 +433,7 @@ export function getShowcaseConfig(): HomepageShowcaseConfig {
     if (!raw) return DEFAULT_SHOWCASE_CONFIG;
     const parsed = JSON.parse(raw);
     const hasHeroBooks = Array.isArray(parsed.heroBooks) && parsed.heroBooks.length > 0;
-    return {
+    return refreshShowcaseArtwork({
       ...DEFAULT_SHOWCASE_CONFIG,
       ...parsed,
       heroBooks: hasHeroBooks ? parsed.heroBooks : DEFAULT_SHOWCASE_CONFIG.heroBooks,
@@ -377,7 +449,7 @@ export function getShowcaseConfig(): HomepageShowcaseConfig {
         Array.isArray(parsed.reviews) && parsed.reviews.length > 0
           ? parsed.reviews
           : DEFAULT_SHOWCASE_CONFIG.reviews,
-    };
+    });
   } catch {
     return DEFAULT_SHOWCASE_CONFIG;
   }

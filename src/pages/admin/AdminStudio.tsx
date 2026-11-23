@@ -60,7 +60,6 @@ import {
   updateOrderStatus,
   attachPhotoToOrder,
   THEME_PRESETS,
-  detectStoryTheme,
   resolveThemeDna,
   type AiProviderKey,
   type CharacterDna,
@@ -73,7 +72,6 @@ import {
   type StudioProductionChecklist,
 } from '@/lib/localStore';
 import { deletePhotoFromVault, getPhotoFromVault, savePhotoToVault } from '@/lib/photoVault';
-import { generateStorybookPDFHTML } from '@/features/pdf/storybookTemplate';
 import { sortFilesNaturally } from '@/features/pdf/kdpSpecs';
 import {
   generateCharacterSheetCandidate,
@@ -82,6 +80,7 @@ import {
   type LikenessPreset,
 } from '@/features/studio/characterSheetEngine';
 import { generateRealAiImage } from '@/features/studio/aiImageGenerator';
+import { createOrderStoryDraft } from '@/features/studio/orderStoryDraft';
 import { CharacterLikenessComparator } from '@/components/studio/CharacterLikenessComparator';
 import {
   THE_SEVEN_BUBBLES,
@@ -366,6 +365,7 @@ export default function AdminStudio() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const orderIdParam = searchParams.get('orderId');
+  const draftParam = searchParams.get('draft');
 
   const initial = useMemo(() => buildInitialDraftState(), []);
 
@@ -527,7 +527,7 @@ export default function AdminStudio() {
       setSelectedOrder(order);
       setActiveDraftKey(order.id);
 
-      const primaryItem = order.items[0];
+      const primaryItem = order.items.find((item) => item.itemType !== 'merch');
       const existingDraft = getStudioDraft(order.id);
 
       if (existingDraft && existingDraft.pages.length > 0) {
@@ -540,72 +540,23 @@ export default function AdminStudio() {
           );
         }
       } else if (primaryItem) {
-        const hero = primaryItem.childName || (ar ? 'البطل' : 'Hero');
-        const lang: 'ar' | 'en' = primaryItem.storyLanguage === 'en' ? 'en' : 'ar';
-        const count = primaryItem.pagesCount || 15;
-        const title = lang === 'ar' ? primaryItem.titleAr : primaryItem.titleEn;
-        const engine = promptEngineRef.current;
-
-        const contextHints = [
-          primaryItem.titleEn,
-          primaryItem.titleAr,
-          primaryItem.storyId,
-          primaryItem.giftMessage,
-          primaryItem.occasion,
-          order.orderNotes,
-        ]
-          .filter(Boolean)
-          .join(' ');
-        const detectedTheme = detectStoryTheme(contextHints);
-        const resolvedThemeDna = resolveThemeDna(
-          detectedTheme,
-          primaryItem.childGender === 'girl' ? 'girl' : 'boy'
-        );
-
-        const nextDna = createDefaultCharacterDna({
-          childName: hero,
-          childAge: primaryItem.childAge || '5',
-          childGender: primaryItem.childGender === 'girl' ? 'girl' : 'boy',
+        const generated = createOrderStoryDraft(order, {
           artStyle: artStyleRef.current,
-          storyTheme: detectedTheme,
-          signatureOutfit: resolvedThemeDna.signatureOutfit,
-          signatureProp: resolvedThemeDna.signatureProp,
-          pose2Description: resolvedThemeDna.pose2Description,
+          engine: promptEngineRef.current,
         });
-        const generatedPages: StudioDraftPage[] = buildFullStoryArc(
-          nextDna,
-          count,
-          lang,
-          title,
-          engine
-        ).map((p) => ({
-          pageNumber: p.pageNumber,
-          text: p.text,
-          imagePrompt: p.imagePrompt,
-          imageUrl: p.imageUrl,
-        }));
+        if (generated) {
+          applyDraftRecord(generated);
+          setCharacterSheetPreview(null);
+          setLastSavedAt(null);
+          setSaveStatus('idle');
 
-        setChildName(hero);
-        setStoryLang(lang);
-        setPageCount(count);
-        setStoryTitle(title);
-        setCharacterDna(nextDna);
-        setCharacterSheetVaultId('');
-        setCharacterSheetCandidates([]);
-        setActiveCandidateId(null);
-        setCharacterSheetPreview(null);
-        setChecklist(createDefaultProductionChecklist({ photoApproved: Boolean(primaryItem?.photoVaultId) }));
-        setPages(generatedPages);
-        setActivePageIndex(0);
-        setLastSavedAt(null);
-        setSaveStatus('idle');
-
-        if (!silent) {
-          toast.success(
-            ar
-              ? `تم تحميل الطلب ${order.reference} (${hero})`
-              : `Loaded order ${order.reference} (${hero})`
-          );
+          if (!silent) {
+            toast.success(
+              ar
+                ? `تم تحميل الطلب ${order.reference} (${generated.childName})`
+                : `Loaded order ${order.reference} (${generated.childName})`
+            );
+          }
         }
       }
 
@@ -634,8 +585,14 @@ export default function AdminStudio() {
       }
     } else if (!orderIdParam) {
       lastLoadedOrderParamRef.current = null;
+      const draft = draftParam ? getStudioDraft(draftParam) : null;
+      if (draft) {
+        setSelectedOrder(null);
+        setChildRefPhoto(null);
+        applyDraftRecord(draft);
+      }
     }
-  }, [orderIdParam, loadOrderIntoStudio]);
+  }, [orderIdParam, draftParam, loadOrderIntoStudio, applyDraftRecord]);
 
   const syncedDna = useMemo<CharacterDna>(
     () => ({
@@ -677,6 +634,7 @@ export default function AdminStudio() {
           isAr ? 'تم حفظ مسودة الاستوديو بنجاح' : 'Studio draft saved successfully'
         );
       }
+      return saved;
     },
     [
       activeDraftKey,
@@ -1852,43 +1810,16 @@ export default function AdminStudio() {
     navigate(target);
   };
 
-  const handleExportQuickProof = async () => {
-    const hydratedPages = await Promise.all(
-      pages.map(async (p) => {
-        const vaultImg = p.imageVaultId ? await getPhotoFromVault(p.imageVaultId) : null;
-        return {
-          pageNumber: p.pageNumber,
-          text: p.text,
-          imageUrl: vaultImg || p.imageUrl,
-        };
-      })
-    );
-
-    const html = generateStorybookPDFHTML({
-      title: storyTitle,
-      childName,
-      language: storyLang,
-      artStyle,
-      pages: hydratedPages,
-    });
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error(
-        isAr
-          ? 'يرجى السماح بالنوافذ المنبثقة لفتح معاينة الطباعة السريعة'
-          : 'Please allow pop-ups to open the quick proof print preview'
-      );
+  const handleOpenDigitalBook = () => {
+    const saved = persistCurrentDraft(false);
+    if (getStudioDraft(saved.key)?.updatedAt !== saved.updatedAt) {
+      toast.error(isAr ? 'تعذّر حفظ المسودة. حاول مرة تانية.' : 'Could not save the draft. Try again.');
       return;
     }
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    toast.success(
-      isAr
-        ? 'تم فتح المعاينة السريعة للكتاب! للتصدير الاحترافي 8.5×8.5 إنش استخدم صانع KDP.'
-        : 'Quick proof opened! For press-ready 8.5"×8.5" 300 DPI files, use the KDP PDF Builder.'
-    );
+    const query = selectedOrder
+      ? `orderId=${encodeURIComponent(selectedOrder.id)}`
+      : `draft=${encodeURIComponent(activeDraftKey)}`;
+    navigate(`/admin/studio?${query}`);
   };
 
   const handleMarkDraftReady = () => {
@@ -2180,11 +2111,11 @@ export default function AdminStudio() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => void handleExportQuickProof()}
+                onClick={handleOpenDigitalBook}
                 className="h-10 px-3.5 rounded-full bg-slate-900/75 border-white/15 text-slate-200 hover:bg-slate-800/90 text-xs font-semibold gap-1.5"
               >
                 <Printer className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{isAr ? 'معاينة سريعة' : 'Quick Proof'}</span>
+                <span>{isAr ? 'افتح الكتاب الرقمي' : 'Open digital book'}</span>
               </Button>
             </div>
           </div>
@@ -4631,11 +4562,11 @@ export default function AdminStudio() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => void handleExportQuickProof()}
+                    onClick={handleOpenDigitalBook}
                     className="h-11 px-4 rounded-full bg-slate-900/80 border-white/15 text-slate-200 hover:bg-slate-800 text-xs font-semibold gap-1.5"
                   >
                     <Printer className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>{isAr ? 'معاينة طباعة سريعة' : 'Quick Proof Print'}</span>
+                    <span>{isAr ? 'افتح الكتاب الرقمي' : 'Open digital book'}</span>
                   </Button>
                 </div>
               </div>

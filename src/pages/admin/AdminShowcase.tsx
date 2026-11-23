@@ -164,8 +164,8 @@ export default function AdminShowcase() {
       titleEn: `New Magical Storybook ${nextIndex}`,
       badgeAr: 'إصدار جديد',
       badgeEn: 'New Release',
-      coverImage: '/bubble-books/space.webp',
-      miniPreviewImage: '/showcase/character/likeness-real.jpg',
+      coverImage: '/artwork/space-ship.webp',
+      miniPreviewImage: '/artwork/character-reference.webp',
       linkedStoryId: defaultStory?.id || 'space-journey',
       accentColor: ACCENT_PRESETS[(nextIndex - 1) % ACCENT_PRESETS.length],
     };
@@ -261,7 +261,7 @@ export default function AdminShowcase() {
               label: `مشهد ${count}`,
               labelAr: `مشهد ${count}`,
               labelEn: `Scene ${count}`,
-              image: '/showcase/character/likeness-pixar.jpg',
+              image: '/artwork/character-illustrated.webp',
               tag: 'رسم مخصص',
               tagAr: 'رسم مخصص',
               tagEn: 'Custom Illustration',
@@ -311,7 +311,7 @@ export default function AdminShowcase() {
       bookTitleAr: 'رحلة إلى الفضاء الخارجي',
       bookTitleEn: 'Space Explorer: Star Odyssey',
       verified: true,
-      avatarUrl: '/showcase/reviews/review-seif.jpg',
+      avatarUrl: '',
     };
     updateConfig((prev) => ({
       ...prev,
@@ -721,7 +721,7 @@ export default function AdminShowcase() {
                           onChange={(e) =>
                             handleUpdateHeroBook(idx, { coverImage: e.target.value })
                           }
-                          placeholder="/bubble-books/space.webp"
+                          placeholder="/artwork/space-ship.webp"
                           className="h-9 rounded-xl bg-slate-950/90 border-white/15 text-xs font-mono text-cyan-200 flex-1"
                         />
                         <label className="bubble-btn-outline h-9 px-3.5 text-xs font-bold gap-1.5 shrink-0">
@@ -757,7 +757,7 @@ export default function AdminShowcase() {
                           onChange={(e) =>
                             handleUpdateHeroBook(idx, { miniPreviewImage: e.target.value })
                           }
-                          placeholder="/showcase/career/career-astronaut.jpg"
+                          placeholder="/artwork/career-astronaut.webp"
                           className="h-9 rounded-xl bg-slate-950/90 border-white/15 text-xs font-mono text-pink-200 flex-1"
                         />
                         <label className="bubble-btn-outline h-9 px-3.5 text-xs font-bold gap-1.5 shrink-0">
@@ -1067,7 +1067,7 @@ export default function AdminShowcase() {
                                     image: e.target.value,
                                   })
                                 }
-                                placeholder="/showcase/character/likeness-pixar.jpg"
+                                placeholder="/artwork/character-illustrated.webp"
                                 className="h-9 rounded-xl bg-slate-950/90 border-white/15 text-[11px] font-mono text-cyan-200 flex-1"
                               />
                               <label className="bubble-btn-outline h-9 px-3 text-xs font-bold gap-1.5 shrink-0">
@@ -1229,7 +1229,7 @@ export default function AdminShowcase() {
                     <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/10">
                       <div className="flex items-center gap-3 min-w-0">
                         <img
-                          src={rev.avatarUrl || '/bubble-books/hero-left.jpg'}
+                          src={rev.avatarUrl || '/placeholder.svg'}
                           alt={rev.parentName}
                           className="w-12 h-12 rounded-2xl object-cover border border-white/20 shrink-0"
                         />
@@ -1323,7 +1323,7 @@ export default function AdminShowcase() {
                             onChange={(e) =>
                               handleUpdateReview(revIdx, { avatarUrl: e.target.value })
                             }
-                            placeholder="/showcase/reviews/review-seif.jpg"
+                            placeholder=""
                             className="h-9 rounded-xl bg-slate-950/80 border-white/15 text-[11px] font-mono text-cyan-200 flex-1"
                           />
                           <label className="bubble-btn-outline h-9 px-3 text-xs font-bold gap-1 shrink-0">

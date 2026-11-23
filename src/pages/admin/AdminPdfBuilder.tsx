@@ -46,6 +46,8 @@ import {
   type StudioDraftRecord,
 } from '@/lib/localStore';
 import { getPhotoFromVault } from '@/lib/photoVault';
+import { createNourBook, getNourSceneArt } from '@/features/studio/nourBook';
+import { DEFAULT_STORY_FALLBACK_IMAGES } from '@/features/studio/stage2PromptEngine';
 import {
   checkImagePrintReadiness,
   type PrintResolutionCheck,
@@ -76,13 +78,15 @@ import {
   type KdpBookProject,
 } from '@/features/pdf/kdpCanvasRenderer';
 
-const STARTER_ARTWORK = [
-  '/showcase/career/career-astronaut.jpg',
-  '/bubble-books/space.webp',
-  '/bubble-books/jungle.webp',
-  '/bubble-books/ocean.webp',
-  '/catalog/bedtime-magic.jpg',
-  '/catalog/dinosaur-valley.jpg',
+const starterBook = createNourBook(true);
+const STARTER_ARTWORK = starterBook.scenes.map((_, index) => getNourSceneArt(index).url);
+const STARTER_ENGLISH = [
+  'At the seaside station, Nour takes the library train with Aunt Salma to bring books to a mountain village.',
+  'Fog rolls over the tracks. At the switch, two paths lie ahead and the wooden sign has fallen.',
+  'Nour finds three stars on her map and spots the same stars carved into a wooden post beside the uphill track.',
+  'She rings the bell twice. A distant bell answers. Nour lifts the little flag to show Aunt Salma the way.',
+  'The train crosses a stone bridge, and village lights appear above the sea as the fog lifts.',
+  'At the village, Nour hands out books. The children gather round, and she opens the first story.',
 ];
 
 function createPageId(): string {
@@ -110,10 +114,8 @@ function extractCleanDedication(raw?: string): string {
 }
 
 function createInitialProject(isAr: boolean): KdpBookProject {
-  const childName = isAr ? 'زين' : 'Zain';
-  const title = isAr
-    ? 'مغامرة زين في كوكب الفقاعات'
-    : "Zain's Cosmic Bubble Adventure";
+  const childName = isAr ? 'نور' : 'Nour';
+  const title = isAr ? starterBook.title : 'Nour and the Train That Lost Its Way';
   return {
     title,
     subtitle: isAr ? 'إصدار مطبوع بمقاس 8.5×8.5 إنش' : '8.5" × 8.5" Collector Edition',
@@ -123,7 +125,7 @@ function createInitialProject(isAr: boolean): KdpBookProject {
     bindingType: 'paperback',
     paperStockId: 'kdp_premium_color',
     interiorTheme: 'cream_paper',
-    defaultTemplate: 'full_bleed_overlay',
+    defaultTemplate: 'split_spread',
     padToKdpMinimum: false,
     anatomy: {
       includeFrontCover: true,
@@ -135,9 +137,9 @@ function createInitialProject(isAr: boolean): KdpBookProject {
     },
     frontCoverImageUrl: STARTER_ARTWORK[0],
     frontCoverBadge: isAr ? 'إصدار بابل فيرس الخاص' : 'BUBBLEVERSE EXCLUSIVE EDITION',
-    dedicationTitle: isAr ? `إهداء خاص إلى البطل ${childName}` : `Dedicated with Love to ${childName}`,
+    dedicationTitle: isAr ? `إهداء إلى ${childName}` : `Dedicated to ${childName}`,
     dedicationMessage: isAr
-      ? 'إلى أغلى بطل في حياتنا، كل صفحة في هذا الكتاب تذكّرك بأن خيالك لا حدود له وأنك قادر على صنع أجمل المغامرات.'
+      ? 'لِـنور، اللي بتلاقي حكاية في كل محطة.'
       : 'To our brightest star — may every page remind you how brave, kind, and limitless your imagination truly is.',
     dedicationFrom: isAr ? 'بكل الحب، ماما وبابا' : 'With all our love, Mom & Dad',
     childPhotoUrl: null,
@@ -146,42 +148,18 @@ function createInitialProject(isAr: boolean): KdpBookProject {
       ? `نحن فخورون بك دائماً يا ${childName}! هذه مجرد البداية لمغامراتك العظيمة القادمة.`
       : `We are endlessly proud of you, ${childName}! Your greatest adventures are just beginning.`,
     backCoverBlurb: isAr
-      ? `صُمّمت هذه القصة خصيصاً للبطل ${childName} لتلهمه الشجاعة والفضول وتمنحه تجربة قراءة سحرية قبل النوم.`
-      : `Created exclusively for ${childName} to spark wonder, courage, and unforgettable bedtime adventures.`,
+      ? 'قطار كتب، وطريقان في الضباب، وقرية مستنية أول حكاية.'
+      : 'A train full of books, two tracks in the fog, and a village waiting for its first story.',
     barcodeLabel: 'ISBN / KDP BARCODE ZONE',
     spineTitle: title,
-    storyPages: [
-      {
-        id: createPageId(),
-        imageUrl: STARTER_ARTWORK[0],
-        fileName: 'scene-01.jpg',
-        text: isAr
-          ? `في صباح يوم مشرق، نظر ${childName} إلى السماء فشاهد فقاعة كونية متلألئة تناديه لبدء مغامرته الأولى.`
-          : `One bright morning, ${childName} looked up at the sky and spotted a glowing cosmic bubble calling for adventure.`,
-        layoutOverride: 'default',
-        overlayPosition: 'bottom',
-      },
-      {
-        id: createPageId(),
-        imageUrl: STARTER_ARTWORK[1],
-        fileName: 'scene-02.jpg',
-        text: isAr
-          ? `انطلق ${childName} بابتسامة شجاعة عبر سماء مليئة بالكواكب الملوّنة والنجوم الضاحكة.`
-          : `With a brave smile, ${childName} soared past swirling pastel planets and twinkling friendly stars.`,
-        layoutOverride: 'default',
-        overlayPosition: 'bottom',
-      },
-      {
-        id: createPageId(),
-        imageUrl: STARTER_ARTWORK[2],
-        fileName: 'scene-03.jpg',
-        text: isAr
-          ? `وهناك اكتشف ${childName} أن أعظم قوة سحرية في الكون هي الطيبة والشجاعة وحب الاستكشاف.`
-          : `Along the journey, ${childName} discovered that the greatest magic in the universe is kindness and courage.`,
-        layoutOverride: 'default',
-        overlayPosition: 'bottom',
-      },
-    ],
+    storyPages: starterBook.scenes.map((scene, index) => ({
+      id: createPageId(),
+      imageUrl: STARTER_ARTWORK[index],
+      fileName: `nour-scene-${index + 1}.webp`,
+      text: isAr ? scene.text : STARTER_ENGLISH[index],
+      layoutOverride: 'default',
+      overlayPosition: 'bottom',
+    })),
   };
 }
 
@@ -233,7 +211,7 @@ async function hydrateStudioDraftPages(draft: StudioDraftRecord): Promise<{
       if (vaultImage) {
         hydratedVaultCount += 1;
       }
-      const resolvedUrl = vaultImage || p.imageUrl;
+      const resolvedUrl = vaultImage || (DEFAULT_STORY_FALLBACK_IMAGES.includes(p.imageUrl) ? '' : p.imageUrl);
       const id = createPageId();
 
       if (
@@ -422,7 +400,7 @@ export default function AdminPdfBuilder() {
       setSelectedOrderId(order.id);
       setCustomSpineText('');
       setIsStarterDemo(false);
-      const item = order.items[0];
+      const item = order.items.find((entry) => entry.itemType !== 'merch');
       if (!item) return;
 
       const isArabicBook = item.storyLanguage !== 'en';
@@ -453,7 +431,7 @@ export default function AdminPdfBuilder() {
           customSpineInches: undefined,
           bindingType: item.format === 'hardcover_book' ? 'hardcover' : 'paperback',
           frontCoverImageUrl:
-            hydrated.pages[0]?.imageUrl || item.coverImage || STARTER_ARTWORK[0],
+            hydrated.pages[0]?.imageUrl || item.coverImage || '',
           dedicationTitle: isArabicBook
             ? `إهداء خاص إلى البطل ${hero}`
             : `Dedicated with Love to ${hero}`,
@@ -552,7 +530,7 @@ export default function AdminPdfBuilder() {
             linkedItem?.format === 'hardcover_book' ? 'hardcover' : prev.bindingType,
           childPhotoUrl: childPhoto,
           frontCoverImageUrl:
-            hydrated.pages[0]?.imageUrl || linkedItem?.coverImage || STARTER_ARTWORK[0],
+            hydrated.pages[0]?.imageUrl || linkedItem?.coverImage || '',
           dedicationTitle: isArabicBook
             ? `إهداء خاص إلى البطل ${hero}`
             : `Dedicated with Love to ${hero}`,
@@ -881,7 +859,7 @@ export default function AdminPdfBuilder() {
         ...prev.storyPages,
         {
           id: createPageId(),
-          imageUrl: STARTER_ARTWORK[nextIdx % STARTER_ARTWORK.length],
+          imageUrl: '',
           fileName: `scene-${String(nextIdx + 1).padStart(2, '0')}.jpg`,
           text:
             prev.direction === 'rtl'

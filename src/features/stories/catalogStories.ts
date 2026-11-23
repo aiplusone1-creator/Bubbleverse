@@ -1,3 +1,5 @@
+import { visual } from '../showcase/siteArtwork.ts';
+
 export type CatalogStoryOccasion =
   | 'birthday'
   | 'ramadan_eid'
@@ -45,7 +47,7 @@ export interface CatalogStory {
   }[];
 }
 
-export const CATALOG_STORIES: CatalogStory[] = [
+const originalCatalogStories: CatalogStory[] = [
   {
     id: 'karim-blue-bubble',
     titleAr: 'كريم وسر الفقاعة الزرقاء',
@@ -796,3 +798,46 @@ export const CATALOG_STORIES: CatalogStory[] = [
     ],
   },
 ];
+
+const storyArtwork: Record<string, string[]> = {
+  'karim-blue-bubble': ['karim-valley', 'karim-window', 'karim-backpack', 'karim-portal'],
+  'zain-bubble-galaxy': ['zain-goodnight', 'zain-window', 'zain-whale', 'zain-galaxy', 'zain-goodnight'],
+  'ramadan-lantern-moon': ['ramadan-lantern', 'ramadan-lantern', 'eid-neighbors'],
+  'sibling-super-team': ['siblings-badge', 'siblings-badge', 'siblings-playground'],
+  'little-graduate-star': ['graduation-cap', 'graduation-cap', 'graduation-diploma'],
+  'future-careers-coloring-book-boy': ['careers-coloring', 'career-dream', 'career-waves-earth', 'career-woodland-doctor'],
+  'animal-doctor': ['vet-rabbit', 'vet-rabbit', 'vet-flowers'],
+  'space-journey': ['career-astronaut', 'space-ship'],
+  'ocean-explorer': ['ocean-turtle', 'ocean-turtle'],
+  'city-superhero': ['city-superhero', 'city-superhero'],
+  'genius-engineer': ['engineer-robot', 'engineer-robot'],
+  'little-traveler': ['traveler-giza', 'traveler-giza'],
+  'dinosaur-guardian': ['dinosaur-leaf', 'dinosaur-leaf'],
+  'star-princess': ['star-princess', 'star-princess'],
+  'friendship-heroes': ['friendship-paint', 'friendship-paint'],
+  'graduation-heroes': ['graduation-stage', 'graduation-stage'],
+};
+
+export function refreshCatalogArtwork(story: CatalogStory): CatalogStory {
+  const previous = originalCatalogStories.find((entry) => entry.id === story.id);
+  const artwork = storyArtwork[story.id];
+  if (!previous || !artwork) return story;
+
+  const [cover, ...scenes] = artwork.map(visual);
+  const coverImage = story.coverImage === previous.coverImage ? cover : story.coverImage;
+  const oldGallery = previous.galleryImages ?? [];
+  const gallery = story.galleryImages ?? [];
+  const sameGallery = gallery.length === oldGallery.length && gallery.every((url, index) => url === oldGallery[index]);
+  const sampleSpreads = story.sampleSpreads.map((page) => {
+    const index = previous.sampleSpreads.findIndex((oldPage) => oldPage.pageNumber === page.pageNumber && oldPage.imageUrl === page.imageUrl);
+    return index >= 0 && scenes[index] ? { ...page, imageUrl: scenes[index] } : page;
+  });
+  return {
+    ...story,
+    coverImage,
+    galleryImages: sameGallery ? [...new Set([coverImage, ...scenes])] : story.galleryImages,
+    sampleSpreads,
+  };
+}
+
+export const CATALOG_STORIES = originalCatalogStories.map(refreshCatalogArtwork);

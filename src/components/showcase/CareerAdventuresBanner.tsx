@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Rocket, Sparkles, ArrowRight, Wrench, Stethoscope, FlaskConical, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ export default function CareerAdventuresBanner() {
   const navigate = useNavigate();
   const [config] = useState(() => getShowcaseConfig());
   const [selectedRoleIndex, setSelectedRoleIndex] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   const currentRole = config.careerRoles[selectedRoleIndex] || config.careerRoles[0];
 
@@ -50,7 +51,8 @@ export default function CareerAdventuresBanner() {
                     <button
                       key={role.id}
                       onClick={() => setSelectedRoleIndex(idx)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all duration-300 ${
+                      aria-pressed={isSelected}
+                      className={`min-h-11 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 motion-safe:transition-all duration-300 ${
                         isSelected
                           ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-[0_0_15px_rgba(0,217,255,0.4)] scale-105'
                           : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700'
@@ -67,10 +69,10 @@ export default function CareerAdventuresBanner() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentRole.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.3 }}
                   className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-1.5"
                 >
                   <div className="flex items-center gap-2">
@@ -107,11 +109,12 @@ export default function CareerAdventuresBanner() {
                   <motion.img
                     key={currentRole.image}
                     src={currentRole.image}
-                    alt={currentRole.titleAr}
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    alt={language === 'ar' ? currentRole.titleAr : currentRole.titleEn}
+                    loading="lazy"
+                    initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 1.1 }}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: reduceMotion ? 0 : 0.4 }}
                     className="w-full h-full object-cover rounded-xl"
                   />
                 </AnimatePresence>

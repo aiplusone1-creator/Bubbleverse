@@ -414,7 +414,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       retailValueAed: gwpConfig.retailValueAed,
       titleAr: gwpConfig.titleAr,
       titleEn: gwpConfig.titleEn,
-      coverImage: gwpConfig.coverImage || '/merch/bub-plush-ball.jpg',
+      coverImage: gwpConfig.coverImage || '/artwork/merch-plush.webp',
       format: 'physical_merch',
       formatLabelAr: 'هدية مجانية (GWP)',
       formatLabelEn: 'FREE Gift (GWP)',

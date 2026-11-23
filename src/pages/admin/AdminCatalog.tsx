@@ -149,12 +149,12 @@ function compressCoverImage(file: File): Promise<string> {
 }
 
 const PRESET_COVERS = [
-  '/bubble-books/space.jpg',
-  '/bubble-books/jungle.jpg',
-  '/catalog/superhero-academy.jpg',
-  '/catalog/bedtime-magic.jpg',
-  '/catalog/dinosaur-valley.jpg',
-  '/showcase/career/career-astronaut.jpg',
+  '/artwork/career-astronaut.webp',
+  '/artwork/vet-rabbit.webp',
+  '/artwork/city-superhero.webp',
+  '/artwork/star-princess.webp',
+  '/artwork/dinosaur-leaf.webp',
+  '/artwork/nour-train-station.webp',
 ];
 
 const EMPTY_STORY: CatalogStory = {
@@ -166,7 +166,7 @@ const EMPTY_STORY: CatalogStory = {
   category: 'career',
   gender: 'all',
   ageRange: '5-7',
-  coverImage: '/bubble-books/space.jpg',
+  coverImage: '/artwork/career-astronaut.webp',
   badgeAr: 'جديد',
   badgeEn: 'New',
   rating: 4.9,
@@ -190,7 +190,7 @@ const EMPTY_STORY: CatalogStory = {
       pageNumber: 1,
       textAr: 'تبدأ المغامرة السحرية لبطلك الصغير في عالم مليء بالخيال والألوان.',
       textEn: 'Your little hero begins a magical adventure in a world full of wonder.',
-      imageUrl: '/bubble-books/space.jpg',
+      imageUrl: '/artwork/career-astronaut.webp',
     },
   ],
 };
@@ -312,7 +312,7 @@ export default function AdminCatalog() {
       return;
     }
 
-    const cover = editing.coverImage.trim() || '/bubble-books/space.jpg';
+    const cover = editing.coverImage.trim() || '/artwork/career-astronaut.webp';
     const resolvedPriceAed15 =
       editing.priceAed15Pages !== undefined && Number.isFinite(editing.priceAed15Pages)
         ? editing.priceAed15Pages
@@ -752,7 +752,7 @@ export default function AdminCatalog() {
                 <div className="glass-card-inner p-4 space-y-3">
                   <div className="flex flex-col sm:flex-row gap-4 items-center">
                     <img
-                      src={editing.coverImage || '/bubble-books/space.jpg'}
+                      src={editing.coverImage || '/artwork/career-astronaut.webp'}
                       alt={isAr ? 'معاينة الغلاف' : 'Cover preview'}
                       className="w-28 h-28 rounded-2xl object-cover border border-cyan-400/35 shrink-0 bg-slate-950"
                     />
@@ -766,7 +766,7 @@ export default function AdminCatalog() {
                           onChange={(e) =>
                             setEditing({ ...editing, coverImage: e.target.value })
                           }
-                          placeholder="/bubble-books/space.jpg"
+                          placeholder="/artwork/career-astronaut.webp"
                           dir="ltr"
                           className="bg-slate-950/80 border-white/15 text-xs text-white rounded-xl h-10"
                         />

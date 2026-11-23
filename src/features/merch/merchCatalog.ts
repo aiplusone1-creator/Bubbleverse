@@ -1,3 +1,5 @@
+import { merchArtwork } from '../showcase/siteArtwork.ts';
+
 export type MerchCategory = 'plush' | 'bundle' | 'bedtime' | 'bags' | 'activity';
 
 export interface MerchVariant {
@@ -68,7 +70,7 @@ export const MERCH_CATEGORIES: MerchCategoryMeta[] = [
   { id: 'activity', labelAr: 'أنشطة وتلوين', labelEn: 'Activity Kits' },
 ];
 
-export const DEFAULT_MERCH_PRODUCTS: MerchProduct[] = [
+const originalMerchProducts: MerchProduct[] = [
   {
     id: 'bub-plush-ball',
     sku: 'BV-BUB-PLUSH',
@@ -556,6 +558,32 @@ export const DEFAULT_MERCH_PRODUCTS: MerchProduct[] = [
     allowsRibbonName: true,
   },
 ];
+
+const merchCovers: Record<string, string> = {
+  'bub-plush-ball': merchArtwork.plush,
+  'story-bub-giftbox': merchArtwork.giftbox,
+  'bub-night-lamp': merchArtwork.lamp,
+  'hero-adventure-backpack': merchArtwork.backpack,
+  'bub-activity-kit': merchArtwork.activity,
+  'bub-squad-trio': merchArtwork.trio,
+};
+
+export function refreshMerchArtwork(product: MerchProduct): MerchProduct {
+  const previous = originalMerchProducts.find((item) => item.id === product.id);
+  const cover = merchCovers[product.id];
+  if (!previous || !cover) return product;
+  const coverImage = product.coverImage === previous.coverImage ? cover : product.coverImage;
+  const gallery = product.galleryImages ?? [];
+  const sameGallery = gallery.length === previous.galleryImages.length &&
+    gallery.every((url, index) => url === previous.galleryImages[index]);
+  return {
+    ...product,
+    coverImage,
+    galleryImages: sameGallery ? [coverImage] : gallery,
+  };
+}
+
+export const DEFAULT_MERCH_PRODUCTS = originalMerchProducts.map(refreshMerchArtwork);
 
 export function getMerchProductById(
   id: string,

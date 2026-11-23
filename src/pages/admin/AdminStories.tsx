@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Trash2, Search, Loader2, RefreshCw, Phone, Printer } from 'lucide-react';
-import { generateStorybookPDFHTML } from '@/features/pdf/storybookTemplate';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -243,35 +242,15 @@ export default function AdminStories() {
                           <Button
                             size="sm"
                             variant="outline"
+                            disabled={!story.pdf_url}
                             onClick={() => {
-                              if (story.pdf_url) {
-                                window.open(story.pdf_url, '_blank');
-                              } else {
-                                const html = generateStorybookPDFHTML({
-                                  title: story.title || 'قصة Bubbleverse السحرية',
-                                  childName: 'بطل القصة',
-                                  language: 'ar',
-                                  artStyle: story.art_style || '3D Pixar',
-                                  pages: [
-                                    {
-                                      pageNumber: 1,
-                                      text: 'في مغامرة شيقة ملؤها الخيال والألوان المتلألئة...',
-                                      imageUrl: '/bubble-books/space.webp',
-                                    },
-                                  ],
-                                });
-                                const w = window.open('', '_blank');
-                                if (w) {
-                                  w.document.write(html);
-                                  w.document.close();
-                                }
-                              }
+                              if (story.pdf_url) window.open(story.pdf_url, '_blank', 'noopener,noreferrer');
                             }}
                             className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                            title="Preview 210×210mm Storybook PDF"
+                            title={story.pdf_url ? 'Open story PDF' : 'No PDF has been created'}
                           >
                             <Printer className="h-4 w-4 mr-1 text-cyan-400" />
-                            PDF
+                            {story.pdf_url ? 'PDF' : 'PDF unavailable'}
                           </Button>
 
                           <Button

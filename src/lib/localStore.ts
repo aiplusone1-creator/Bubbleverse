@@ -1,4 +1,4 @@
-import { CATALOG_STORIES, CatalogStory } from '@/features/stories/catalogStories';
+import { CATALOG_STORIES, type CatalogStory, refreshCatalogArtwork } from '@/features/stories/catalogStories';
 import {
   calculateAddonTotal,
   deriveAedFromSar,
@@ -9,6 +9,7 @@ import {
 } from '@/features/commerce/pricingEngine';
 import {
   DEFAULT_MERCH_PRODUCTS,
+  refreshMerchArtwork,
   type MerchProduct,
 } from '@/features/merch/merchCatalog';
 import {
@@ -1280,10 +1281,10 @@ export function getCatalogStories(): CatalogStory[] {
           if (seenIds.has(id)) continue;
           seenIds.add(id);
           validStored.push(
-            hydrateCatalogStory(
+            refreshCatalogArtwork(hydrateCatalogStory(
               entry as Partial<CatalogStory> & { id: string },
               defaultById.get(id)
-            )
+            ))
           );
         }
       }
@@ -1728,14 +1729,14 @@ export function getMerchCatalog(): MerchProduct[] {
           : fallback?.stockCount ?? 0;
 
       hydrated.push(
-        cloneMerchProduct({
+        refreshMerchArtwork(cloneMerchProduct({
           ...merged,
           priceEgp,
           priceSar,
           priceAed,
           stockCount,
           inStock: typeof merged.inStock === 'boolean' ? merged.inStock : stockCount > 0,
-        })
+        }))
       );
     }
 
@@ -1857,7 +1858,9 @@ function normalizeGwpConfig(
         ? merged.variantLabelEn.trim()
         : base.variantLabelEn,
     coverImage:
-      typeof merged.coverImage === 'string' && merged.coverImage.trim()
+      merged.giftMerchId === base.giftMerchId && merged.coverImage === '/merch/bub-plush-ball.jpg'
+        ? base.coverImage
+        : typeof merged.coverImage === 'string' && merged.coverImage.trim()
         ? merged.coverImage.trim()
         : base.coverImage,
     retailValueEgp:

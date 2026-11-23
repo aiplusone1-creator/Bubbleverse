@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import NourStoryFeature from '@/components/showcase/NourStoryFeature';
 import ImmersiveBackground from '@/components/ImmersiveBackground';
 import TiltBookCard from '@/components/ui/TiltBookCard';
 import { Button } from '@/components/ui/button';
@@ -138,6 +139,7 @@ export default function Stories() {
       <Header />
 
       <main className="relative z-10 pt-24 sm:pt-28 pb-20">
+        <NourStoryFeature />
 
         {/* Warm Conversational Hero Intro */}
         <section className="px-4 bv-container pt-4 pb-10 sm:pb-12 text-center">

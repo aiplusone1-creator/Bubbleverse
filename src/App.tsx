@@ -28,6 +28,8 @@ const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminCatalog = lazy(() => import("./pages/admin/AdminCatalog"));
 const AdminMerch = lazy(() => import("./pages/admin/AdminMerch"));
 const AdminStudio = lazy(() => import("./pages/admin/AdminStudio"));
+const AdminBookProduction = lazy(() => import("./pages/admin/AdminBookProduction"));
+const NourStory = lazy(() => import("./pages/NourStory"));
 const AdminPdfBuilder = lazy(() => import("./pages/admin/AdminPdfBuilder"));
 const AdminShowcase = lazy(() => import("./pages/admin/AdminShowcase"));
 const AdminGrowth = lazy(() => import("./pages/admin/AdminGrowth"));
@@ -52,6 +54,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/stories" element={<Stories />} />
+                    <Route path="/stories/nour-library-train/read" element={<NourStory />} />
                     <Route path="/products/:id" element={<ProductDetail />} />
                     <Route path="/stories/:id" element={<ProductDetail />} />
                     <Route path="/merch" element={<MerchStore />} />
@@ -66,7 +69,8 @@ const App = () => (
                       <Route path="/admin/orders" element={<AdminOrders />} />
                       <Route path="/admin/catalog" element={<AdminCatalog />} />
                       <Route path="/admin/merch" element={<AdminMerch />} />
-                      <Route path="/admin/studio" element={<AdminStudio />} />
+                      <Route path="/admin/studio" element={<AdminBookProduction />} />
+                      <Route path="/admin/studio/advanced" element={<AdminStudio />} />
                       <Route path="/admin/pdf-builder" element={<AdminPdfBuilder />} />
                       <Route path="/admin/showcase" element={<AdminShowcase />} />
                       <Route path="/admin/growth" element={<AdminGrowth />} />

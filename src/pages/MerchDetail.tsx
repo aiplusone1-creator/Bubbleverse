@@ -483,6 +483,12 @@ export default function MerchDetail() {
                   />
                 </AnimatePresence>
 
+                {(gallery[safeImageIndex] ?? product.coverImage).startsWith('/artwork/merch-') && (
+                  <span className="absolute end-3 bottom-3 z-10 rounded-lg bg-slate-950/85 px-2.5 py-1.5 text-xs text-white">
+                    {language === 'ar' ? 'تصوّر للمنتج' : 'Product concept'}
+                  </span>
+                )}
+
                 {/* Out-of-stock scrim ribbon */}
                 {!isAvailable && (
                   <div className="absolute bottom-4 inset-x-4 z-20 rounded-2xl bg-slate-950/85 backdrop-blur-md border border-rose-400/40 px-4 py-2.5 flex items-center justify-center gap-2 text-rose-200 text-xs sm:text-sm font-bold">

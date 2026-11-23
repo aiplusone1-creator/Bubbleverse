@@ -1379,7 +1379,7 @@ export default function AdminOrders() {
       titleEn: selectedCatalogStory
         ? selectedCatalogStory.titleEn
         : manualForm.customTitleEn.trim() || `${manualForm.childName.trim()}'s Magical Adventure`,
-      coverImage: selectedCatalogStory?.coverImage || '/bubble-books/space.jpg',
+      coverImage: selectedCatalogStory?.coverImage || '/placeholder.svg',
       format: isPdf ? 'digital_pdf' : 'hardcover_book',
       formatLabelAr,
       formatLabelEn,
@@ -2894,7 +2894,7 @@ export default function AdminOrders() {
                           >
                             <div className="w-24 shrink-0">
                               <img
-                                src={item.coverImage || '/merch/bub-plush-ball.jpg'}
+                                src={item.coverImage || '/placeholder.svg'}
                                 alt={itemTitle}
                                 loading="lazy"
                                 decoding="async"
@@ -2960,7 +2960,7 @@ export default function AdminOrders() {
                           >
                             <div className="w-24 shrink-0">
                               <img
-                                src={item.coverImage || '/merch/bub-plush-ball.jpg'}
+                                src={item.coverImage || '/placeholder.svg'}
                                 alt={itemTitle}
                                 loading="lazy"
                                 decoding="async"

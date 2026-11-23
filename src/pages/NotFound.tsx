@@ -47,7 +47,7 @@ const NotFound = () => {
               className="relative w-full h-full rounded-full overflow-hidden border-2 border-cyan-300/45 bg-slate-950/90 shadow-[0_0_32px_rgba(0,217,255,0.28)]"
             >
               <img
-                src="/merch/bub-plush-ball.jpg"
+                src="/artwork/merch-plush.webp"
                 alt={isAr ? 'باب — رفيق بابل فيرس القطيفة' : 'Bub — Bubbleverse plush companion'}
                 loading="eager"
                 decoding="async"

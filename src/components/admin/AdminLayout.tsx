@@ -16,6 +16,7 @@ const ROUTE_TITLES: Record<string, { ar: string; en: string }> = {
   '/admin/growth': { ar: 'النمو والعروض وB2B', en: 'Growth, Promos & B2B' },
   '/admin/merch': { ar: 'متجر البراند وهدية Bub', en: 'Merch Store & Bub GWP' },
   '/admin/studio': { ar: 'استوديو القصص', en: 'Story Studio' },
+  '/admin/studio/advanced': { ar: 'أدوات الإنتاج المتقدمة', en: 'Advanced production tools' },
   '/admin/pdf-builder': { ar: 'صانع كتب KDP (8.5×8.5)', en: 'KDP 8.5"×8.5" PDF Composer' },
   '/admin/showcase': { ar: 'واجهة العرض', en: 'Hero & Showcase' },
   '/admin/integrations': { ar: 'مركز الـ APIs', en: 'APIs & Integrations' },

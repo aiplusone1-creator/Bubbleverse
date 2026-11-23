@@ -238,7 +238,7 @@ export function BubBrandShowcaseSection() {
                   >
                     <div className="aspect-square w-full overflow-hidden bg-slate-950">
                       <img
-                        src="/merch/bub-plush-ball.jpg"
+                        src="/artwork/merch-plush.webp"
                         alt={
                           isAr
                             ? 'كورة باب القطيفة المتلألئة من بابل فيرس'
@@ -277,7 +277,7 @@ export function BubBrandShowcaseSection() {
                   >
                     <div className="aspect-square w-full overflow-hidden bg-slate-950">
                       <img
-                        src="/merch/story-bub-giftbox.jpg"
+                        src="/artwork/merch-giftbox.webp"
                         alt={
                           isAr
                             ? 'صندوق القصة الفاخر مع كورة باب القطيفة'

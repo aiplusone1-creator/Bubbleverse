@@ -11,118 +11,9 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { DEFAULT_SHOWCASE_CONFIG, getShowcaseConfig } from '@/features/showcase/showcaseConfig';
 
-interface ProofCardItem {
-  id: string;
-  icon: typeof Smile;
-  titleAr: string;
-  titleEn: string;
-  subtitleAr: string;
-  subtitleEn: string;
-  variations: {
-    labelAr: string;
-    labelEn: string;
-    image: string;
-    altAr: string;
-    altEn: string;
-  }[];
-}
-
-const PROOF_CARDS: ProofCardItem[] = [
-  {
-    id: 'expressions',
-    icon: Smile,
-    titleAr: 'مشاعر وتعبيرات حقيقية',
-    titleEn: 'Living Storybook Expressions',
-    subtitleAr: 'ضحكته ودهشته وشجاعته تتفاعل مع كل موقف في القصة.',
-    subtitleEn: 'Real joy, curious wonder, and proud smiles that match every scene.',
-    variations: [
-      {
-        labelAr: 'فرحة وضحكة',
-        labelEn: 'Joyful Smile',
-        image: '/bubble-books/hero-left.jpg',
-        altAr: 'طفل يبتسم بفرح في مشهد قصصي مصوّر',
-        altEn: 'Illustrated child smiling joyfully in a storybook scene',
-      },
-      {
-        labelAr: 'شجاعة وبطولة',
-        labelEn: 'Brave Hero',
-        image: '/catalog/superhero-academy.jpg',
-        altAr: 'طفل بطل شجاع في مغامرة مصوّرة',
-        altEn: 'Illustrated child dressed as a brave storybook hero',
-      },
-      {
-        labelAr: 'فضول واكتشاف',
-        labelEn: 'Curious Explorer',
-        image: '/catalog/dinosaur-valley.jpg',
-        altAr: 'طفل يستكشف عالم الديناصورات بفضول',
-        altEn: 'Illustrated child exploring a friendly dinosaur valley',
-      },
-    ],
-  },
-  {
-    id: 'continuity',
-    icon: Compass,
-    titleAr: 'نفس الملامح في كل صفحة',
-    titleEn: 'True Likeness on Every Page',
-    subtitleAr: 'من أول صفحة لآخرها، طفلك هو نفس البطل بعيونه وشعره.',
-    subtitleEn: 'Consistent eyes, curls, and charm from cover to final spread.',
-    variations: [
-      {
-        labelAr: 'إطلالة دافئة',
-        labelEn: 'Front Portrait',
-        image: '/bubble-books/hero-right.jpg',
-        altAr: 'طفل يقرأ كتاباً مصوراً بإطلالة مباشرة دافئة',
-        altEn: 'Warm front portrait of an illustrated child reading',
-      },
-      {
-        labelAr: 'قبل النوم',
-        labelEn: 'Dreamy Night',
-        image: '/catalog/bedtime-magic.jpg',
-        altAr: 'مشهد ليلي حالم لطفل بين النجوم قبل النوم',
-        altEn: 'Calm starlight bedtime illustration of a child',
-      },
-      {
-        labelAr: 'انطلاق ومغامرة',
-        labelEn: 'Action Scene',
-        image: '/bubble-books/jungle.jpg',
-        altAr: 'طفل في مغامرة غابة مليئة بالحركة والمرح',
-        altEn: 'Dynamic jungle adventure illustration of a child',
-      },
-    ],
-  },
-  {
-    id: 'styles',
-    icon: Palette,
-    titleAr: 'أنماط رسم تخطف العين',
-    titleEn: 'Fine Art Storybook Styles',
-    subtitleAr: 'اختار الجو الفني اللي يناسب عمر طفلك وذوقك.',
-    subtitleEn: 'Pick the illustration atmosphere that matches their imagination.',
-    variations: [
-      {
-        labelAr: 'سينمائي مجسّم',
-        labelEn: 'Cinematic 3D',
-        image: '/showcase/career/career-astronaut.jpg',
-        altAr: 'رسم سينمائي مجسّم لطفل رائد فضاء',
-        altEn: 'Cinematic 3D style illustration of a child astronaut',
-      },
-      {
-        labelAr: 'خيال ملون',
-        labelEn: 'Vibrant Fantasy',
-        image: '/catalog/dinosaur-valley.jpg',
-        altAr: 'رسم خيالي ملون لطفل في عالم المغامرات',
-        altEn: 'Vibrant fantasy storybook illustration',
-      },
-      {
-        labelAr: 'ألوان هادئة',
-        labelEn: 'Soft Watercolor',
-        image: '/catalog/bedtime-magic.jpg',
-        altAr: 'رسم بألوان مائية ناعمة لقصة قبل النوم',
-        altEn: 'Soft watercolor bedtime illustration',
-      },
-    ],
-  },
-];
+const proofIcons = { expressions: Smile, angles: Compass, styles: Palette };
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
@@ -131,6 +22,9 @@ export default function CharacterControlShowcase() {
   const isAr = language === 'ar';
   const shouldReduceMotion = Boolean(useReducedMotion());
 
+  const [config] = useState(getShowcaseConfig);
+  const faces = config.characterCards.find((card) => card.id === 'faces') ?? DEFAULT_SHOWCASE_CONFIG.characterCards[0];
+  const cards = config.characterCards.filter((card) => card.id !== 'faces' && card.variations.length > 0);
   const [revealPercent, setRevealPercent] = useState(48);
   const [activeCycleIndex, setActiveCycleIndex] = useState(0);
   const [userSelected, setUserSelected] = useState<Record<string, number>>({});
@@ -195,8 +89,8 @@ export default function CharacterControlShowcase() {
 
           <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
             {isAr
-              ? 'اسحب الخط السحري وشوف بنفسك إزاي بنحوّل صورة طفلك العادية لرسومات فنية ساحرة بملامحه الحقيقية في كل مشهد.'
-              : "Slide the magic beam to watch an everyday photo transform into a luminous storybook hero — keeping your child's real likeness in every scene."}
+              ? 'اسحب الخط وشوف نفس الشخصية الخيالية في البورتريه المرجعي وفي الرسم القصصي.'
+              : 'Drag the slider to compare the fictional character’s reference portrait with her storybook illustration.'}
           </p>
         </motion.div>
 
@@ -211,11 +105,11 @@ export default function CharacterControlShowcase() {
               >
                 {/* Base Layer: AFTER (Storybook Hero) */}
                 <img
-                  src="/showcase/character/likeness-pixar.jpg"
+                  src={faces.secondaryImage || faces.variations[1]?.image || DEFAULT_SHOWCASE_CONFIG.characterCards[0].secondaryImage}
                   alt={
                     isAr
-                      ? 'بعد التحوّل: رسم قصصي ساحر لطفل بملامحه الحقيقية'
-                      : 'After transformation: illustrated storybook hero preserving child likeness'
+                      ? 'بعد التحوّل: رسم لنفس الشخصية الخيالية'
+                      : 'After transformation: the same fictional character illustrated for a storybook'
                   }
                   className="absolute inset-0 w-full h-full object-cover"
                 />
@@ -237,11 +131,11 @@ export default function CharacterControlShowcase() {
                   style={{ clipPath: `inset(0 ${100 - revealPercent}% 0 0)` }}
                 >
                   <img
-                    src="/showcase/character/likeness-real.jpg"
+                    src={faces.primaryImage || DEFAULT_SHOWCASE_CONFIG.characterCards[0].primaryImage}
                     alt={
                       isAr
-                        ? 'قبل التحوّل: صورة حقيقية للطفل'
-                        : 'Before transformation: original child photograph'
+                        ? 'قبل التحوّل: بورتريه مرجعي خيالي'
+                        : 'Before transformation: a synthetic reference portrait'
                     }
                     className="w-full h-full object-cover"
                   />
@@ -255,7 +149,7 @@ export default function CharacterControlShowcase() {
 
                 {/* Corner Labels matching each half */}
                 <div className="pointer-events-none absolute top-3.5 left-3.5 z-10 px-3 py-1.5 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/15 text-xs font-semibold text-slate-100">
-                  {isAr ? 'قبل: الصورة الحقيقية' : 'Before: Real Photo'}
+                  {isAr ? 'قبل: مرجع خيالي' : 'Before: Fictional Reference'}
                 </div>
                 <div className="pointer-events-none absolute top-3.5 right-3.5 z-10 px-3 py-1.5 rounded-full bg-cyan-500/20 backdrop-blur-md border border-cyan-300/40 text-xs font-semibold text-cyan-100">
                   {isAr ? 'بعد: بطل الحكاية' : 'After: Story Hero'}
@@ -300,7 +194,7 @@ export default function CharacterControlShowcase() {
                   }`}
                 >
                   <Camera className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>{isAr ? 'شوف الصورة الأصلية' : 'View Original Photo'}</span>
+                  <span>{isAr ? 'شوف صورة المرجع' : 'View Reference Portrait'}</span>
                 </button>
 
                 <button
@@ -368,8 +262,8 @@ export default function CharacterControlShowcase() {
 
         {/* 3 Clean Interactive Proof Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 xl:gap-8">
-          {PROOF_CARDS.map((card) => {
-            const Icon = card.icon;
+          {cards.map((card) => {
+            const Icon = proofIcons[card.id as keyof typeof proofIcons] ?? Sparkles;
             const activeIndex =
               userSelected[card.id] !== undefined
                 ? userSelected[card.id]
@@ -398,7 +292,7 @@ export default function CharacterControlShowcase() {
                     <motion.img
                       key={`${card.id}-${activeIndex}`}
                       src={currentVariation.image}
-                      alt={isAr ? currentVariation.altAr : currentVariation.altEn}
+                      alt={isAr ? currentVariation.labelAr || currentVariation.label : currentVariation.labelEn || currentVariation.label}
                       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.98 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}

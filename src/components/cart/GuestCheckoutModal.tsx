@@ -761,7 +761,7 @@ export default function GuestCheckoutModal() {
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               <img
-                                src={it.coverImage || '/merch/bub-plush-ball.jpg'}
+                                src={it.coverImage || '/placeholder.svg'}
                                 alt={language === 'ar' ? it.titleAr : it.titleEn}
                                 className="w-10 h-10 rounded-xl object-cover border border-emerald-300/45 shrink-0"
                               />

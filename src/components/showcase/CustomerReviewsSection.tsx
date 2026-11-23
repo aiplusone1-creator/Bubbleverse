@@ -166,12 +166,10 @@ export default function CustomerReviewsSection({
                 {/* Parent Header */}
                 <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-2 lg:gap-3 pb-3.5 lg:pb-4 border-b border-white/10">
                   <div className="flex items-center gap-2.5 lg:gap-3 min-w-0">
-                    <div className="w-9 h-9 lg:w-11 lg:h-11 rounded-full overflow-hidden bg-slate-900 border border-white/20 shrink-0">
-                      <img
-                        src={rev.avatarUrl || '/bubble-books/hero-left.jpg'}
-                        alt={parentName}
-                        className="w-full h-full object-cover"
-                      />
+                    <div aria-hidden="true" className="grid w-9 h-9 lg:w-11 lg:h-11 place-items-center rounded-full overflow-hidden bg-purple-900/50 border border-white/20 shrink-0 font-bold text-purple-100">
+                      {rev.avatarUrl
+                        ? <img src={rev.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        : parentName.trim().slice(0, 1)}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">

@@ -76,12 +76,10 @@ test('DEFAULT_MERCH_PRODUCTS seeds all 6 flagship Bubbleverse products with veri
   // Flagship Bub Plush Ball exact contract check
   const bub = getMerchProductById('bub-plush-ball');
   assert.ok(bub);
-  assert.equal(bub.coverImage, '/merch/bub-plush-ball.jpg');
-  assert.deepEqual(bub.galleryImages, [
-    '/merch/bub-plush-ball.jpg',
-    '/merch/story-bub-giftbox.jpg',
-    '/merch/hero-backpack.jpg',
-  ]);
+  assert.equal(bub.coverImage, '/artwork/merch-plush.webp');
+  assert.equal(bub.coverImage, DEFAULT_GWP_CONFIG.coverImage);
+  assert.deepEqual(bub.galleryImages, [bub.coverImage]);
+  assert.equal(new Set(DEFAULT_MERCH_PRODUCTS.map((product) => product.coverImage)).size, 6);
   assert.equal(bub.featured, true);
   assert.equal(bub.isGwpEligibleGift, true);
   assert.equal(bub.allowsRibbonName, true);
